@@ -1,10 +1,8 @@
 import 'dart:ui';
-import 'package:adobe_xd/page_link.dart';
 import 'package:flutter/material.dart';
-import 'dart:async';
 import 'package:flutter/services.dart';
-import 'package:optimist_erp_app/screens/bottomNavigation.dart';
-import 'package:optimist_erp_app/screens/home.dart';
+import 'package:optimist_erp_app/ui_elements/bottomNavigation.dart';
+
 
 class Login extends StatefulWidget {
   @override
@@ -12,11 +10,14 @@ class Login extends StatefulWidget {
 }
 
 class LoginState extends State<Login> {
+  List<String> _locations = ['IND', 'US', 'UK', 'PK']; // Option 2
+  String _selectedLocation;
+
+
   @override
   void initState() {
     //on Splash Screen hide statusbar
     SystemChrome.setEnabledSystemUIOverlays([SystemUiOverlay.bottom]);
-
     super.initState();
   }
 
@@ -56,26 +57,56 @@ class LoginState extends State<Login> {
                     ),
                   ),
                   SizedBox(height: 30,),
-                  Padding(
-                    padding: const EdgeInsets.all(0.0),
-                    child: Container(
-                      width: MediaQuery.of(context).size.width * 0.7,
+                  Center(
+                    child: Padding(
+                      padding:  EdgeInsets.all(0),
                       child: Card(
-                        elevation: 10,
+                        elevation: 5,
                         child: Container(
-                          child: TextFormField(
-                           // controller: _username,
-                            decoration: InputDecoration(
-                                hintText: 'Select Country',
-                                //filled: true,
-                              filled: false,
-                              contentPadding: EdgeInsets.only(
-                                  left: 15, bottom: 15, top: 15, right: 15),
-                                prefixIcon: Icon(
-                                  Icons.flag,
-                                  size: 25.0,
-                                  color: Colors.grey,
-                                ),)
+                          width: MediaQuery.of(context).size.width * 0.7,
+                          height: 50,
+                          padding: const EdgeInsets.only(),
+                          // decoration: BoxDecoration(
+                          //   // color: Color(0xfffb4ce5),
+                          //   borderRadius: BorderRadius.circular(10),
+                          // ),
+                          child: Row(
+                            children: [
+                              SizedBox(width: 5,),
+                              Icon(
+                                Icons.flag,
+                                size: 25.0,
+                                color: Colors.grey,
+                              ),
+                              Container(
+                                width: MediaQuery.of(context).size.width * 0.6,
+                                height: 50,
+                                padding: EdgeInsets.only(
+                                    left: 20.0, top: 10, ),
+                                child: DropdownButton(
+                                  isDense: true,
+                                  //itemHeight: 50,
+                                  iconSize: 30,
+                                  isExpanded: true,
+                                  hint: Text('Select Country'),
+                                  value: _selectedLocation,
+                                  onChanged: (newValue) {
+                                    setState(() {
+                                      _selectedLocation = newValue;
+                                    });
+                                  },
+                                  items: _locations.map((location) {
+                                    return DropdownMenuItem(
+                                      child: Padding(
+                                        padding: const EdgeInsets.only(top:0.0,left: 0),
+                                        child: new Text(location),
+                                      ),
+                                      value: location,
+                                    );
+                                  }).toList(),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
@@ -85,7 +116,7 @@ class LoginState extends State<Login> {
                   Padding(
                     padding: const EdgeInsets.all(0.0),
                     child: Container(
-                      width: MediaQuery.of(context).size.width * 0.7,
+                      width: MediaQuery.of(context).size.width * 0.714,
                       child: Card(
                         elevation: 10,
                         child: Container(
@@ -93,7 +124,7 @@ class LoginState extends State<Login> {
                             // controller: _username,
                               decoration: InputDecoration(
                                 contentPadding: EdgeInsets.only(
-                                    left: 15, bottom: 15, top: 15, right: 15),
+                                    left: 20, top: 15),
                                 hintText: 'Enter Mobile Number',
                                 //filled: true,
                                 filled: false,
@@ -107,8 +138,6 @@ class LoginState extends State<Login> {
                       ),
                     ),
                   ),
-
-
                   SizedBox(height: 50,),
                   GestureDetector(
                     onTap: (){
@@ -136,7 +165,7 @@ class LoginState extends State<Login> {
                         ],
                       ),
                       child: Text(
-                        'Login',
+                        ' Login ',
                         style: TextStyle(
                           fontFamily: 'Arial',
                           fontSize: 20,

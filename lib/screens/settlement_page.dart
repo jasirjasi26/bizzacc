@@ -384,8 +384,33 @@ class SettlementPageState extends State<SettlementPage> {
 
             ],
           ),
+          Padding(
+            padding: const EdgeInsets.only(
+                left: 10.0, right: 50, bottom: 5, top: 25),
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 25,
+                ),
+                Container(
+                    height: 20,
+                    width: 20,
+                    child: Image.asset("assets/images/percentage.png",
+                        fit: BoxFit.scaleDown,
+                        )),
+                SizedBox(
+                  width: 20,
+                ),
+                Text(
+                  "Tax :    0.00",
+                  style:
+                  TextStyle(color: Colors.black, fontSize: 18),
+                ),
+              ],
+            ),
+          ),
           SizedBox(
-            height: 40,
+            height: 30,
           ),
           Padding(
             padding: const EdgeInsets.all(8.0),

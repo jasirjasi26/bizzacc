@@ -1,6 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-
+import '../ui_elements/main_drawer.dart';
 import 'all_products.dart';
 
 class ProductPage extends StatefulWidget {
@@ -13,9 +13,15 @@ class ProductPage extends StatefulWidget {
 }
 
 class ProductPageState extends State<ProductPage> {
+  final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
+  List<String> _locations = ['A', 'B', 'C', 'D']; // Option 2
+  String _selectedLocation; // Opt
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: _scaffoldKey,
+      drawer: MainDrawer(),
       backgroundColor: Colors.white,
       appBar: buildAppBar(context),
       body: ListView(
@@ -78,14 +84,44 @@ class ProductPageState extends State<ProductPage> {
             child: Column(
               children: [
                 Spacer(),
-                Container(
-                    height: 25,
-                    width: 25,
-                    child: Image.asset(
-                      "assets/images/filter.png",
-                      fit: BoxFit.scaleDown,
-                      //    color: Colors.white
-                    )),
+                GestureDetector(
+                  child: Container(
+                      height: 30,
+                      width: 45,
+                      decoration: BoxDecoration(
+                        image: DecorationImage(image: AssetImage(
+                          "assets/images/filter.png",
+                          //fit: BoxFit.scaleDown,
+                          //    color: Colors.white
+                        ))
+                      ),
+                      child:DropdownButton(
+                        isDense: true,
+                        //itemHeight: 50,
+                        iconSize: 0,
+                        isExpanded: true,
+                        hint: Text('Please choose sales type'),
+                        // Not necessary for Option 1
+                        value: _selectedLocation,
+                        onChanged: (newValue) {
+                          setState(() {
+                            _selectedLocation = newValue;
+                          });
+                        },
+                        items: _locations.map((location) {
+                          return DropdownMenuItem(
+                            child: Text(location,style: TextStyle(fontSize: 1),),
+                            value: location,
+                          );
+                        }).toList(),
+                      ),
+                      // child: Image.asset(
+                      //   "assets/images/filter.png",
+                      //   fit: BoxFit.scaleDown,
+                      //   //    color: Colors.white
+                      // )
+                  ),
+                ),
                 Spacer(),
                 Text("Filter")
               ],
@@ -626,12 +662,38 @@ class ProductPageState extends State<ProductPage> {
 
   AppBar buildAppBar(BuildContext context) {
     return AppBar(
-      backgroundColor: Colors.blue[900],
+      backgroundColor: widget.title == "title" ? Colors.blue[900] : Colors.white,
       centerTitle: false,
-      title: Text("Product"),
-      elevation: 1.0,
+      title: widget.title == "title" ? Text("Product") : Text("  Product",style: TextStyle(color: Colors.black),),
+      elevation: widget.title == "title" ? 1.0 : 0,
       titleSpacing: 0,
       toolbarHeight: 70,
+      leading: widget.title == "title" ? Builder(
+        builder: (context) => IconButton(
+          icon: Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+      ) : Container(
+        child: GestureDetector(
+          onTap: () {
+            _scaffoldKey.currentState.openDrawer();
+          },
+          child: Builder(
+            builder: (context) => Padding(
+              padding: EdgeInsets.symmetric(vertical: 12.0, horizontal: 12.0),
+              child: Container(
+                child: Image.asset(
+                  'assets/images/homebox.png',
+                  height: 30,
+                  width: 30,
+                  //color: MyTheme.dark_grey,
+                  color: Colors.grey,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

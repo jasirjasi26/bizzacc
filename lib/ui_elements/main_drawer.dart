@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:optimist_erp_app/screens/mis_reports/sales_register.dart';
+
+import 'package:optimist_erp_app/screens/mis_reports/sales_ledger.dart';
+import 'package:optimist_erp_app/screens/mis_reports/stock_reports.dart';
 import 'package:optimist_erp_app/screens/orders.dart';
 import 'package:optimist_erp_app/screens/product.dart';
 import 'package:optimist_erp_app/screens/van_page.dart';
@@ -20,9 +24,8 @@ class MainDrawerState extends State<MainDrawer> {
     return Drawer(
       child: Container(
         color: Colors.white,
-        padding: EdgeInsets.only(top: 80),
-        child: SingleChildScrollView(
-          child: Column(
+        padding: EdgeInsets.only(top: 50),
+        child: ListView(
             children: <Widget>[
               ListTile(
                   visualDensity:
@@ -125,7 +128,7 @@ class MainDrawerState extends State<MainDrawer> {
 
                     Navigator.push(context,
                         MaterialPageRoute(builder: (context) {
-                           return ProductPage();
+                           return ProductPage(title: "title",);
                         }));
                   }),
 
@@ -206,6 +209,45 @@ class MainDrawerState extends State<MainDrawer> {
 
                   }),
 
+              ///3 types
+              ///
+              ListTile(
+                  trailing: Padding(
+                    padding: const EdgeInsets.only(right:50.0),
+                    child: Text('Sales Register',
+                        style: TextStyle(color: Colors.black, fontSize: 18)),
+                  ),
+                  onTap: () {
+                    Navigator.push(context,
+                        MaterialPageRoute(builder: (context) {
+                          return SalesRegister();
+                        }));
+                  }),
+              ListTile(
+                  trailing: Padding(
+                    padding: const EdgeInsets.only(right:50.0),
+                    child: Text('Stock Reports ',
+                        style: TextStyle(color: Colors.black, fontSize: 18)),
+                  ),
+                  onTap: () {
+                    Navigator.push(context,
+                        MaterialPageRoute(builder: (context) {
+                          return StockReports();
+                        }));
+                  }),
+              ListTile(
+                  trailing: Padding(
+                    padding: const EdgeInsets.only(right:50.0),
+                    child: Text('Sales Ledger  ',
+                        style: TextStyle(color: Colors.black, fontSize: 18)),
+                  ),
+                  onTap: () {
+                    Navigator.push(context,
+                        MaterialPageRoute(builder: (context) {
+                          return SalesLedger();
+                        }));
+                  }),
+
               ListTile(
                   visualDensity:
                   VisualDensity(horizontal: -4, vertical: -4),
@@ -271,8 +313,6 @@ class MainDrawerState extends State<MainDrawer> {
                     //     }));
                   }),
 
-              Divider(height: 20,color: Colors.white,thickness: 0.2,),
-
 
               ListTile(
                   visualDensity:
@@ -295,10 +335,11 @@ class MainDrawerState extends State<MainDrawer> {
                   onTap: () {
 
                   }),
+
+              SizedBox(height: 30,)
             ],
           ),
         ),
-      ),
     );
   }
 }

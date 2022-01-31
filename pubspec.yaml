@@ -28,6 +28,7 @@ dependencies:
   syncfusion_flutter_signaturepad: ^18.4.49-beta
   flutter_signature_pad: ^1.0.0
   firebase_database: ^6.0.0
+  textfield_search: ^0.8.0
 
 
   # The following adds the Cupertino Icons font to your application.

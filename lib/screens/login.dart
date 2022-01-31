@@ -2,7 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:optimist_erp_app/ui_elements/bottomNavigation.dart';
-
+import 'package:firebase_database/firebase_database.dart';
 
 class Login extends StatefulWidget {
   @override
@@ -10,14 +10,28 @@ class Login extends StatefulWidget {
 }
 
 class LoginState extends State<Login> {
-  List<String> _locations = ['IND', 'US', 'UK', 'PK']; // Option 2
+  List<String> _locations = []; // Option 2
   String _selectedLocation;
+  DatabaseReference types;
 
+  Future<void> getCountryCodes() async {
+    await types.once().then((DataSnapshot snapshot) {
+      Map<dynamic, dynamic> values = snapshot.value;
+      values.forEach((key, values) {
+        _locations.add(values.toString());
+      });
+    });
+  }
 
   @override
   void initState() {
     //on Splash Screen hide statusbar
     SystemChrome.setEnabledSystemUIOverlays([SystemUiOverlay.bottom]);
+    types = FirebaseDatabase.instance
+        .reference()
+        .child("CountryCodes");
+
+    getCountryCodes();
     super.initState();
   }
 

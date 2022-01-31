@@ -7,6 +7,7 @@ import 'dart:ui';
 import 'package:flutter/services.dart';
 import 'package:optimist_erp_app/screens/home.dart';
 import 'package:optimist_erp_app/screens/product.dart';
+import 'package:textfield_search/textfield_search.dart';
 import '../screens/newOrderPage.dart';
 
 class BottomBar extends StatefulWidget {
@@ -16,10 +17,15 @@ class BottomBar extends StatefulWidget {
 
 class BottomBarState extends State<BottomBar> {
   int _currentIndex = 0;
-  List<String> _locations = ['[None]', 'Export', 'Non Tax']; // Option 2
+  List<String> _locations = []; // Option 2
   String _selectedLocation; // Opt
   var _children = [MyHomePage(), ProductPage(), Container(), Container()];
   DatabaseReference reference;
+  DatabaseReference types;
+  DatabaseReference names;
+  String label = "Enter Customer Name";
+  List<String> dummyList = [];
+  var textEditingController = TextEditingController();
 
   void onTapped(int i) {
     if (i != 3) {
@@ -29,11 +35,58 @@ class BottomBarState extends State<BottomBar> {
     }
   }
 
+
+  Future<void> getSalesTypes() async {
+    await names.once().then((DataSnapshot snapshot) {
+      Map<dynamic, dynamic> values = snapshot.value;
+      values.forEach((key, values) {
+        dummyList.add(values["Name"].toString());
+      });
+    });
+
+    await types.once().then((DataSnapshot snapshot) {
+      Map<dynamic, dynamic> values = snapshot.value;
+      values.forEach((key, values) {
+        _locations.add(values["Name"].toString());
+      });
+    });
+  }
+
   void addValues() {
-    String name = "";
-    String ref = "";
-    Map<String, String> values = {'name': name, 'ref': ref};
-    reference.push().set(values);
+    Map<String, String> values = {
+      'Address': "address",
+      'ArabicName': "...",
+      'Balance': "10000",
+      'CustomerCode': "...",
+      'CustomerId': "...",
+      'EmployeeMobile': "...",
+      'GSTNO': "...",
+      'MobileNo': "...",
+      'Name': "...",
+      'TRNNO': "...",
+      'VATNO': "...",
+    };
+
+    Map<String, String> details = {
+      'Address': "",
+      'CodeBasedBarcode': "Disabled",
+      'CompanyName': "",
+      'CreateNewCustomer': "Disabled",
+      'CurrencyIcon': "U+0024",
+      'DecimalPoint': "2",
+      'DiasablePrinterButton': "Disabled",
+      'FreeIssue': "Disabled",
+      'GSTNO': "",
+      'ItemWiseDiscount': "Disabled",
+      'LastUpdate': "1/27/2022 1:09:11 AM",
+      'PhoneNumber': "",
+      'PrinterType': "0",
+      'SalesReturn': "Disabled",
+      'SubEndDate': "00010101",
+      'TRNNO': "",
+    };
+    reference.child("Customers").child("11").set(values);
+    reference.child("Details").set(details);
   }
 
   void initState() {
@@ -42,7 +95,25 @@ class BottomBarState extends State<BottomBar> {
     SystemChrome.setEnabledSystemUIOverlays(
         [SystemUiOverlay.top, SystemUiOverlay.bottom]);
 
-    reference = FirebaseDatabase.instance.reference().child("name");
+    reference = FirebaseDatabase.instance
+        .reference()
+        .child("Companies")
+        .child("Cybrix Mobile");
+
+    types = FirebaseDatabase.instance
+        .reference()
+        .child("Companies")
+        .child("CYBRIX")
+        .child("SalesTypes");
+
+    names = FirebaseDatabase.instance
+        .reference()
+        .child("Companies")
+        .child("CYBRIX")
+        .child("Customers");
+
+
+    getSalesTypes();
 
     super.initState();
   }
@@ -55,7 +126,7 @@ class BottomBarState extends State<BottomBar> {
       floatingActionButtonLocation: FloatingActionButtonLocation.endDocked,
       floatingActionButton: GestureDetector(
         onTap: () {
-          showBookingDialog();
+          showBookingDialog(textEditingController);
         },
         child: Container(
           width: 80,
@@ -259,10 +330,10 @@ class BottomBarState extends State<BottomBar> {
     );
   }
 
-  void showBookingDialog() {
+  void showBookingDialog(TextEditingController textEditingController) {
     showGeneralDialog(
       barrierLabel: "Barrier",
-      barrierDismissible: true,
+      barrierDismissible: false,
       barrierColor: Colors.black.withOpacity(0.5),
       transitionDuration: Duration(milliseconds: 500),
       context: context,
@@ -293,7 +364,7 @@ class BottomBarState extends State<BottomBar> {
                                     right: 30.0, top: 25, bottom: 20),
                                 child: GestureDetector(
                                   onTap: () {
-                                    Navigator.pop(context);
+                                    Navigator.pop(context,true);
                                   },
                                   child: Container(
                                     child: Image.asset(
@@ -309,33 +380,25 @@ class BottomBarState extends State<BottomBar> {
                           SizedBox(
                             height: 20,
                           ),
-                          Center(
-                            child: Padding(
-                              padding:
-                                  const EdgeInsets.only(left: 50.0, right: 50),
-                              child: Container(
-                                width: MediaQuery.of(context).size.width,
-                                child: Card(
-                                  elevation: 5,
-                                  child: Container(
-                                    child: TextFormField(
-                                        // controller: _username,
-                                        decoration: InputDecoration(
-                                      hintText: 'Enter Customer Name',
-                                      //filled: true,
-
-                                      contentPadding: EdgeInsets.only(
-                                          left: 15, top: 15, right: 15),
-                                      filled: false,
-                                      prefixIcon: Icon(
-                                        Icons.person,
-                                        size: 25.0,
-                                        color: Colors.grey,
-                                      ),
-                                    )),
+                          Padding(
+                            padding:
+                            const EdgeInsets.only(left: 50.0, right: 50),
+                            child: Card(
+                              child: TextFieldSearch(
+                                  initialList: dummyList,
+                                  label: label,
+                                  decoration: InputDecoration(
+                                    hintText: 'Enter Customer Name',
+                                    contentPadding: EdgeInsets.only(
+                                        left: 15, top: 15, right: 15),
+                                    filled: false,
+                                    prefixIcon: Icon(
+                                      Icons.person,
+                                      size: 25.0,
+                                      color: Colors.grey,
+                                    ),
                                   ),
-                                ),
-                              ),
+                                  controller: textEditingController),
                             ),
                           ),
                           SizedBox(
@@ -420,6 +483,7 @@ class BottomBarState extends State<BottomBar> {
                           Center(
                             child: GestureDetector(
                               onTap: () {
+                                //addValues();
                                 Navigator.push(context,
                                     MaterialPageRoute(builder: (context) {
                                   return NewOrderPage();

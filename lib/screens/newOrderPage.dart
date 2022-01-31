@@ -2,8 +2,9 @@ import 'package:adobe_xd/pinned.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:optimist_erp_app/screens/settlement_page.dart';
-
+import 'package:textfield_search/textfield_search.dart';
 import 'package:optimist_erp_app/screens/qr_scan.dart';
+import 'package:firebase_database/firebase_database.dart';
 
 class NewOrderPage extends StatefulWidget {
   @override
@@ -13,8 +14,24 @@ class NewOrderPage extends StatefulWidget {
 class NewOrderPageState extends State<NewOrderPage> {
   int _radioValue1 = 0;
   int _radioValue2 = 0;
-  List<String> _locations = ['Pack', 'Kg', 'Ltr']; // Option 2
-  String _selectedLocation;
+  List<String> itemList = [];
+  String label = "Enter Customer Name";
+  var textEditingController = TextEditingController();
+  var saleRate = TextEditingController();
+  var saleQty = TextEditingController();
+  var depoStock = TextEditingController();
+  var unitController = TextEditingController();
+  double totalAmount = 0;
+  List<String> itemname=[];
+  List<String> units=[];
+  List<String> totalamount=[];
+  List<String> quantity=[];
+  double totalBill=0;
+
+  DatabaseReference items;
+  String unit = "";
+  String rate = "";
+  String stock = "";
 
   void _handleRadioValueChange(int value) {
     setState(() {
@@ -26,6 +43,68 @@ class NewOrderPageState extends State<NewOrderPage> {
     setState(() {
       _radioValue2 = value;
     });
+  }
+
+  Future<List> fetchData() async {
+    List _list = new List();
+    String _inputText = textEditingController.text;
+    await items.orderByChild("ItemID").once().then((DataSnapshot snapshot) {
+      if (snapshot.value != null) {
+        List<dynamic> value = snapshot.value;
+        for (int i = 0; i < value.length; i++) {
+          if (value[i] != null) {
+            //itemList.add(value[i]["ItemName"].toString());
+            if (value[i]["ItemName"]
+                .toString()
+                .toLowerCase()
+                .contains(_inputText.toLowerCase())) {
+              _list.add(value[i]["ItemName"].toString());
+              setState(() {
+                unit = value[i]["SaleUnit"].toString();
+                rate = value[i]["RateAndStock"]["PCS"]["Rate"];
+                stock = value[i]["TotalStock"].toString();
+                saleRate.text = rate;
+                totalAmount = double.parse(rate);
+                unitController.text = unit;
+                depoStock.text = "10";
+              });
+            }
+          }
+        }
+      }
+    });
+    return _list;
+  }
+
+  void calculteAmount(String a) {
+
+    setState(() {
+      totalAmount=double.parse(saleQty.text)*double.parse(rate);
+    });
+  }
+
+  void addItem(String name,String unit,String total,String qty){
+    setState(() {
+      itemname.add(name);
+      units.add(unit);
+      totalamount.add(total);
+      quantity.add(qty);
+      totalBill=totalBill+double.parse(total);
+    });
+
+
+  }
+
+  void initState() {
+    // TODO: implement initState
+
+    items = FirebaseDatabase.instance
+        .reference()
+        .child("Companies")
+        .child("CYBRIX")
+        .child("Items");
+
+    super.initState();
   }
 
   @override
@@ -183,166 +262,93 @@ class NewOrderPageState extends State<NewOrderPage> {
             )
           ],
         ),
-        Padding(
-          padding: const EdgeInsets.all(10.0),
-          child: Container(
-            height: 100,
-            width: MediaQuery.of(context).size.width,
-            child: Stack(
-              children: <Widget>[
-                Pinned.fromPins(
-                  Pin(start: 0.0, end: 0.0),
-                  Pin(start: 0.0, end: 0.0),
+        Container(
+            height: MediaQuery.of(context).size.height * 0.3,
+            child: ListView.builder(
+              itemCount: itemname.length,
+              itemBuilder: (context, i) {
+                return Padding(
+                  padding: const EdgeInsets.all(10.0),
                   child: Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16.0),
-                      color: const Color(0xffffffff),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0x29000000),
-                          offset: Offset(6, 3),
-                          blurRadius: 12,
+                    height: 100,
+                    width: MediaQuery.of(context).size.width,
+                    child: Stack(
+                      children: <Widget>[
+                        Pinned.fromPins(
+                          Pin(start: 0.0, end: 0.0),
+                          Pin(start: 0.0, end: 0.0),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(16.0),
+                              color: const Color(0xffffffff),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color(0x29000000),
+                                  offset: Offset(6, 3),
+                                  blurRadius: 12,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        Pinned.fromPins(
+                          Pin(size: 146.0, start: 12.0),
+                          Pin(size: 17.0, start: 13.0),
+                          child: Text(
+                            itemname[i].toString(),
+                            style: TextStyle(
+                              fontFamily: 'Arial',
+                              fontSize: 15,
+                              color: const Color(0xff182d66),
+                            ),
+                            textAlign: TextAlign.left,
+                          ),
+                        ),
+                        Pinned.fromPins(
+                          Pin(size: 47.0, start: 12.0),
+                          Pin(size: 14.0, middle: 0.565),
+                          child: Text(
+                            quantity[i].toString()+"  "+units[i].toString(),
+                            style: TextStyle(
+                              fontFamily: 'Arial',
+                              fontSize: 12,
+                              color: const Color(0xff5b5b5b),
+                            ),
+                            textAlign: TextAlign.left,
+                          ),
+                        ),
+                        Pinned.fromPins(
+                          Pin(size: 87.0, end: 29.0),
+                          Pin(size: 14.0, middle: 0.5625),
+                          child: Text(
+                            '[45.50]    330.00',
+                            style: TextStyle(
+                              fontFamily: 'Arial',
+                              fontSize: 12,
+                              color: const Color(0xff182d66),
+                            ),
+                            textAlign: TextAlign.left,
+                          ),
+                        ),
+                        Pinned.fromPins(
+                          Pin(size: 37.0, end: 29.0),
+                          Pin(size: 14.0, end: 13.0),
+                          child: Text(
+                            totalamount[i].toString(),
+                            style: TextStyle(
+                              fontFamily: 'Arial',
+                              fontSize: 12,
+                              color: const Color(0xff182d66),
+                            ),
+                            textAlign: TextAlign.left,
+                          ),
                         ),
                       ],
                     ),
                   ),
-                ),
-                Pinned.fromPins(
-                  Pin(size: 146.0, start: 12.0),
-                  Pin(size: 17.0, start: 13.0),
-                  child: Text(
-                    'Capitain Morgan Gold',
-                    style: TextStyle(
-                      fontFamily: 'Arial',
-                      fontSize: 15,
-                      color: const Color(0xff182d66),
-                    ),
-                    textAlign: TextAlign.left,
-                  ),
-                ),
-                Pinned.fromPins(
-                  Pin(size: 27.0, start: 12.0),
-                  Pin(size: 14.0, middle: 0.5625),
-                  child: Text(
-                    '1 PC',
-                    style: TextStyle(
-                      fontFamily: 'Arial',
-                      fontSize: 12,
-                      color: const Color(0xff5b5b5b),
-                    ),
-                    textAlign: TextAlign.left,
-                  ),
-                ),
-                Pinned.fromPins(
-                  Pin(size: 87.0, end: 29.0),
-                  Pin(size: 14.0, middle: 0.5625),
-                  child: Text(
-                    '[45.50]    330.00',
-                    style: TextStyle(
-                      fontFamily: 'Arial',
-                      fontSize: 12,
-                      color: const Color(0xff182d66),
-                    ),
-                    textAlign: TextAlign.left,
-                  ),
-                ),
-                Pinned.fromPins(
-                  Pin(size: 37.0, end: 29.0),
-                  Pin(size: 14.0, end: 13.0),
-                  child: Text(
-                    '284.48',
-                    style: TextStyle(
-                      fontFamily: 'Arial',
-                      fontSize: 12,
-                      color: const Color(0xff182d66),
-                    ),
-                    textAlign: TextAlign.left,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.all(10.0),
-          child: Container(
-            height: 100,
-            width: MediaQuery.of(context).size.width,
-            child: Stack(
-              children: <Widget>[
-                Pinned.fromPins(
-                  Pin(start: 0.0, end: 0.0),
-                  Pin(start: 0.0, end: 0.0),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16.0),
-                      color: const Color(0xffffffff),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0x29000000),
-                          offset: Offset(6, 3),
-                          blurRadius: 12,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                Pinned.fromPins(
-                  Pin(size: 146.0, start: 12.0),
-                  Pin(size: 17.0, start: 13.0),
-                  child: Text(
-                    'Capitain Morgan Gold',
-                    style: TextStyle(
-                      fontFamily: 'Arial',
-                      fontSize: 15,
-                      color: const Color(0xff182d66),
-                    ),
-                    textAlign: TextAlign.left,
-                  ),
-                ),
-                Pinned.fromPins(
-                  Pin(size: 27.0, start: 12.0),
-                  Pin(size: 14.0, middle: 0.5625),
-                  child: Text(
-                    '1 PC',
-                    style: TextStyle(
-                      fontFamily: 'Arial',
-                      fontSize: 12,
-                      color: const Color(0xff5b5b5b),
-                    ),
-                    textAlign: TextAlign.left,
-                  ),
-                ),
-                Pinned.fromPins(
-                  Pin(size: 87.0, end: 29.0),
-                  Pin(size: 14.0, middle: 0.5625),
-                  child: Text(
-                    '[45.50]    330.00',
-                    style: TextStyle(
-                      fontFamily: 'Arial',
-                      fontSize: 12,
-                      color: const Color(0xff182d66),
-                    ),
-                    textAlign: TextAlign.left,
-                  ),
-                ),
-                Pinned.fromPins(
-                  Pin(size: 37.0, end: 29.0),
-                  Pin(size: 14.0, end: 13.0),
-                  child: Text(
-                    '284.48',
-                    style: TextStyle(
-                      fontFamily: 'Arial',
-                      fontSize: 12,
-                      color: const Color(0xff182d66),
-                    ),
-                    textAlign: TextAlign.left,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
+                );
+              },
+            )),
 
         ///after container
         ///
@@ -494,7 +500,7 @@ class NewOrderPageState extends State<NewOrderPage> {
                         ),
                       ],
                     ),
-                    child: Center(child: Text("0.00")),
+                    child: Center(child: Text(totalBill.toString())),
                   ),
                 ],
               ),
@@ -788,7 +794,8 @@ class NewOrderPageState extends State<NewOrderPage> {
                                 left: 10.0, right: 50, bottom: 5),
                             child: Text(
                               "Add Item",
-                              style: TextStyle(color: Colors.black, fontSize: 22),
+                              style:
+                                  TextStyle(color: Colors.black, fontSize: 22),
                             ),
                           ),
                           SizedBox(
@@ -878,7 +885,8 @@ class NewOrderPageState extends State<NewOrderPage> {
                                   width: 10,
                                 ),
                                 Container(
-                                  width: MediaQuery.of(context).size.width * 0.8,
+                                  width:
+                                      MediaQuery.of(context).size.width * 0.8,
                                   height: 50,
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(16.0),
@@ -891,17 +899,27 @@ class NewOrderPageState extends State<NewOrderPage> {
                                       ),
                                     ],
                                   ),
-                                  child: TextFormField(
-                                      // controller: _username,
-                                      decoration: InputDecoration(
-                                    hintText: 'Enter item name here',
-                                    //filled: true,
-                                    border: InputBorder.none,
-                                    contentPadding: EdgeInsets.only(
-                                        left: 15, bottom: 15, top: 15, right: 15),
-                                    filled: false,
-                                    isDense: false,
-                                  )),
+                                  child: TextFieldSearch(
+                                    initialList: itemList,
+                                    label: "",
+                                    future: () {
+                                      return fetchData();
+                                    },
+
+                                    minStringLength: 1,
+                                    // getSelectedValue: (value) {
+                                    //   print(value); // this prints the selected option which could be an object
+                                    // },
+                                    decoration: InputDecoration(
+                                      hintText: 'Enter item name here',
+                                      border: InputBorder.none,
+                                      contentPadding: EdgeInsets.only(
+                                          left: 15, top: 5, right: 15),
+                                      filled: false,
+                                      isDense: false,
+                                    ),
+                                    controller: textEditingController,
+                                  ),
                                 ),
                               ],
                             ),
@@ -916,14 +934,16 @@ class NewOrderPageState extends State<NewOrderPage> {
                                 Container(
                                     height: 20,
                                     width: 20,
-                                    child: Image.asset("assets/images/weels.png",
+                                    child: Image.asset(
+                                        "assets/images/weels.png",
                                         fit: BoxFit.scaleDown,
                                         color: Colors.black)),
                                 SizedBox(
                                   width: 10,
                                 ),
                                 Container(
-                                  width: MediaQuery.of(context).size.width * 0.35,
+                                  width:
+                                      MediaQuery.of(context).size.width * 0.35,
                                   height: 50,
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(16.0),
@@ -937,15 +957,18 @@ class NewOrderPageState extends State<NewOrderPage> {
                                     ],
                                   ),
                                   child: TextFormField(
-                                      // controller: _username,
+                                      controller: depoStock,
                                       decoration: InputDecoration(
-                                    hintText: '',
-                                    border: InputBorder.none,
-                                    contentPadding: EdgeInsets.only(
-                                        left: 15, bottom: 15, top: 15, right: 15),
-                                    filled: false,
-                                    isDense: false,
-                                  )),
+                                        hintText: '',
+                                        border: InputBorder.none,
+                                        contentPadding: EdgeInsets.only(
+                                            left: 15,
+                                            bottom: 15,
+                                            top: 15,
+                                            right: 15),
+                                        filled: false,
+                                        isDense: false,
+                                      )),
                                 ),
                                 SizedBox(
                                   width: 10,
@@ -953,14 +976,16 @@ class NewOrderPageState extends State<NewOrderPage> {
                                 Container(
                                     height: 20,
                                     width: 20,
-                                    child: Image.asset("assets/images/bucket.png",
+                                    child: Image.asset(
+                                        "assets/images/bucket.png",
                                         fit: BoxFit.scaleDown,
                                         color: Colors.black)),
                                 SizedBox(
                                   width: 10,
                                 ),
                                 Container(
-                                  width: MediaQuery.of(context).size.width * 0.35,
+                                  width:
+                                      MediaQuery.of(context).size.width * 0.35,
                                   height: 50,
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(16.0),
@@ -974,72 +999,19 @@ class NewOrderPageState extends State<NewOrderPage> {
                                     ],
                                   ),
                                   child: TextFormField(
-                                      // controller: _username,
+                                      controller: unitController,
                                       decoration: InputDecoration(
-                                    hintText: '',
-                                    //filled: true,
-                                    border: InputBorder.none,
-                                    contentPadding: EdgeInsets.only(
-                                        left: 15, bottom: 15, top: 15, right: 15),
-                                    filled: false,
-                                    isDense: false,
-                                  )),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.only(
-                                left: 8.0, right: 50, bottom: 10,top: 10),
-                            child: Row(
-                              children: [
-                                Container(
-                                    height: 20,
-                                    width: 20,
-                                    child: Image.asset("assets/images/filter.png",
-                                        fit: BoxFit.scaleDown,
-                                        color: Colors.black)),
-                                SizedBox(
-                                  width: 20,
-                                ),
-                                Text(
-                                  "Unit  ",
-                                  style:
-                                  TextStyle(color: Colors.grey, fontSize: 18),
-                                ),
-                                Card(
-                                  elevation: 5,
-                                  child: Container(
-                                    padding: const EdgeInsets.only(
-                                        left: 0.0,top: 5),
-                                    width: 100,
-                                    height: 40,
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                    child: DropdownButton(
-                                      isDense: true,
-                                      //itemHeight: 50,
-                                      iconSize: 35,
-                                      isExpanded: true,
-                                      hint: Text(''),
-                                      value: _selectedLocation,
-                                      onChanged: (newValue) {
-                                        setState(() {
-                                          _selectedLocation = newValue;
-                                        });
-                                      },
-                                      items: _locations.map((location) {
-                                        return DropdownMenuItem(
-                                          child: Padding(
-                                            padding: const EdgeInsets.only(bottom:4.0,left: 0),
-                                            child: new Text(location),
-                                          ),
-                                          value: location,
-                                        );
-                                      }).toList(),
-                                    ),
-                                  ),
+                                        hintText: '',
+                                        //filled: true,
+                                        border: InputBorder.none,
+                                        contentPadding: EdgeInsets.only(
+                                            left: 15,
+                                            bottom: 15,
+                                            top: 15,
+                                            right: 15),
+                                        filled: false,
+                                        isDense: false,
+                                      )),
                                 ),
                               ],
                             ),
@@ -1052,16 +1024,17 @@ class NewOrderPageState extends State<NewOrderPage> {
                                 Container(
                                     height: 20,
                                     width: 20,
-                                    child: Image.asset("assets/images/stocks.png",
+                                    child: Image.asset(
+                                        "assets/images/stocks.png",
                                         fit: BoxFit.scaleDown,
                                         color: Colors.black)),
                                 SizedBox(
                                   width: 20,
                                 ),
                                 Text(
-                                  "Total Stock    0.00",
-                                  style:
-                                      TextStyle(color: Colors.grey, fontSize: 18),
+                                  "Total Stock  " + stock,
+                                  style: TextStyle(
+                                      color: Colors.grey, fontSize: 18),
                                 ),
                               ],
                             ),
@@ -1075,15 +1048,15 @@ class NewOrderPageState extends State<NewOrderPage> {
                                     height: 20,
                                     width: 20,
                                     child: Image.asset(
-                                      "assets/images/dollar.png",
-                                      fit: BoxFit.scaleDown,
-                                         color: Colors.black
-                                    )),
+                                        "assets/images/dollar.png",
+                                        fit: BoxFit.scaleDown,
+                                        color: Colors.black)),
                                 SizedBox(
                                   width: 20,
                                 ),
                                 Container(
-                                  width: MediaQuery.of(context).size.width * 0.35,
+                                  width:
+                                      MediaQuery.of(context).size.width * 0.35,
                                   height: 50,
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(16.0),
@@ -1097,30 +1070,32 @@ class NewOrderPageState extends State<NewOrderPage> {
                                     ],
                                   ),
                                   child: TextFormField(
-                                      // controller: _username,
+                                      controller: saleRate,
                                       decoration: InputDecoration(
-                                    hintText: 'Rate',
-                                    //filled: true,
-                                    hintStyle:
-                                        TextStyle(color: Color(0xffb0b0b0)),
-                                    border: InputBorder.none,
-                                    contentPadding: EdgeInsets.only(
-                                        left: 15, bottom: 15, top: 15, right: 15),
-                                    filled: false,
-                                    isDense: false,
-                                  )),
+                                        hintText: 'Rate',
+                                        //filled: true,
+                                        hintStyle:
+                                            TextStyle(color: Color(0xffb0b0b0)),
+                                        border: InputBorder.none,
+                                        contentPadding: EdgeInsets.only(
+                                            left: 15,
+                                            bottom: 15,
+                                            top: 15,
+                                            right: 15),
+                                        filled: false,
+                                        isDense: false,
+                                      )),
                                 ),
                                 SizedBox(
                                   width: 20,
                                 ),
                                 Container(
-                                  width: MediaQuery.of(context).size.width * 0.35,
+                                  width:
+                                      MediaQuery.of(context).size.width * 0.35,
                                   height: 50,
-                                  padding: EdgeInsets.only(
-                                      left: 15, bottom: 15, top: 15, right: 15),
                                   decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(12.0),
-                                    color: Color(0xffffffff),
+                                    borderRadius: BorderRadius.circular(16.0),
+                                    color: const Color(0xffffffff),
                                     boxShadow: [
                                       BoxShadow(
                                         color: const Color(0x29000000),
@@ -1129,20 +1104,28 @@ class NewOrderPageState extends State<NewOrderPage> {
                                       ),
                                     ],
                                   ),
-                                  child: Text(
-                                    'Qty',
-                                    style: TextStyle(
-                                      fontFamily: 'Arial',
-                                      fontSize: 14,
-                                      color: const Color(0xffb0b0b0),
-                                    ),
-                                    textAlign: TextAlign.left,
-                                  ),
+                                  child: TextFormField(
+                                      controller: saleQty,
+                                      onChanged: calculteAmount,
+                                      keyboardType: TextInputType.number,
+                                      decoration: InputDecoration(
+                                        hintText: 'Qty',
+                                        //filled: true,
+                                        hintStyle:
+                                            TextStyle(color: Color(0xffb0b0b0)),
+                                        border: InputBorder.none,
+                                        contentPadding: EdgeInsets.only(
+                                            left: 15,
+                                            bottom: 15,
+                                            top: 15,
+                                            right: 15),
+                                        filled: false,
+                                        isDense: false,
+                                      )),
                                 ),
                               ],
                             ),
                           ),
-
                           Padding(
                             padding: const EdgeInsets.only(
                                 left: 10.0, right: 50, bottom: 5, top: 20),
@@ -1151,7 +1134,8 @@ class NewOrderPageState extends State<NewOrderPage> {
                                 Container(
                                     height: 20,
                                     width: 20,
-                                    child: Image.asset("assets/images/percentage.png",
+                                    child: Image.asset(
+                                        "assets/images/percentage.png",
                                         fit: BoxFit.scaleDown,
                                         color: Colors.black)),
                                 SizedBox(
@@ -1159,13 +1143,12 @@ class NewOrderPageState extends State<NewOrderPage> {
                                 ),
                                 Text(
                                   "Tax :    0.00",
-                                  style:
-                                  TextStyle(color: Colors.grey, fontSize: 18),
+                                  style: TextStyle(
+                                      color: Colors.grey, fontSize: 18),
                                 ),
                               ],
                             ),
                           ),
-
                           Padding(
                             padding: const EdgeInsets.all(8.0),
                             child: Row(
@@ -1294,7 +1277,8 @@ class NewOrderPageState extends State<NewOrderPage> {
                                       ),
                                     ],
                                   ),
-                                  child: Center(child: Text("0.00")),
+                                  child: Center(
+                                      child: Text(totalAmount.toString())),
                                 ),
                               ],
                             ),
@@ -1346,6 +1330,7 @@ class NewOrderPageState extends State<NewOrderPage> {
                           Center(
                             child: GestureDetector(
                               onTap: () {
+                                addItem(textEditingController.text, unit, totalAmount.toString(),saleQty.text);
                                 Navigator.pop(context);
                               },
                               child: Container(
@@ -1383,6 +1368,9 @@ class NewOrderPageState extends State<NewOrderPage> {
                                 ),
                               ),
                             ),
+                          ),
+                          SizedBox(
+                            height: 40,
                           ),
                         ],
                       ),

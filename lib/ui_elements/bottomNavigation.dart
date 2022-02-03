@@ -25,7 +25,6 @@ class BottomBarState extends State<BottomBar> {
   DatabaseReference names;
   String label = "Enter Customer Name";
   List<String> dummyList = [];
-  var textEditingController = TextEditingController();
 
   void onTapped(int i) {
     if (i != 3) {
@@ -52,42 +51,6 @@ class BottomBarState extends State<BottomBar> {
     });
   }
 
-  void addValues() {
-    Map<String, String> values = {
-      'Address': "address",
-      'ArabicName': "...",
-      'Balance': "10000",
-      'CustomerCode': "...",
-      'CustomerId': "...",
-      'EmployeeMobile': "...",
-      'GSTNO': "...",
-      'MobileNo': "...",
-      'Name': "...",
-      'TRNNO': "...",
-      'VATNO': "...",
-    };
-
-    Map<String, String> details = {
-      'Address': "",
-      'CodeBasedBarcode': "Disabled",
-      'CompanyName': "",
-      'CreateNewCustomer': "Disabled",
-      'CurrencyIcon': "U+0024",
-      'DecimalPoint': "2",
-      'DiasablePrinterButton': "Disabled",
-      'FreeIssue': "Disabled",
-      'GSTNO': "",
-      'ItemWiseDiscount': "Disabled",
-      'LastUpdate': "1/27/2022 1:09:11 AM",
-      'PhoneNumber': "",
-      'PrinterType': "0",
-      'SalesReturn': "Disabled",
-      'SubEndDate': "00010101",
-      'TRNNO': "",
-    };
-    reference.child("Customers").child("11").set(values);
-    reference.child("Details").set(details);
-  }
 
   void initState() {
     // TODO: implement initState
@@ -126,7 +89,7 @@ class BottomBarState extends State<BottomBar> {
       floatingActionButtonLocation: FloatingActionButtonLocation.endDocked,
       floatingActionButton: GestureDetector(
         onTap: () {
-          showBookingDialog(textEditingController);
+          showBookingDialog();
         },
         child: Container(
           width: 80,
@@ -330,10 +293,12 @@ class BottomBarState extends State<BottomBar> {
     );
   }
 
-  void showBookingDialog(TextEditingController textEditingController) {
+  void showBookingDialog() {
+    var textEditingController= TextEditingController();
+
     showGeneralDialog(
       barrierLabel: "Barrier",
-      barrierDismissible: false,
+      barrierDismissible: true,
       barrierColor: Colors.black.withOpacity(0.5),
       transitionDuration: Duration(milliseconds: 500),
       context: context,
@@ -483,11 +448,12 @@ class BottomBarState extends State<BottomBar> {
                           Center(
                             child: GestureDetector(
                               onTap: () {
-                                //addValues();
-                                Navigator.push(context,
-                                    MaterialPageRoute(builder: (context) {
-                                  return NewOrderPage();
-                                }));
+                                if(textEditingController.text.isNotEmpty&&_selectedLocation.isNotEmpty){
+                                  Navigator.push(context,
+                                      MaterialPageRoute(builder: (context) {
+                                        return NewOrderPage(customerName: textEditingController.text,refNo: "0",salesType: _selectedLocation,);
+                                      }));
+                                }
                               },
                               child: Container(
                                 height: 45,

@@ -29,6 +29,15 @@ dependencies:
   flutter_signature_pad: ^1.0.0
   firebase_database: ^6.0.0
   textfield_search: ^0.8.0
+  flutter_flexible_toast: ^0.1.4
+  pdf: ^2.1.0
+  screenshot: ^0.3.0
+  printing: ^4.1.0
+  syncfusion_flutter_pdf: ^18.4.49-beta
+  flutter_full_pdf_viewer: ^1.0.4
+  path_provider:
+  csv: ^4.0.3
+  flutter_html_to_pdf: ^0.5.2
 
 
   # The following adds the Cupertino Icons font to your application.

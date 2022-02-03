@@ -48,7 +48,7 @@ class ProductPageState extends State<ProductPage> {
           Padding(
             padding: const EdgeInsets.all(5.0),
             child: Container(
-              width: MediaQuery.of(context).size.width * 0.7,
+              width: MediaQuery.of(context).size.width * 0.9,
               height: 50,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(16.0),
@@ -79,72 +79,72 @@ class ProductPageState extends State<ProductPage> {
               )),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.only(left: 8.0, right: 8),
-            child: Column(
-              children: [
-                Spacer(),
-                GestureDetector(
-                  child: Container(
-                      height: 30,
-                      width: 45,
-                      decoration: BoxDecoration(
-                        image: DecorationImage(image: AssetImage(
-                          "assets/images/filter.png",
-                          //fit: BoxFit.scaleDown,
-                          //    color: Colors.white
-                        ))
-                      ),
-                      child:DropdownButton(
-                        isDense: true,
-                        //itemHeight: 50,
-                        iconSize: 0,
-                        isExpanded: true,
-                        hint: Text('Please choose sales type'),
-                        // Not necessary for Option 1
-                        value: _selectedLocation,
-                        onChanged: (newValue) {
-                          setState(() {
-                            _selectedLocation = newValue;
-                          });
-                        },
-                        items: _locations.map((location) {
-                          return DropdownMenuItem(
-                            child: Text(location,style: TextStyle(fontSize: 1),),
-                            value: location,
-                          );
-                        }).toList(),
-                      ),
-                      // child: Image.asset(
-                      //   "assets/images/filter.png",
-                      //   fit: BoxFit.scaleDown,
-                      //   //    color: Colors.white
-                      // )
-                  ),
-                ),
-                Spacer(),
-                Text("Filter")
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.only(left: 8.0, right: 8),
-            child: Column(
-              children: [
-                Spacer(),
-                Container(
-                    height: 30,
-                    width: 30,
-                    child: Image.asset(
-                      "assets/images/scan.png",
-                      fit: BoxFit.scaleDown,
-                      //    color: Colors.white
-                    )),
-                Spacer(),
-                Text("Scan")
-              ],
-            ),
-          ),
+          // Padding(
+          //   padding: const EdgeInsets.only(left: 8.0, right: 8),
+          //   child: Column(
+          //     children: [
+          //       Spacer(),
+          //       GestureDetector(
+          //         child: Container(
+          //             height: 30,
+          //             width: 45,
+          //             decoration: BoxDecoration(
+          //               image: DecorationImage(image: AssetImage(
+          //                 "assets/images/filter.png",
+          //                 //fit: BoxFit.scaleDown,
+          //                 //    color: Colors.white
+          //               ))
+          //             ),
+          //             child:DropdownButton(
+          //               isDense: true,
+          //               //itemHeight: 50,
+          //               iconSize: 0,
+          //               isExpanded: true,
+          //               hint: Text('Please choose sales type'),
+          //               // Not necessary for Option 1
+          //               value: _selectedLocation,
+          //               onChanged: (newValue) {
+          //                 setState(() {
+          //                   _selectedLocation = newValue;
+          //                 });
+          //               },
+          //               items: _locations.map((location) {
+          //                 return DropdownMenuItem(
+          //                   child: Text(location,style: TextStyle(fontSize: 1),),
+          //                   value: location,
+          //                 );
+          //               }).toList(),
+          //             ),
+          //             // child: Image.asset(
+          //             //   "assets/images/filter.png",
+          //             //   fit: BoxFit.scaleDown,
+          //             //   //    color: Colors.white
+          //             // )
+          //         ),
+          //       ),
+          //       Spacer(),
+          //       Text("Filter")
+          //     ],
+          //   ),
+          // ),
+          // Padding(
+          //   padding: const EdgeInsets.only(left: 8.0, right: 8),
+          //   child: Column(
+          //     children: [
+          //       Spacer(),
+          //       Container(
+          //           height: 30,
+          //           width: 30,
+          //           child: Image.asset(
+          //             "assets/images/scan.png",
+          //             fit: BoxFit.scaleDown,
+          //             //    color: Colors.white
+          //           )),
+          //       Spacer(),
+          //       Text("Scan")
+          //     ],
+          //   ),
+          // ),
         ],
       ),
     );
@@ -346,39 +346,40 @@ class ProductPageState extends State<ProductPage> {
                   ),
                   child: Stack(
                     children: [
-                      Positioned(
-                          bottom: 10,
-                          right: 25,
-                          child: Row(
-                            children: [
-                              Text(
-                                'Total Sales : ',
-                                style: TextStyle(
-                                  fontFamily: 'Arial',
-                                  fontSize: 10,
-                                  color: const Color(0xff868383),
-                                ),
-                                textAlign: TextAlign.left,
-                              ),
-                              Text(
-                                ' 263 ',
-                                style: TextStyle(
-                                  fontFamily: 'Arial',
-                                  fontSize: 10,
-                                  color: const Color(0xff388e3c),
-                                ),
-                                textAlign: TextAlign.left,
-                              ),
-                              Container(
-                                  height: 10,
-                                  width: 10,
-                                  child: Image.asset(
-                                    "assets/images/up.png",
-                                    fit: BoxFit.scaleDown,
-                                    //    color: Colors.white
-                                  )),
-                            ],
-                          )),
+                      // Positioned(
+                      //     bottom: 10,
+                      //     right: 25,
+                      //     child: Row(
+                      //       children: [
+                      //         Text(
+                      //           'Total Sales : ',
+                      //           style: TextStyle(
+                      //             fontFamily: 'Arial',
+                      //             fontSize: 10,
+                      //             color: const Color(0xff868383),
+                      //           ),
+                      //           textAlign: TextAlign.left,
+                      //         ),
+                      //         Text(
+                      //           ' 263 ',
+                      //           style: TextStyle(
+                      //             fontFamily: 'Arial',
+                      //             fontSize: 10,
+                      //             color: const Color(0xff388e3c),
+                      //           ),
+                      //           textAlign: TextAlign.left,
+                      //         ),
+                      //         Container(
+                      //             height: 10,
+                      //             width: 10,
+                      //             child: Image.asset(
+                      //               "assets/images/up.png",
+                      //               fit: BoxFit.scaleDown,
+                      //               //    color: Colors.white
+                      //             )),
+                      //       ],
+                      //     )
+                      // ),
                       Center(
                         child: Row(
                           children: [
@@ -457,39 +458,39 @@ class ProductPageState extends State<ProductPage> {
                 ),
                 child: Stack(
                   children: [
-                    Positioned(
-                        bottom: 10,
-                        right: 25,
-                        child: Row(
-                          children: [
-                            Text(
-                              'Total Sales : ',
-                              style: TextStyle(
-                                fontFamily: 'Arial',
-                                fontSize: 10,
-                                color: const Color(0xff868383),
-                              ),
-                              textAlign: TextAlign.left,
-                            ),
-                            Text(
-                              ' 263 ',
-                              style: TextStyle(
-                                fontFamily: 'Arial',
-                                fontSize: 10,
-                                color: const Color(0xff388e3c),
-                              ),
-                              textAlign: TextAlign.left,
-                            ),
-                            Container(
-                                height: 10,
-                                width: 10,
-                                child: Image.asset(
-                                  "assets/images/up.png",
-                                  fit: BoxFit.scaleDown,
-                                  //    color: Colors.white
-                                )),
-                          ],
-                        )),
+                    // Positioned(
+                    //     bottom: 10,
+                    //     right: 25,
+                    //     child: Row(
+                    //       children: [
+                    //         Text(
+                    //           'Total Sales : ',
+                    //           style: TextStyle(
+                    //             fontFamily: 'Arial',
+                    //             fontSize: 10,
+                    //             color: const Color(0xff868383),
+                    //           ),
+                    //           textAlign: TextAlign.left,
+                    //         ),
+                    //         Text(
+                    //           ' 263 ',
+                    //           style: TextStyle(
+                    //             fontFamily: 'Arial',
+                    //             fontSize: 10,
+                    //             color: const Color(0xff388e3c),
+                    //           ),
+                    //           textAlign: TextAlign.left,
+                    //         ),
+                    //         Container(
+                    //             height: 10,
+                    //             width: 10,
+                    //             child: Image.asset(
+                    //               "assets/images/up.png",
+                    //               fit: BoxFit.scaleDown,
+                    //               //    color: Colors.white
+                    //             )),
+                    //       ],
+                    //     )),
                     Center(
                       child: Row(
                         children: [
@@ -566,39 +567,39 @@ class ProductPageState extends State<ProductPage> {
                 ),
                 child: Stack(
                   children: [
-                    Positioned(
-                        bottom: 10,
-                        right: 25,
-                        child: Row(
-                          children: [
-                            Text(
-                              'Total Sales : ',
-                              style: TextStyle(
-                                fontFamily: 'Arial',
-                                fontSize: 10,
-                                color: const Color(0xff868383),
-                              ),
-                              textAlign: TextAlign.left,
-                            ),
-                            Text(
-                              ' 263 ',
-                              style: TextStyle(
-                                fontFamily: 'Arial',
-                                fontSize: 10,
-                                color: const Color(0xff388e3c),
-                              ),
-                              textAlign: TextAlign.left,
-                            ),
-                            Container(
-                                height: 10,
-                                width: 10,
-                                child: Image.asset(
-                                  "assets/images/up.png",
-                                  fit: BoxFit.scaleDown,
-                                  //    color: Colors.white
-                                )),
-                          ],
-                        )),
+                    // Positioned(
+                    //     bottom: 10,
+                    //     right: 25,
+                    //     child: Row(
+                    //       children: [
+                    //         Text(
+                    //           'Total Sales : ',
+                    //           style: TextStyle(
+                    //             fontFamily: 'Arial',
+                    //             fontSize: 10,
+                    //             color: const Color(0xff868383),
+                    //           ),
+                    //           textAlign: TextAlign.left,
+                    //         ),
+                    //         Text(
+                    //           ' 263 ',
+                    //           style: TextStyle(
+                    //             fontFamily: 'Arial',
+                    //             fontSize: 10,
+                    //             color: const Color(0xff388e3c),
+                    //           ),
+                    //           textAlign: TextAlign.left,
+                    //         ),
+                    //         Container(
+                    //             height: 10,
+                    //             width: 10,
+                    //             child: Image.asset(
+                    //               "assets/images/up.png",
+                    //               fit: BoxFit.scaleDown,
+                    //               //    color: Colors.white
+                    //             )),
+                    //       ],
+                    //     )),
                     Center(
                       child: Row(
                         children: [

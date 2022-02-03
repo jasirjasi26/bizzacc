@@ -1,5 +1,7 @@
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:optimist_erp_app/data/user_data.dart';
 import 'package:optimist_erp_app/screens/orders.dart';
 import '../ui_elements/main_drawer.dart';
 
@@ -14,6 +16,35 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
+  DatabaseReference reference;
+  String today=DateTime.now().year.toString() + "-" + DateTime.now().month.toString() + "-" + DateTime.now().day.toString();
+
+
+  Future<void> getBill() async {
+    reference..child("Bills").child(today).child(User.vanNo).once().then((DataSnapshot snapshot) {
+      List<dynamic> value = snapshot.value;
+      for (int i = 0; i < value.length; i++) {
+        if (value[i] != null) {
+          setState(() {
+            // item.add(value[i]['ItemName'].toString());
+            // totalDisc=totalDisc+double.parse(value[i]['DiscAmount'].toString());
+          });
+        }}
+    });
+  }
+
+
+  void initState() {
+    // TODO: implement initState
+    reference = FirebaseDatabase.instance
+        .reference()
+        .child("Companies")
+        .child("CYBRIX");
+
+    getBill();
+    super.initState();
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -21,21 +52,28 @@ class _MyHomePageState extends State<MyHomePage> {
       key: _scaffoldKey,
       drawer: MainDrawer(),
       appBar: buildAppBar(context),
-      body: ListView(
-        children: [
-          SizedBox(
-            height: 10,
-          ),
-          homeBox(),
-          SizedBox(
-            height: 20,
-          ),
-          diffBox(),
-          SizedBox(
-            height: 20,
-          ),
-          overViewBox()
-        ],
+      body: WillPopScope(
+        onWillPop: () async {
+          // You can do some work here.
+          // Returning true allows the pop to happen, returning false prevents it.
+          return false;
+        },
+        child: ListView(
+          children: [
+            SizedBox(
+              height: 10,
+            ),
+            homeBox(),
+            SizedBox(
+              height: 20,
+            ),
+            diffBox(),
+            SizedBox(
+              height: 20,
+            ),
+            overViewBox()
+          ],
+        ),
       ),
     );
   }
@@ -889,7 +927,7 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
         Center(
             child: Text(
-          "Sales Man 1",
+          User.name,
           style: TextStyle(color: Colors.black, fontWeight: FontWeight.w900),
         )),
         SizedBox(

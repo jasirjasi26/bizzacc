@@ -1,3 +1,4 @@
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
@@ -11,6 +12,75 @@ class SalesRegister extends StatefulWidget {
 }
 
 class SalesRegisterState extends State<SalesRegister> {
+  DatabaseReference reference;
+  List<String> dates = [];
+  List<String> party = [];
+  List<String> amount = [];
+  List<String> paid = [];
+  List<String> balance = [];
+  DateTime selectedDate = DateTime.now();
+  String from="2021-12-15";
+  var name=TextEditingController();
+
+  Future<void> _selectDate(BuildContext context) async {
+    dates.clear();
+    party.clear();
+    amount.clear();
+    paid.clear();
+    balance.clear();
+
+    final DateTime picked = await showDatePicker(
+        context: context,
+        initialDate: selectedDate,
+        firstDate: DateTime(2015, 8),
+        lastDate: DateTime(2101));
+    if (picked != null && picked != selectedDate)
+      setState(() {
+        selectedDate = picked;
+        from=selectedDate.year.toString()+"-"+selectedDate.month.toString()+"-"+selectedDate.day.toString();
+      });
+
+    getCustomerId(from);
+  }
+
+
+  Future<void> getCustomerId(String date) async {
+    setState(() {
+      dates.clear();
+      party.clear();
+      amount.clear();
+      paid.clear();
+      balance.clear();
+    });
+    await reference.child("SalesReport").child(from).once().then((DataSnapshot snapshot) {
+      Map<dynamic, dynamic> values = snapshot.value;
+      values.forEach((key, values) {
+        if(values['PartyName'].toString().toLowerCase().contains(name.text.toLowerCase())){
+          setState(() {
+            dates.add(values['Date'].toString());
+            party.add(values['PartyName'].toString());
+            amount.add(values['GrandAmount'].toString());
+            paid.add(values['Paid'].toString());
+            balance.add(values['Balance'].toString());
+          });
+        }
+
+      });
+    });
+
+  }
+
+  void initState() {
+    // TODO: implement initState
+    reference = FirebaseDatabase.instance
+        .reference()
+        .child("Companies")
+        .child("CYBRIX");
+getCustomerId(from);
+
+    super.initState();
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -60,7 +130,8 @@ class SalesRegisterState extends State<SalesRegister> {
                     ],
                   ),
                   child: TextFormField(
-                    // controller: _username,
+                     controller: name,
+                      onChanged: getCustomerId,
                       decoration: InputDecoration(
                         hintText: 'Enter customer name here',
                         //filled: true,
@@ -79,14 +150,19 @@ class SalesRegisterState extends State<SalesRegister> {
               ),
               Padding(
                 padding: const EdgeInsets.only(left: 8.0, right: 8),
-                child: Container(
-                    height: 30,
-                    width: 30,
-                    child: Image.asset(
-                      "assets/images/calender.png",
-                      fit: BoxFit.scaleDown,
-                      //    color: Colors.white
-                    )),
+                child: GestureDetector(
+                  onTap:(){
+                    _selectDate(context);
+                  },
+                  child: Container(
+                      height: 30,
+                      width: 30,
+                      child: Image.asset(
+                        "assets/images/calender.png",
+                        fit: BoxFit.scaleDown,
+                        //    color: Colors.white
+                      )),
+                ),
               ),
             ],
           ),
@@ -96,10 +172,10 @@ class SalesRegisterState extends State<SalesRegister> {
             child: Row(
               children: [
                 Text(
-                  'From',
+                  '   Date  :',
                   style: TextStyle(
                     fontFamily: 'Arial',
-                    fontSize: 13,
+                    fontSize: 14,
                     color: Color(0xffb0b0b0),
                   ),
                   textAlign: TextAlign.left,
@@ -107,39 +183,49 @@ class SalesRegisterState extends State<SalesRegister> {
                 SizedBox(
                   width: 10,
                 ),
-                Text(
-                  '22/12/2021',
-                  style: TextStyle(
-                      fontFamily: 'Arial',
-                      fontSize: 13,
-                      color: Colors.black,
-                      decoration: TextDecoration.underline),
-                  textAlign: TextAlign.left,
-                ),
-                SizedBox(
-                  width: 10,
-                ),
-                Text(
-                  'To',
-                  style: TextStyle(
-                    fontFamily: 'Arial',
-                    fontSize: 13,
-                    color: Color(0xffb0b0b0),
+                GestureDetector(
+                  onTap:(){
+                    _selectDate(context);
+                  },
+                  child: Text(
+                    from,
+                    style: TextStyle(
+                        fontFamily: 'Arial',
+                        fontSize: 13,
+                        color: Colors.black,
+                        decoration: TextDecoration.underline),
+                    textAlign: TextAlign.left,
                   ),
-                  textAlign: TextAlign.left,
                 ),
-                SizedBox(
-                  width: 10,
-                ),
-                Text(
-                  '25/12/2021',
-                  style: TextStyle(
-                      fontFamily: 'Arial',
-                      fontSize: 13,
-                      color: Colors.black,
-                      decoration: TextDecoration.underline),
-                  textAlign: TextAlign.left,
-                ),
+                // SizedBox(
+                //   width: 10,
+                // ),
+                // Text(
+                //   'To',
+                //   style: TextStyle(
+                //     fontFamily: 'Arial',
+                //     fontSize: 13,
+                //     color: Color(0xffb0b0b0),
+                //   ),
+                //   textAlign: TextAlign.left,
+                // ),
+                // SizedBox(
+                //   width: 10,
+                // ),
+                // GestureDetector(
+                //   onTap:(){
+                //     _selectToDate(context);
+                //   },
+                //   child: Text(
+                //     to,
+                //     style: TextStyle(
+                //         fontFamily: 'Arial',
+                //         fontSize: 13,
+                //         color: Colors.black,
+                //         decoration: TextDecoration.underline),
+                //     textAlign: TextAlign.left,
+                //   ),
+                // ),
               ],
             ),
           ),
@@ -189,16 +275,21 @@ class SalesRegisterState extends State<SalesRegister> {
                     textAlign: TextAlign.left,
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Text(
-                    'Party',
-                    style: TextStyle(
-                      fontFamily: 'Arial',
-                      fontSize: 12,
-                      color: const Color(0xffffffff),
+                Container(
+                  width: 200,
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Center(
+                      child: Text(
+                        'Party',
+                        style: TextStyle(
+                          fontFamily: 'Arial',
+                          fontSize: 12,
+                          color: const Color(0xffffffff),
+                        ),
+                        textAlign: TextAlign.left,
+                      ),
                     ),
-                    textAlign: TextAlign.left,
                   ),
                 ),
                 Padding(
@@ -251,7 +342,7 @@ class SalesRegisterState extends State<SalesRegister> {
                 .width,
 
             child: new ListView(
-              children: new List.generate(30, (index) =>
+              children: new List.generate(dates.length, (index) =>
                   Container(
                     height: 25,
                     width: MediaQuery
@@ -280,7 +371,7 @@ class SalesRegisterState extends State<SalesRegister> {
                         Padding(
                           padding: const EdgeInsets.all(8.0),
                           child: Text(
-                            '01-12-2021',
+                            dates[index],
                             style: TextStyle(
                               fontFamily: 'Arial',
                               fontSize: 12,
@@ -289,10 +380,25 @@ class SalesRegisterState extends State<SalesRegister> {
                             textAlign: TextAlign.left,
                           ),
                         ),
+                        Container(
+                          width: 200,
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Text(
+                              party[index],
+                              style: TextStyle(
+                                fontFamily: 'Arial',
+                                fontSize: 12,
+                                color: Colors.black,
+                              ),
+                              textAlign: TextAlign.left,
+                            ),
+                          ),
+                        ),
                         Padding(
                           padding: const EdgeInsets.all(8.0),
                           child: Text(
-                            '-6',
+                            amount[index],
                             style: TextStyle(
                               fontFamily: 'Arial',
                               fontSize: 12,
@@ -304,7 +410,7 @@ class SalesRegisterState extends State<SalesRegister> {
                         Padding(
                           padding: const EdgeInsets.all(8.0),
                           child: Text(
-                            '2090.00',
+                            paid[index],
                             style: TextStyle(
                               fontFamily: 'Arial',
                               fontSize: 12,
@@ -316,19 +422,7 @@ class SalesRegisterState extends State<SalesRegister> {
                         Padding(
                           padding: const EdgeInsets.all(8.0),
                           child: Text(
-                            '1390.00',
-                            style: TextStyle(
-                              fontFamily: 'Arial',
-                              fontSize: 12,
-                              color: Colors.black,
-                            ),
-                            textAlign: TextAlign.left,
-                          ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Text(
-                            '0.00',
+                            balance[index],
                             style: TextStyle(
                               fontFamily: 'Arial',
                               fontSize: 12,

@@ -1,6 +1,8 @@
 import 'package:adobe_xd/pinned.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:optimist_erp_app/data/user_data.dart';
 
 class AllProductPage extends StatefulWidget {
   AllProductPage({Key key, this.title}) : super(key: key);
@@ -12,6 +14,61 @@ class AllProductPage extends StatefulWidget {
 }
 
 class AllProductPageState extends State<AllProductPage> {
+  var name=TextEditingController();
+  DatabaseReference items;
+  List<String> names = [];
+  List<String> id = [];
+  List<String> unit = [];
+  List<String> salerate = [];
+  List<String> purchaserate = [];
+  List<String> stock = [];
+
+  Future<void> getCustomerId(String a) async {
+    setState(() {
+      names.clear();
+      id.clear();
+      unit.clear();
+      salerate.clear();
+      purchaserate.clear();
+      stock.clear();
+    });
+
+    await items.once().then((DataSnapshot snapshot) {
+      List<dynamic> values = snapshot.value;
+      for (int i = 0; i < values.length; i++) {
+        if (values[i] != null) {
+          if(values[i]['ItemName'].toString().toLowerCase().contains(name.text.toLowerCase())) {
+            setState(() {
+              names.add(values[i]['ItemName'].toString());
+              id.add(values[i]['ItemID'].toString());
+              unit.add(values[i]['SaleUnit'].toString());
+              salerate.add(values[i]['RateAndStock'][values[i]['SaleUnit']
+                  .toString()]['Rate'].toString());
+              purchaserate.add(values[i]['RateAndStock'][values[i]['SaleUnit']
+                  .toString()]['PurchaseRate'].toString());
+              stock.add(values[i]['RateAndStock'][values[i]['SaleUnit']
+                  .toString()]['Stock'][int.parse(User.vanNo)].toString());
+            });
+          }
+
+        }
+      }
+    });
+  }
+
+  void initState() {
+    // TODO: implement initState
+
+    items = FirebaseDatabase.instance
+        .reference()
+        .child("Companies")
+        .child("CYBRIX")
+        .child("Items");
+
+    getCustomerId("1");
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -39,9 +96,9 @@ class AllProductPageState extends State<AllProductPage> {
       child: Row(
         children: [
           Padding(
-            padding: const EdgeInsets.all(5.0),
+            padding: const EdgeInsets.only(left:15.0,right: 15),
             child: Container(
-              width: MediaQuery.of(context).size.width * 0.7,
+              width: MediaQuery.of(context).size.width * 0.90,
               height: 50,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(16.0),
@@ -55,7 +112,8 @@ class AllProductPageState extends State<AllProductPage> {
                 ],
               ),
               child: TextFormField(
-                  // controller: _username,
+                   controller: name,
+                  onChanged: getCustomerId,
                   decoration: InputDecoration(
                 hintText: 'Enter product name here',
                 //filled: true,
@@ -72,42 +130,42 @@ class AllProductPageState extends State<AllProductPage> {
               )),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.only(left: 8.0, right: 8),
-            child: Column(
-              children: [
-                Spacer(),
-                Container(
-                    height: 25,
-                    width: 25,
-                    child: Image.asset(
-                      "assets/images/filter.png",
-                      fit: BoxFit.scaleDown,
-                      //    color: Colors.white
-                    )),
-                Spacer(),
-                Text("Filter")
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.only(left: 8.0, right: 8),
-            child: Column(
-              children: [
-                Spacer(),
-                Container(
-                    height: 30,
-                    width: 30,
-                    child: Image.asset(
-                      "assets/images/scan.png",
-                      fit: BoxFit.scaleDown,
-                      //    color: Colors.white
-                    )),
-                Spacer(),
-                Text("Scan")
-              ],
-            ),
-          ),
+          // Padding(
+          //   padding: const EdgeInsets.only(left: 8.0, right: 8),
+          //   child: Column(
+          //     children: [
+          //       Spacer(),
+          //       Container(
+          //           height: 25,
+          //           width: 25,
+          //           child: Image.asset(
+          //             "assets/images/filter.png",
+          //             fit: BoxFit.scaleDown,
+          //             //    color: Colors.white
+          //           )),
+          //       Spacer(),
+          //       Text("Filter")
+          //     ],
+          //   ),
+          // ),
+          // Padding(
+          //   padding: const EdgeInsets.only(left: 8.0, right: 8),
+          //   child: Column(
+          //     children: [
+          //       Spacer(),
+          //       Container(
+          //           height: 30,
+          //           width: 30,
+          //           child: Image.asset(
+          //             "assets/images/scan.png",
+          //             fit: BoxFit.scaleDown,
+          //             //    color: Colors.white
+          //           )),
+          //       Spacer(),
+          //       Text("Scan")
+          //     ],
+          //   ),
+          // ),
         ],
       ),
     );
@@ -120,149 +178,154 @@ class AllProductPageState extends State<AllProductPage> {
           height: MediaQuery.of(context).size.height,
           width: MediaQuery.of(context).size.width,
           child: GridView.builder(
-            itemCount: 20,
-            gridDelegate:
-                SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 3,childAspectRatio: 0.7,),
-
-            itemBuilder: (_, index) =>  Padding(
-              padding: const EdgeInsets.all(3.0),
+            itemCount: names.length,
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              childAspectRatio: 1,
+            ),
+            itemBuilder: (_, index) => Padding(
+              padding: const EdgeInsets.all(0.0),
               child: Container(
-                  height: 300,
-                  width: MediaQuery.of(context).size.width / 3 ,
-                  child: Column(
-                    children: [
-                      Card(
-                        child: Container(
-                            height: MediaQuery.of(context).size.width / 3-20,
-                            width:MediaQuery.of(context).size.width / 3-20,
-                            child: Image.asset(
-                              "assets/images/vegitable.png",
-                              fit: BoxFit.cover,
-                              //    color: Colors.white
-                            )),
-                      ),
-                      Container(
-                        height: 50,
-                        child: Column(
-                          children: [
-                            Text(
-                              'Product Name',
-                              style: TextStyle(
-                                fontFamily: 'Arial',
-                                fontSize: 12,
-                                color: const Color(0xff182d66),
-                                fontWeight: FontWeight.w700,
-                              ),
-                              textAlign: TextAlign.left,
+                height: 300,
+                width: MediaQuery.of(context).size.width / 3,
+                child: Column(
+                  children: [
+                    Card(
+                      child: Container(
+                          height: MediaQuery.of(context).size.width / 3 - 25,
+                          width: MediaQuery.of(context).size.width / 3 - 25,
+                          child: Image.asset(
+                            "assets/images/vegitable.png",
+                            fit: BoxFit.cover,
+                            //    color: Colors.white
+                          )),
+                    ),
+                    Container(
+                      height: 60,
+                      child: Column(
+                        children: [
+                          Text(
+                            names[index],
+                            style: TextStyle(
+                              fontFamily: 'Arial',
+                              fontSize: 10,
+                              color: const Color(0xff182d66),
+                              fontWeight: FontWeight.w700,
                             ),
-                            SizedBox(height: 5,),
-                            Row(
-                              children: [
-                                SizedBox(width: 10,),
-                                Text(
-                                  'Code:1234567',
+                            textAlign: TextAlign.left,
+                          ),
+                          SizedBox(
+                            height: 5,
+                          ),
+                          Row(
+                            children: [
+                              SizedBox(
+                                width: 10,
+                              ),
+                              Text(
+                                'Code: '+id[index],
+                                style: TextStyle(
+                                  fontFamily: 'Arial',
+                                  fontSize: 8,
+                                  color: const Color(0xff182d66),
+                                ),
+                                textAlign: TextAlign.left,
+                              ),
+                            ],
+                          ),
+                          Row(
+                            children: [
+                              SizedBox(
+                                width: 10,
+                              ),
+                              Text.rich(
+                                TextSpan(
                                   style: TextStyle(
                                     fontFamily: 'Arial',
                                     fontSize: 8,
                                     color: const Color(0xff182d66),
                                   ),
-                                  textAlign: TextAlign.left,
-                                ),
-                              ],
-                            ),
-                            Row(
-                              children: [
-                                SizedBox(width: 10,),
-                                Text.rich(
-                                  TextSpan(
-                                    style: TextStyle(
-                                      fontFamily: 'Arial',
-                                      fontSize: 8,
-                                      color: const Color(0xff182d66),
+                                  children: [
+                                    TextSpan(
+                                      text: 'Unit: '+unit[index]+'\nIn Stock: '+stock[index],
                                     ),
-                                    children: [
-                                      TextSpan(
-                                        text: 'Unit: Kg  In Stock: ',
-                                      ),
-                                      TextSpan(
-                                        text: '123',
-                                        style: TextStyle(
-                                          color: const Color(0xffff0023),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  textHeightBehavior:
-                                  TextHeightBehavior(applyHeightToFirstAscent: false),
-                                  textAlign: TextAlign.left,
+                                  ],
                                 ),
-                              ],
-                            ),
-                            Row(
-                              children: [
-                                SizedBox(width: 10,),
-                                Text.rich(
-                                  TextSpan(
-                                    style: TextStyle(
-                                      fontFamily: 'Arial',
-                                      fontSize: 8,
-                                      color: const Color(0xff182d66),
+                                textHeightBehavior: TextHeightBehavior(
+                                    applyHeightToFirstAscent: false),
+                                textAlign: TextAlign.left,
+                              ),
+                            ],
+                          ),
+                          Row(
+                            children: [
+                              SizedBox(
+                                width: 10,
+                              ),
+                              Text.rich(
+                                TextSpan(
+                                  style: TextStyle(
+                                    fontFamily: 'Arial',
+                                    fontSize: 8,
+                                    color: const Color(0xff182d66),
+                                  ),
+                                  children: [
+                                    TextSpan(
+                                      text: 'Sale Rate: ',
                                     ),
-                                    children: [
-                                      TextSpan(
-                                        text: 'Sale Rate: ',
+                                    TextSpan(
+                                      text: salerate[index],
+                                      style: TextStyle(
+                                        color: const Color(0xff388e3c),
                                       ),
-                                      TextSpan(
-                                        text: '96 \$',
-                                        style: TextStyle(
-                                          color: const Color(0xff388e3c),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  textHeightBehavior:
-                                  TextHeightBehavior(applyHeightToFirstAscent: false),
-                                  textAlign: TextAlign.left,
-                                ),
-                              ],
-                            ),
-                            Row(
-                              children: [
-                                SizedBox(width: 10,),
-                                Text.rich(
-                                  TextSpan(
-                                    style: TextStyle(
-                                      fontFamily: 'Arial',
-                                      fontSize: 8,
-                                      color: const Color(0xff182d66),
                                     ),
-                                    children: [
-                                      TextSpan(
-                                        text: 'Purchase Rate:',
-                                      ),
-                                      TextSpan(
-                                        text: ' 28 \$',
-                                        style: TextStyle(
-                                          color: const Color(0xff388e3c),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  textHeightBehavior:
-                                  TextHeightBehavior(applyHeightToFirstAscent: false),
-                                  textAlign: TextAlign.left,
+                                  ],
                                 ),
-                              ],
-                            ),
-                          ],
-                        ),
+                                textHeightBehavior: TextHeightBehavior(
+                                    applyHeightToFirstAscent: false),
+                                textAlign: TextAlign.left,
+                              ),
+                            ],
+                          ),
+                          Row(
+                            children: [
+                              SizedBox(
+                                width: 10,
+                              ),
+                              Text.rich(
+                                TextSpan(
+                                  style: TextStyle(
+                                    fontFamily: 'Arial',
+                                    fontSize: 8,
+                                    color: const Color(0xff182d66),
+                                  ),
+                                  children: [
+                                    TextSpan(
+                                      text: 'Purchase Rate:',
+                                    ),
+                                    TextSpan(
+                                      text: purchaserate[index],
+                                      style: TextStyle(
+                                        color: const Color(0xff388e3c),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                textHeightBehavior: TextHeightBehavior(
+                                    applyHeightToFirstAscent: false),
+                                textAlign: TextAlign.left,
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-            ),
+              ),
             ),
           ),
+        ),
       ],
     );
   }

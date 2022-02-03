@@ -1,5 +1,6 @@
 import 'package:adobe_xd/page_link.dart';
 import 'package:adobe_xd/pinned.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
@@ -15,6 +16,57 @@ class StockReports extends StatefulWidget {
 class StockReportsState extends State<StockReports> {
   List<String> _locations = ['[None]', 'Export', 'Non Tax']; // Option 2
   String _selectedLocation;
+  DatabaseReference reference;
+  List<String> names = [];
+  List<String> stock = [];
+  List<String> sRate = [];
+  List<String> pRate = [];
+  List<String> id = [];
+  DateTime selectedDate = DateTime.now();
+  String from="2021-12-15";
+  var name=TextEditingController();
+
+
+  Future<void> getCustomerId(String date) async {
+    setState(() {
+      names.clear();
+      stock.clear();
+      sRate.clear();
+      pRate.clear();
+      id.clear();
+    });
+
+
+    await reference.child("Stocks").once().then((DataSnapshot snapshot) {
+      List<dynamic> values = snapshot.value;
+      for (int i = 0; i < values.length; i++) {
+        if (values[i] != null) {
+            if(values[i]['ItemName'].toString().toLowerCase().contains(name.text.toLowerCase())){
+              setState(() {
+                names.add(values[i]['ItemName'].toString());
+                sRate.add(values[i]['SaleRate'].toString());
+                pRate.add(values[i]['PurchaseRate'].toString());
+                id.add(values[i]['ItemID'].toString());
+                stock.add(values[i]['Stock']['All'].toString());
+              });
+            }
+        }
+      }
+    });
+
+  }
+
+  void initState() {
+    // TODO: implement initState
+    reference = FirebaseDatabase.instance
+        .reference()
+        .child("Companies")
+        .child("CYBRIX");
+    getCustomerId(from);
+
+    super.initState();
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -39,18 +91,18 @@ class StockReportsState extends State<StockReports> {
           .of(context)
           .size
           .width,
-      height: 150,
+      height: 80,
       child: Column(
         children: [
           Row(
             children: [
               Padding(
-                padding: const EdgeInsets.all(5.0),
+                padding: const EdgeInsets.all(10.0),
                 child: Container(
                   width: MediaQuery
                       .of(context)
                       .size
-                      .width * 0.83,
+                      .width * 0.93,
                   height: 50,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(5.0),
@@ -64,9 +116,10 @@ class StockReportsState extends State<StockReports> {
                     ],
                   ),
                   child: TextFormField(
-                    // controller: _username,
+                    controller: name,
+                      onChanged: getCustomerId,
                       decoration: InputDecoration(
-                        hintText: 'Enter customer name here',
+                        hintText: 'Enter item name here',
                         //filled: true,
                         border: InputBorder.none,
                         contentPadding: EdgeInsets.only(
@@ -74,187 +127,187 @@ class StockReportsState extends State<StockReports> {
                         filled: false,
                         isDense: false,
                         prefixIcon: Icon(
-                          Icons.person,
+                          Icons.settings_input_composite_outlined,
                           size: 25.0,
                           color: Colors.grey,
                         ),
                       )),
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.only(left: 8.0, right: 8),
-                child: Container(
-                    height: 30,
-                    width: 30,
-                    child: Image.asset(
-                      "assets/images/calender.png",
-                      fit: BoxFit.scaleDown,
-                      //    color: Colors.white
-                    )),
-              ),
+              // Padding(
+              //   padding: const EdgeInsets.only(left: 8.0, right: 8),
+              //   child: Container(
+              //       height: 30,
+              //       width: 30,
+              //       child: Image.asset(
+              //         "assets/images/calender.png",
+              //         fit: BoxFit.scaleDown,
+              //         //    color: Colors.white
+              //       )),
+              // ),
             ],
           ),
-          SizedBox(height: 5,),
-          Row(
-            children: [
-              SizedBox(width: 20,),
-              Card(
-                elevation: 5,
-                child: Container(
-                  padding: const EdgeInsets.only(
-                      left: 10.0,top: 5),
-                  width: MediaQuery.of(context).size.width * 0.35,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: DropdownButton(
-                    isDense: true,
-                    //itemHeight: 50,
-                    iconSize: 35,
-                    iconEnabledColor: Color(0xffb0b0b0),
-                    isExpanded: true,
-                    hint: Text(
-                      'Select Depo',
-                      style: TextStyle(
-                        fontFamily: 'Arial',
-                        fontSize: 12,
-                        color: const Color(0xffb0b0b0),
-                      ),
-                      textAlign: TextAlign.left,
-                    ),
-                    value: _selectedLocation,
-                    onChanged: (newValue) {
-                      setState(() {
-                        _selectedLocation = newValue;
-                      });
-                    },
-                    items: _locations.map((location) {
-                      return DropdownMenuItem(
-                        child: Padding(
-                          padding: const EdgeInsets.only(bottom:4.0,left: 0),
-                          child: new Text(
-                            location,
-                            style: TextStyle(
-                              fontFamily: 'Arial',
-                              fontSize: 12,
-                              color: const Color(0xffb0b0b0),
-                            ),
-                            textAlign: TextAlign.left,
-                          ),
-                        ),
-                        value: location,
-                      );
-                    }).toList(),
-                  ),
-                ),
-              ),
-
-              Card(
-                elevation: 5,
-                child: Container(
-                  padding: const EdgeInsets.only(
-                      left: 10.0,top: 5),
-                  width: MediaQuery.of(context).size.width * 0.35,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: DropdownButton(
-                    isDense: true,
-                    //itemHeight: 50,
-                    iconSize: 35,
-                    iconEnabledColor: Color(0xffb0b0b0),
-                    isExpanded: true,
-                    hint: Text(
-                      'Select Group',
-                      style: TextStyle(
-                        fontFamily: 'Arial',
-                        fontSize: 12,
-                        color: const Color(0xffb0b0b0),
-                      ),
-                      textAlign: TextAlign.left,
-                    ),
-                    value: _selectedLocation,
-                    onChanged: (newValue) {
-                      setState(() {
-                        _selectedLocation = newValue;
-                      });
-                    },
-                    items: _locations.map((location) {
-                      return DropdownMenuItem(
-                        child: Padding(
-                          padding: const EdgeInsets.only(bottom:4.0,left: 0),
-                          child: new Text(
-                            location,
-                            style: TextStyle(
-                              fontFamily: 'Arial',
-                              fontSize: 12,
-                              color: const Color(0xffb0b0b0),
-                            ),
-                            textAlign: TextAlign.left,
-                          ),
-                        ),
-                        value: location,
-                      );
-                    }).toList(),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
-              children: [
-                Text(
-                  'From',
-                  style: TextStyle(
-                    fontFamily: 'Arial',
-                    fontSize: 13,
-                    color: Color(0xffb0b0b0),
-                  ),
-                  textAlign: TextAlign.left,
-                ),
-                SizedBox(
-                  width: 10,
-                ),
-                Text(
-                  '22/12/2021',
-                  style: TextStyle(
-                      fontFamily: 'Arial',
-                      fontSize: 13,
-                      color: Colors.black,
-                      decoration: TextDecoration.underline),
-                  textAlign: TextAlign.left,
-                ),
-                SizedBox(
-                  width: 10,
-                ),
-                Text(
-                  'To',
-                  style: TextStyle(
-                    fontFamily: 'Arial',
-                    fontSize: 13,
-                    color: Color(0xffb0b0b0),
-                  ),
-                  textAlign: TextAlign.left,
-                ),
-                SizedBox(
-                  width: 10,
-                ),
-                Text(
-                  '25/12/2021',
-                  style: TextStyle(
-                      fontFamily: 'Arial',
-                      fontSize: 13,
-                      color: Colors.black,
-                      decoration: TextDecoration.underline),
-                  textAlign: TextAlign.left,
-                ),
-              ],
-            ),
-          ),
+          // SizedBox(height: 5,),
+          // Row(
+          //   children: [
+          //     SizedBox(width: 20,),
+          //     Card(
+          //       elevation: 5,
+          //       child: Container(
+          //         padding: const EdgeInsets.only(
+          //             left: 10.0,top: 5),
+          //         width: MediaQuery.of(context).size.width * 0.35,
+          //         height: 40,
+          //         decoration: BoxDecoration(
+          //           borderRadius: BorderRadius.circular(20),
+          //         ),
+          //         child: DropdownButton(
+          //           isDense: true,
+          //           //itemHeight: 50,
+          //           iconSize: 35,
+          //           iconEnabledColor: Color(0xffb0b0b0),
+          //           isExpanded: true,
+          //           hint: Text(
+          //             'Select Depo',
+          //             style: TextStyle(
+          //               fontFamily: 'Arial',
+          //               fontSize: 12,
+          //               color: const Color(0xffb0b0b0),
+          //             ),
+          //             textAlign: TextAlign.left,
+          //           ),
+          //           value: _selectedLocation,
+          //           onChanged: (newValue) {
+          //             setState(() {
+          //               _selectedLocation = newValue;
+          //             });
+          //           },
+          //           items: _locations.map((location) {
+          //             return DropdownMenuItem(
+          //               child: Padding(
+          //                 padding: const EdgeInsets.only(bottom:4.0,left: 0),
+          //                 child: new Text(
+          //                   location,
+          //                   style: TextStyle(
+          //                     fontFamily: 'Arial',
+          //                     fontSize: 12,
+          //                     color: const Color(0xffb0b0b0),
+          //                   ),
+          //                   textAlign: TextAlign.left,
+          //                 ),
+          //               ),
+          //               value: location,
+          //             );
+          //           }).toList(),
+          //         ),
+          //       ),
+          //     ),
+          //
+          //     Card(
+          //       elevation: 5,
+          //       child: Container(
+          //         padding: const EdgeInsets.only(
+          //             left: 10.0,top: 5),
+          //         width: MediaQuery.of(context).size.width * 0.35,
+          //         height: 40,
+          //         decoration: BoxDecoration(
+          //           borderRadius: BorderRadius.circular(20),
+          //         ),
+          //         child: DropdownButton(
+          //           isDense: true,
+          //           //itemHeight: 50,
+          //           iconSize: 35,
+          //           iconEnabledColor: Color(0xffb0b0b0),
+          //           isExpanded: true,
+          //           hint: Text(
+          //             'Select Group',
+          //             style: TextStyle(
+          //               fontFamily: 'Arial',
+          //               fontSize: 12,
+          //               color: const Color(0xffb0b0b0),
+          //             ),
+          //             textAlign: TextAlign.left,
+          //           ),
+          //           value: _selectedLocation,
+          //           onChanged: (newValue) {
+          //             setState(() {
+          //               _selectedLocation = newValue;
+          //             });
+          //           },
+          //           items: _locations.map((location) {
+          //             return DropdownMenuItem(
+          //               child: Padding(
+          //                 padding: const EdgeInsets.only(bottom:4.0,left: 0),
+          //                 child: new Text(
+          //                   location,
+          //                   style: TextStyle(
+          //                     fontFamily: 'Arial',
+          //                     fontSize: 12,
+          //                     color: const Color(0xffb0b0b0),
+          //                   ),
+          //                   textAlign: TextAlign.left,
+          //                 ),
+          //               ),
+          //               value: location,
+          //             );
+          //           }).toList(),
+          //         ),
+          //       ),
+          //     ),
+          //   ],
+          // ),
+          // Padding(
+          //   padding: const EdgeInsets.all(8.0),
+          //   child: Row(
+          //     children: [
+          //       Text(
+          //         'From',
+          //         style: TextStyle(
+          //           fontFamily: 'Arial',
+          //           fontSize: 13,
+          //           color: Color(0xffb0b0b0),
+          //         ),
+          //         textAlign: TextAlign.left,
+          //       ),
+          //       SizedBox(
+          //         width: 10,
+          //       ),
+          //       Text(
+          //         '22/12/2021',
+          //         style: TextStyle(
+          //             fontFamily: 'Arial',
+          //             fontSize: 13,
+          //             color: Colors.black,
+          //             decoration: TextDecoration.underline),
+          //         textAlign: TextAlign.left,
+          //       ),
+          //       SizedBox(
+          //         width: 10,
+          //       ),
+          //       Text(
+          //         'To',
+          //         style: TextStyle(
+          //           fontFamily: 'Arial',
+          //           fontSize: 13,
+          //           color: Color(0xffb0b0b0),
+          //         ),
+          //         textAlign: TextAlign.left,
+          //       ),
+          //       SizedBox(
+          //         width: 10,
+          //       ),
+          //       Text(
+          //         '25/12/2021',
+          //         style: TextStyle(
+          //             fontFamily: 'Arial',
+          //             fontSize: 13,
+          //             color: Colors.black,
+          //             decoration: TextDecoration.underline),
+          //         textAlign: TextAlign.left,
+          //       ),
+          //     ],
+          //   ),
+          // ),
         ],
       ),
     );
@@ -289,16 +342,19 @@ class StockReportsState extends State<StockReports> {
                     textAlign: TextAlign.left,
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Text(
-                    'Name',
-                    style: TextStyle(
-                      fontFamily: 'Arial',
-                      fontSize: 12,
-                      color: const Color(0xffffffff),
+                Container(
+                  width: 200,
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Text(
+                      'Name',
+                      style: TextStyle(
+                        fontFamily: 'Arial',
+                        fontSize: 12,
+                        color: const Color(0xffffffff),
+                      ),
+                      textAlign: TextAlign.left,
                     ),
-                    textAlign: TextAlign.left,
                   ),
                 ),
                 SizedBox(),
@@ -353,7 +409,7 @@ class StockReportsState extends State<StockReports> {
                 .width,
 
             child: new ListView(
-              children: new List.generate(20, (index) =>
+              children: new List.generate(names.length, (index) =>
                   Container(
                     height: 30,
                     width: MediaQuery
@@ -370,7 +426,7 @@ class StockReportsState extends State<StockReports> {
                         Padding(
                           padding: const EdgeInsets.all(8.0),
                           child: Text(
-                            index.toString(),
+                            id[index],
                             style: TextStyle(
                               fontFamily: 'Arial',
                               fontSize: 12,
@@ -379,23 +435,26 @@ class StockReportsState extends State<StockReports> {
                             textAlign: TextAlign.left,
                           ),
                         ),
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Text(
-                            'Red chilly',
-                            style: TextStyle(
-                              fontFamily: 'Arial',
-                              fontSize: 12,
-                              color:  Colors.black,
+                        Container(
+                          width: 200,
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Text(
+                              names[index],
+                              style: TextStyle(
+                                fontFamily: 'Arial',
+                                fontSize: 12,
+                                color:  Colors.black,
+                              ),
+                              textAlign: TextAlign.left,
                             ),
-                            textAlign: TextAlign.left,
                           ),
                         ),
                         SizedBox(),
                         Padding(
                           padding: const EdgeInsets.all(8.0),
                           child: Text(
-                            '-6',
+                           stock[index],
                             style: TextStyle(
                               fontFamily: 'Arial',
                               fontSize: 12,
@@ -407,7 +466,7 @@ class StockReportsState extends State<StockReports> {
                         Padding(
                           padding: const EdgeInsets.all(8.0),
                           child: Text(
-                            '2090.00',
+                            sRate[index],
                             style: TextStyle(
                               fontFamily: 'Arial',
                               fontSize: 12,
@@ -419,7 +478,7 @@ class StockReportsState extends State<StockReports> {
                         Padding(
                           padding: const EdgeInsets.all(8.0),
                           child: Text(
-                            '0.00',
+                            pRate[index],
                             style: TextStyle(
                               fontFamily: 'Arial',
                               fontSize: 12,

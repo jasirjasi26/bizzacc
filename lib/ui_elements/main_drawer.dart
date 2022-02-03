@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:optimist_erp_app/data/user_data.dart';
 import 'package:optimist_erp_app/screens/mis_reports/sales_register.dart';
 
 import 'package:optimist_erp_app/screens/mis_reports/sales_ledger.dart';
@@ -43,13 +44,10 @@ class MainDrawerState extends State<MainDrawer> {
                           )),
                     ),
                   ),
-                  title: Text('Van number 3',
+                  title: Text('Van number '+User.vanNo,
                       style: TextStyle(color: Colors.black, fontSize: 18)),
                   onTap: () {
-                    Navigator.push(context,
-                        MaterialPageRoute(builder: (context) {
-                           return VanPage();
-                        }));
+
                   }),
               ListTile(
                   visualDensity:
@@ -67,7 +65,7 @@ class MainDrawerState extends State<MainDrawer> {
                           )),
                     ),
                   ),
-                  title: Text('+919999999222',
+                  title: Text(User.number,
                       style: TextStyle(color: Colors.black, fontSize: 18)),
                   onTap: () {
                     // Navigator.push(context,

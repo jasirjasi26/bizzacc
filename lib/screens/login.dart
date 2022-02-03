@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:optimist_erp_app/data/user_data.dart';
 import 'package:optimist_erp_app/ui_elements/bottomNavigation.dart';
 import 'package:firebase_database/firebase_database.dart';
 
@@ -10,15 +11,38 @@ class Login extends StatefulWidget {
 }
 
 class LoginState extends State<Login> {
-  List<String> _locations = []; // Option 2
+  List<dynamic> _locations = [];
+  String code;
+  List<String> userNumbers = []; // Option 2
   String _selectedLocation;
   DatabaseReference types;
+  DatabaseReference numbers;
+  var number=TextEditingController();
 
-  Future<void> getCountryCodes() async {
+  Future<void> getCountryAndNumbers() async {
     await types.once().then((DataSnapshot snapshot) {
       Map<dynamic, dynamic> values = snapshot.value;
       values.forEach((key, values) {
         _locations.add(values.toString());
+      });
+    });
+  }
+
+  Future<void> authenticate() async {
+
+    await numbers.once().then((DataSnapshot snapshot) {
+      Map<dynamic, dynamic> values = snapshot.value;
+      values.forEach((key, values) {
+        if(code.toString()+number.text==values["ID"].toString()){
+          User.number=values["ID"].toString();
+          User.name=values["Name"].toString();
+          User.vanNo=values["VanNO"].toString();
+          Navigator.push(context, MaterialPageRoute(builder: (context) {
+            return BottomBar();
+          }));
+        }else{
+          print("Error");
+        }
       });
     });
   }
@@ -31,7 +55,11 @@ class LoginState extends State<Login> {
         .reference()
         .child("CountryCodes");
 
-    getCountryCodes();
+    numbers = FirebaseDatabase.instance
+        .reference().child("Companies")
+        .child("CYBRIX").child("USERS");
+
+    getCountryAndNumbers();
     super.initState();
   }
 
@@ -80,10 +108,6 @@ class LoginState extends State<Login> {
                           width: MediaQuery.of(context).size.width * 0.7,
                           height: 50,
                           padding: const EdgeInsets.only(),
-                          // decoration: BoxDecoration(
-                          //   // color: Color(0xfffb4ce5),
-                          //   borderRadius: BorderRadius.circular(10),
-                          // ),
                           child: Row(
                             children: [
                               SizedBox(width: 5,),
@@ -108,6 +132,52 @@ class LoginState extends State<Login> {
                                     setState(() {
                                       _selectedLocation = newValue;
                                     });
+                                    if(_selectedLocation=="UAE"){
+                                      setState(() {
+                                        code="+971";
+                                      });
+                                    }
+                                    if(_selectedLocation=="India"){
+                                      setState(() {
+                                        code="+91";
+                                      });
+                                    }
+                                    if(_selectedLocation=="Nigeria"){
+                                      setState(() {
+                                        code="+234";
+                                      });
+                                    }
+                                    if(_selectedLocation=="Sri Lanka"){
+                                      setState(() {
+                                        code="+94";
+                                      });
+                                    }
+                                    if(_selectedLocation=="Kuwait"){
+                                      setState(() {
+                                        code="+965";
+                                      });
+                                    }
+                                    if(_selectedLocation=="Saudi Arabia"){
+                                      setState(() {
+                                        code="+966";
+                                      });
+                                    }
+                                    if(_selectedLocation=="Oman"){
+                                      setState(() {
+                                        code="+968";
+                                      });
+                                    }
+                                    if(_selectedLocation=="Bahrain"){
+                                      setState(() {
+                                        code="+973";
+                                      });
+                                    }
+                                    if(_selectedLocation=="Quatar"){
+                                      setState(() {
+                                        code="+974";
+                                      });
+                                    }
+                                    print(_selectedLocation);
                                   },
                                   items: _locations.map((location) {
                                     return DropdownMenuItem(
@@ -135,7 +205,8 @@ class LoginState extends State<Login> {
                         elevation: 10,
                         child: Container(
                           child: TextFormField(
-                            // controller: _username,
+                             controller: number,
+                              keyboardType: TextInputType.number,
                               decoration: InputDecoration(
                                 contentPadding: EdgeInsets.only(
                                     left: 20, top: 15),
@@ -155,10 +226,7 @@ class LoginState extends State<Login> {
                   SizedBox(height: 50,),
                   GestureDetector(
                     onTap: (){
-                      Navigator.push(context, MaterialPageRoute(builder: (context) {
-                        return BottomBar(
-                        );
-                      }));
+                     authenticate();
                     },
                     child: Container(
                       padding: EdgeInsets.only(left: 40,right: 40,top: 10,bottom: 10),

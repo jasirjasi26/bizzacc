@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_flexible_toast/flutter_flexible_toast.dart';
 import 'package:optimist_erp_app/data/customed_details.dart';
 import 'package:optimist_erp_app/data/user_data.dart';
-import 'package:optimist_erp_app/screens/settlement_page.dart';
+import 'package:optimist_erp_app/screens/returns/sales_settlement.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:screenshot/screenshot.dart';
 import 'package:share/share.dart';
@@ -16,8 +16,8 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'dart:io';
 
-class NewOrderPage extends StatefulWidget {
-  NewOrderPage(
+class SalesReturn extends StatefulWidget {
+  SalesReturn(
       {Key key, this.customerName, this.salesType, this.refNo, this.balance})
       : super(key: key);
 
@@ -27,12 +27,11 @@ class NewOrderPage extends StatefulWidget {
   final String refNo;
 
   @override
-  NewOrderPageState createState() => NewOrderPageState();
+  SalesReturnState createState() => SalesReturnState();
 }
 
-class NewOrderPageState extends State<NewOrderPage> {
+class SalesReturnState extends State<SalesReturn> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-  String db=User.database;
   final _screenshotController = ScreenshotController();
   final pdf = pw.Document();
   int _radioValue1 = 0;
@@ -166,7 +165,7 @@ class NewOrderPageState extends State<NewOrderPage> {
                   totalStock = value[i]["TotalStock"].toString();
 
                   stock = value[i]["RateAndStock"][unit]["Stock"]
-                          [int.parse(User.vanNo)]
+                  [int.parse(User.vanNo)]
                       .toString();
 
                   code = value[i]["Code"].toString();
@@ -212,7 +211,7 @@ class NewOrderPageState extends State<NewOrderPage> {
                   totalStock = value[i]["TotalStock"].toString();
                   rate = value[i]["RateAndStock"][unit]["Rate"];
                   stock = value[i]["RateAndStock"][unit]["Stock"]
-                          [int.parse(User.vanNo)]
+                  [int.parse(User.vanNo)]
                       .toString();
 
 
@@ -266,9 +265,9 @@ class NewOrderPageState extends State<NewOrderPage> {
         for (int i = 0; i < value.length; i++) {
           if (value[i] != null) {
             if (value[i]["ItemName"]
-                    .toString()
-                    .toLowerCase()
-                    .contains(input.toLowerCase()) &&
+                .toString()
+                .toLowerCase()
+                .contains(input.toLowerCase()) &&
                 value[i]["ItemID"].toString() == itemIds[edititem]) {
               _list.add(value[i]["ItemName"].toString());
               setState(() {
@@ -277,7 +276,7 @@ class NewOrderPageState extends State<NewOrderPage> {
                 rate = value[i]["RateAndStock"][unit]["Rate"];
                 totalStock = value[i]["TotalStock"].toString();
                 stock = value[i]["RateAndStock"][unit]["Stock"]
-                        [int.parse(User.vanNo)]
+                [int.parse(User.vanNo)]
                     .toString();
 
                 code = value[i]["Code"].toString();
@@ -323,7 +322,7 @@ class NewOrderPageState extends State<NewOrderPage> {
                 totalStock = value[i]["TotalStock"].toString();
                 rate = value[i]["RateAndStock"][unit]["Rate"];
                 stock = value[i]["RateAndStock"][unit]["Stock"]
-                        [int.parse(User.vanNo)]
+                [int.parse(User.vanNo)]
                     .toString();
                 saleRate.text = rate;
                 code = value[i]["Code"].toString();
@@ -567,7 +566,7 @@ class NewOrderPageState extends State<NewOrderPage> {
 
       ///then add item details
       reference
-          .child("Bills")
+          .child("Returns")
           .child(today)
           .child(User.vanNo)
           .child(User.voucherNumber)
@@ -577,7 +576,7 @@ class NewOrderPageState extends State<NewOrderPage> {
     }
 
     Navigator.push(context, MaterialPageRoute(builder: (context) {
-      return SettlementPage(
+      return SalesSettlementPage(
         customerName: Customer.CustomerName,
         date: today,
         values: values,
@@ -587,106 +586,8 @@ class NewOrderPageState extends State<NewOrderPage> {
     }));
   }
 
-  void addtoOrders() {
-    double d = (totalBill - discountedBill) + disc;
-    Map<String, dynamic> values = {
-      'Amount': discountedBill - disc,
-      'ArabicName': "",
-      'Balance': Customer.balance,
-      'BillAmount': totalBill.toString(),
-      'TotalDiscount': d.toStringAsFixed(2),
-      'CardReceived': 0,
-      'CashReceived': 0,
-      'CustomerID': customerId,
-      'CustomerName': Customer.CustomerName,
-      'DeliveryDate': from,
-      'OldBalance': Customer.balance,
-      'OrderID': User.orderNumber,
-      'Qty': quantity.reduce((a, b) => a + b),
-      'RefNo': "",
-      'RoundOff': "",
-      'SalesType': widget.salesType,
-      'SettledBy': User.number,
-      'TaxAmount': taxTotal.reduce((a, b) => a + b),
-      'TotalCESS': 0,
-      'TotalGST': 0,
-      'TotalReceived': 0,
-      'TotalVAT': taxTotal.reduce((a, b) => a + b),
-      'UpdatedBy': User.number,
-      'UpdatedTime': DateTime.now().toString(),
-      'VoucherDate': today,
-    };
-
-    reference
-        .child("OrderList")
-        .child(today)
-        .child(User.vanNo)
-        .child(User.orderNumber)
-        .set(values);
-
-    for (int i = 0; i < itemname.length; i++) {
-      Map<String, dynamic> itemValues = {
-        'ArabicName': "",
-        'CESSAmount': "0",
-        'Code': codeList[i],
-        'DiscAmount': discountAmount[i],
-        'DiscPercentage': percentages[i],
-        'GSTAmount': gstTotal[i],
-        'InclusiveRate': "",
-        'ItemID': itemIds[i],
-        'ItemName': itemname[i],
-        'Qty': quantity[i],
-        'Rate': rateList[i],
-        'TaxAmount': taxTotal[i],
-        'Total': totalamount[i],
-        'Unit': units[i],
-        'UpdatedBy': User.number,
-        'UpdatedTime': DateTime.now().toString(),
-        'VATAmount': vatTotal[i],
-      };
-
-      ///then add item details
-      reference
-          .child("OrderList")
-          .child(today)
-          .child(User.vanNo)
-          .child(User.orderNumber)
-          .child("Items")
-          .child(i.toString())
-          .set(itemValues);
-    }
-
-    String lastVoucher = User.orderNumber.replaceAll(User.orderStarting, "");
-    reference
-      ..child("Vouchers")
-          .child(User.vanNo)
-          .child("OrderNumber")
-          .remove()
-          .whenComplete(() => {
-                reference
-                  ..child("Vouchers")
-                      .child(User.vanNo)
-                      .child("OrderNumber")
-                      .set(lastVoucher.toString())
-              });
-
-    FlutterFlexibleToast.showToast(
-        message: "Added to Order List",
-        toastGravity: ToastGravity.BOTTOM,
-        icon: ICON.SUCCESS,
-        radius: 50,
-        elevation: 10,
-        imageSize: 15,
-        textColor: Colors.white,
-        backgroundColor: Colors.black,
-        timeInSeconds: 2);
-  }
-
   void initState() {
     // TODO: implement initState
-    setState(() {
-      db=User.database;
-    });
 
     reference = FirebaseDatabase.instance
         .reference()
@@ -1176,7 +1077,7 @@ class NewOrderPageState extends State<NewOrderPage> {
                       ],
                     ),
                     child:
-                        Center(child: Text((discountedBill - disc).toString())),
+                    Center(child: Text((discountedBill - disc).toString())),
                   ),
                 ],
               ),
@@ -1306,8 +1207,8 @@ class NewOrderPageState extends State<NewOrderPage> {
                     onTap: () {
                       Navigator.push(context,
                           MaterialPageRoute(builder: (context) {
-                        return QRViewExample();
-                      }));
+                            return QRViewExample();
+                          }));
                     },
                     child: Center(
                       child: Image.asset(
@@ -1327,76 +1228,10 @@ class NewOrderPageState extends State<NewOrderPage> {
                   Row(
                     children: [
                       Spacer(),
-                      _radioValue1 == 1
-                          ? GestureDetector(
-                              onTap: () {
-                                if (totalBill > 0) {
-                                  if (from != "Select a date") {
-                                    addtoOrders();
-                                  } else {
-                                    FlutterFlexibleToast.showToast(
-                                        message: "Please select date...",
-                                        // toastLength: Toast.LENGTH_LONG,
-                                        toastGravity: ToastGravity.BOTTOM,
-                                        icon: ICON.ERROR,
-                                        radius: 50,
-                                        elevation: 10,
-                                        imageSize: 15,
-                                        textColor: Colors.white,
-                                        backgroundColor: Colors.black,
-                                        timeInSeconds: 2);
-                                  }
-                                } else {
-                                  FlutterFlexibleToast.showToast(
-                                      message: "Please add items",
-                                      // toastLength: Toast.LENGTH_LONG,
-                                      toastGravity: ToastGravity.BOTTOM,
-                                      icon: ICON.ERROR,
-                                      radius: 50,
-                                      elevation: 10,
-                                      imageSize: 20,
-                                      textColor: Colors.white,
-                                      backgroundColor: Colors.black,
-                                      timeInSeconds: 2);
-                                }
-                              },
-                              child: Container(
-                                height: 50,
-                                width: 150,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(8.0),
-                                  gradient: LinearGradient(
-                                    begin: Alignment(0.01, -0.72),
-                                    end: Alignment(0.0, 1.0),
-                                    colors: [
-                                      const Color(0xff385194),
-                                      const Color(0xff182d66)
-                                    ],
-                                    stops: [0.0, 1.0],
-                                  ),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: const Color(0x80182d66),
-                                      offset: Offset(6, 3),
-                                      blurRadius: 6,
-                                    ),
-                                  ],
-                                ),
-                                child: Center(
-                                  child: Text(
-                                    'Save',
-                                    style: TextStyle(
-                                      fontFamily: 'Arial',
-                                      fontSize: 18,
-                                      color: const Color(0xfff7fdfd),
-                                    ),
-                                    textAlign: TextAlign.left,
-                                  ),
-                                ),
-                              ),
-                            )
-                          : Container(),
-                     _radioValue1 == 0 ? GestureDetector(
+                      SizedBox(
+                        width: 20,
+                      ),
+                      GestureDetector(
                         onTap: () {
                           if (totalBill > 0) {
                             if (from != "Select a date") {
@@ -1462,7 +1297,7 @@ class NewOrderPageState extends State<NewOrderPage> {
                             ),
                           ),
                         ),
-                      ) :Container(),
+                      ),
                       Spacer(),
                     ],
                   )
@@ -1580,7 +1415,7 @@ class NewOrderPageState extends State<NewOrderPage> {
                             child: Text(
                               "Add Item",
                               style:
-                                  TextStyle(color: Colors.black, fontSize: 22),
+                              TextStyle(color: Colors.black, fontSize: 22),
                             ),
                           ),
                           SizedBox(
@@ -1601,7 +1436,7 @@ class NewOrderPageState extends State<NewOrderPage> {
                                 ),
                                 Container(
                                   width:
-                                      MediaQuery.of(context).size.width * 0.8,
+                                  MediaQuery.of(context).size.width * 0.8,
                                   height: 50,
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(16.0),
@@ -1708,7 +1543,7 @@ class NewOrderPageState extends State<NewOrderPage> {
                                       iconSize: 35,
                                       isExpanded: true,
                                       hint: Text(unit),
-                                     // value: unit==null ? "": unit,
+                                      // value: unit==null ? "": unit,
                                       onChanged: (newValue) {
                                         setState(() {
                                           unit = newValue;
@@ -1771,7 +1606,7 @@ class NewOrderPageState extends State<NewOrderPage> {
                                 ),
                                 Container(
                                   width:
-                                      MediaQuery.of(context).size.width * 0.35,
+                                  MediaQuery.of(context).size.width * 0.35,
                                   height: 50,
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(16.0),
@@ -1791,7 +1626,7 @@ class NewOrderPageState extends State<NewOrderPage> {
                                         hintText: 'Rate',
                                         //filled: true,
                                         hintStyle:
-                                            TextStyle(color: Color(0xffb0b0b0)),
+                                        TextStyle(color: Color(0xffb0b0b0)),
                                         border: InputBorder.none,
                                         contentPadding: EdgeInsets.only(
                                             left: 15,
@@ -1824,7 +1659,7 @@ class NewOrderPageState extends State<NewOrderPage> {
                                     )),
                                 Container(
                                   width:
-                                      MediaQuery.of(context).size.width * 0.2,
+                                  MediaQuery.of(context).size.width * 0.2,
                                   height: 50,
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(16.0),
@@ -1845,7 +1680,7 @@ class NewOrderPageState extends State<NewOrderPage> {
                                         hintText: 'Qty',
                                         //filled: true,
                                         hintStyle:
-                                            TextStyle(color: Color(0xffb0b0b0)),
+                                        TextStyle(color: Color(0xffb0b0b0)),
                                         border: InputBorder.none,
                                         contentPadding: EdgeInsets.only(
                                             left: 15,
@@ -2272,7 +2107,7 @@ class NewOrderPageState extends State<NewOrderPage> {
                             child: Text(
                               "Add Item",
                               style:
-                                  TextStyle(color: Colors.black, fontSize: 22),
+                              TextStyle(color: Colors.black, fontSize: 22),
                             ),
                           ),
                           SizedBox(
@@ -2293,7 +2128,7 @@ class NewOrderPageState extends State<NewOrderPage> {
                                 ),
                                 Container(
                                   width:
-                                      MediaQuery.of(context).size.width * 0.8,
+                                  MediaQuery.of(context).size.width * 0.8,
                                   height: 50,
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(16.0),
@@ -2460,7 +2295,7 @@ class NewOrderPageState extends State<NewOrderPage> {
                                 ),
                                 Container(
                                   width:
-                                      MediaQuery.of(context).size.width * 0.35,
+                                  MediaQuery.of(context).size.width * 0.35,
                                   height: 50,
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(16.0),
@@ -2480,7 +2315,7 @@ class NewOrderPageState extends State<NewOrderPage> {
                                         hintText: 'Rate',
                                         //filled: true,
                                         hintStyle:
-                                            TextStyle(color: Color(0xffb0b0b0)),
+                                        TextStyle(color: Color(0xffb0b0b0)),
                                         border: InputBorder.none,
                                         contentPadding: EdgeInsets.only(
                                             left: 15,
@@ -2513,7 +2348,7 @@ class NewOrderPageState extends State<NewOrderPage> {
                                     )),
                                 Container(
                                   width:
-                                      MediaQuery.of(context).size.width * 0.2,
+                                  MediaQuery.of(context).size.width * 0.2,
                                   height: 50,
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(16.0),
@@ -2534,7 +2369,7 @@ class NewOrderPageState extends State<NewOrderPage> {
                                         hintText: 'Qty',
                                         //filled: true,
                                         hintStyle:
-                                            TextStyle(color: Color(0xffb0b0b0)),
+                                        TextStyle(color: Color(0xffb0b0b0)),
                                         border: InputBorder.none,
                                         contentPadding: EdgeInsets.only(
                                             left: 15,
@@ -2877,7 +2712,7 @@ class NewOrderPageState extends State<NewOrderPage> {
     return AppBar(
       backgroundColor: Colors.blue[900],
       centerTitle: false,
-      title: Text("New Order"),
+      title: Text("Sales Returns"),
       elevation: 1.0,
       actions: [
         Padding(

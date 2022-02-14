@@ -1,146 +1,53 @@
-import 'package:adobe_xd/page_link.dart';
-import 'package:adobe_xd/pinned.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:optimist_erp_app/data/user_data.dart';
 
 class SalesLedger extends StatefulWidget {
-  SalesLedger({Key key, this.title}) : super(key: key);
-
-  final String title;
-
   @override
   SalesLedgerState createState() => SalesLedgerState();
 }
 
 class SalesLedgerState extends State<SalesLedger> {
+  DatabaseReference reference;
+  List<String> names = [];
+  List<String> balance = [];
+
+  Future<void> getCustomerId() async {
+    setState(() {
+      names.clear();
+      balance.clear();
+    });
+
+    await reference.child("Accounts").once().then((DataSnapshot snapshot) {
+      Map<dynamic, dynamic> values = snapshot.value;
+      values.forEach((key, values) {
+        setState(() {
+          names.add(key);
+          balance.add(values["TotalBalance"].toString());
+        });
+      });
+    });
+  }
+
+  void initState() {
+    // TODO: implement initState
+    reference = FirebaseDatabase.instance
+        .reference()
+        .child("Companies")
+        .child(User.database);
+    getCustomerId();
+
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: buildAppBar(context),
       body: ListView(
-        children: [
-          SizedBox(
-            height: 10,
-          ),
-          searchRow(),
-          salesOrder()
-        ],
-      ),
-    );
-  }
-
-  searchRow() {
-    return Container(
-      width: MediaQuery.of(context).size.width,
-      height: 105,
-      child: Column(
-        children: [
-          Row(
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(5.0),
-                child: Container(
-                  width: MediaQuery.of(context).size.width * 0.83,
-                  height: 50,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(5.0),
-                    color: const Color(0xffffffff),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0x29000000),
-                        offset: Offset(6, 3),
-                        blurRadius: 12,
-                      ),
-                    ],
-                  ),
-                  child: TextFormField(
-                      // controller: _username,
-                      decoration: InputDecoration(
-                    hintText: 'Enter customer name here',
-                    //filled: true,
-                    border: InputBorder.none,
-                    contentPadding: EdgeInsets.only(
-                        left: 15, bottom: 5, top: 15, right: 15),
-                    filled: false,
-                    isDense: false,
-                    prefixIcon: Icon(
-                      Icons.person,
-                      size: 25.0,
-                      color: Colors.grey,
-                    ),
-                  )),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.only(left: 8.0, right: 8),
-                child: Container(
-                    height: 30,
-                    width: 30,
-                    child: Image.asset(
-                      "assets/images/calender.png",
-                      fit: BoxFit.scaleDown,
-                      //    color: Colors.white
-                    )),
-              ),
-            ],
-          ),
-          SizedBox(
-            height: 10,
-          ),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
-              children: [
-                Text(
-                  'From',
-                  style: TextStyle(
-                    fontFamily: 'Arial',
-                    fontSize: 13,
-                    color: Color(0xffb0b0b0),
-                  ),
-                  textAlign: TextAlign.left,
-                ),
-                SizedBox(
-                  width: 10,
-                ),
-                Text(
-                  '22/12/2021',
-                  style: TextStyle(
-                      fontFamily: 'Arial',
-                      fontSize: 13,
-                      color: Colors.black,
-                      decoration: TextDecoration.underline),
-                  textAlign: TextAlign.left,
-                ),
-                SizedBox(
-                  width: 10,
-                ),
-                Text(
-                  'To',
-                  style: TextStyle(
-                    fontFamily: 'Arial',
-                    fontSize: 13,
-                    color: Color(0xffb0b0b0),
-                  ),
-                  textAlign: TextAlign.left,
-                ),
-                SizedBox(
-                  width: 10,
-                ),
-                Text(
-                  '25/12/2021',
-                  style: TextStyle(
-                      fontFamily: 'Arial',
-                      fontSize: 13,
-                      color: Colors.black,
-                      decoration: TextDecoration.underline),
-                  textAlign: TextAlign.left,
-                ),
-              ],
-            ),
-          ),
-        ],
+        children: [salesOrder()],
       ),
     );
   }
@@ -150,13 +57,10 @@ class SalesLedgerState extends State<SalesLedger> {
       width: MediaQuery.of(context).size.width,
       child: ListView(
         shrinkWrap: true,
-
-        /// scrollDirection: Axis.horizontal,
-
         children: [
           Container(
             height: 30,
-            width: 400,
+            width: MediaQuery.of(context).size.width,
             decoration: BoxDecoration(
               color: const Color(0xff454d60),
             ),
@@ -199,351 +103,59 @@ class SalesLedgerState extends State<SalesLedger> {
             ),
           ),
           Container(
-            height: MediaQuery.of(context).size.height * 0.7,
-            width: MediaQuery.of(context).size.width,
-            child: ListView(
-              children: [
-                Container(
-                  height: 30,
-                  width: MediaQuery.of(context).size.width,
-                  decoration: BoxDecoration(color: Color(0x66d6d6d6)
-
-                      ///: Color(0x66f3ceef),
-                      ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      SizedBox(
-                        width: 25,
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Text(
-                          'Cash Account',
-                          style: TextStyle(
-                            fontFamily: 'Arial',
-                            fontSize: 12,
-                            color: Colors.black,
-                          ),
-                          textAlign: TextAlign.left,
+              height: MediaQuery.of(context).size.height * 0.7,
+              width: MediaQuery.of(context).size.width,
+              child: ListView.builder(
+                itemCount: names.length,
+                itemBuilder: (context, index) {
+                  return Container(
+                    height: 30,
+                    width: MediaQuery.of(context).size.width,
+                    decoration: BoxDecoration(
+                      color: index.floor().isEven
+                          ? Color(0x66d6d6d6)
+                          : Color(0x66f3ceef),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        SizedBox(
+                          width: 25,
                         ),
-                      ),
-                      Spacer(),
-                      Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Text(
-                          '42090',
-                          style: TextStyle(
-                            fontFamily: 'Arial',
-                            fontSize: 12,
-                            color: Colors.black,
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Text(
+                            names[index],
+                            style: TextStyle(
+                              fontFamily: 'Arial',
+                              fontSize: 12,
+                              color: Colors.black,
+                            ),
+                            textAlign: TextAlign.left,
                           ),
-                          textAlign: TextAlign.left,
                         ),
-                      ),
-                      SizedBox(
-                        width: 25,
-                      ),
-                    ],
-                  ),
-                ),
-
-                Container(
-                  height: 30,
-                  width: MediaQuery.of(context).size.width,
-                  decoration: BoxDecoration(color: Color(0x66f3ceef)
-
-                    ///: Color(0x66f3ceef),
-                  ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      SizedBox(
-                        width: 25,
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Text(
-                          'Party 1',
-                          style: TextStyle(
-                            fontFamily: 'Arial',
-                            fontSize: 12,
-                            color: Colors.black,
+                        Spacer(),
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Text(
+                            balance[index].toString(),
+                            style: TextStyle(
+                              fontFamily: 'Arial',
+                              fontSize: 12,
+                              color: Colors.black,
+                            ),
+                            textAlign: TextAlign.left,
                           ),
-                          textAlign: TextAlign.left,
                         ),
-                      ),
-                      Spacer(),
-                      Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Text(
-                          '599.0',
-                          style: TextStyle(
-                            fontFamily: 'Arial',
-                            fontSize: 12,
-                            color: Colors.black,
-                          ),
-                          textAlign: TextAlign.left,
+                        SizedBox(
+                          width: 25,
                         ),
-                      ),
-                      SizedBox(
-                        width: 25,
-                      ),
-                    ],
-                  ),
-                ),
-
-                Container(
-                  height: 30,
-                  width: MediaQuery.of(context).size.width,
-                  decoration: BoxDecoration(color: Color(0x66d6d6d6)
-
-                    ///: Color(0x66f3ceef),
-                  ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      SizedBox(
-                        width: 25,
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Text(
-                          'VAT on purchase',
-                          style: TextStyle(
-                            fontFamily: 'Arial',
-                            fontSize: 12,
-                            color: Colors.black,
-                          ),
-                          textAlign: TextAlign.left,
-                        ),
-                      ),
-                      Spacer(),
-                      Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Text(
-                          '16',
-                          style: TextStyle(
-                            fontFamily: 'Arial',
-                            fontSize: 12,
-                            color: Colors.black,
-                          ),
-                          textAlign: TextAlign.left,
-                        ),
-                      ),
-                      SizedBox(
-                        width: 25,
-                      ),
-                    ],
-                  ),
-                ),
-
-                Container(
-                  height: 30,
-                  width: MediaQuery.of(context).size.width,
-                  decoration: BoxDecoration(color: Color(0x66f3ceef)
-
-                    ///: Color(0x66f3ceef),
-                  ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      SizedBox(
-                        width: 25,
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Text(
-                          'VAT on sale',
-                          style: TextStyle(
-                            fontFamily: 'Arial',
-                            fontSize: 12,
-                            color: Colors.black,
-                          ),
-                          textAlign: TextAlign.left,
-                        ),
-                      ),
-                      Spacer(),
-                      Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Text(
-                          '-5904.14',
-                          style: TextStyle(
-                            fontFamily: 'Arial',
-                            fontSize: 12,
-                            color: Colors.black,
-                          ),
-                          textAlign: TextAlign.left,
-                        ),
-                      ),
-                      SizedBox(
-                        width: 25,
-                      ),
-                    ],
-                  ),
-                ),
-
-                Container(
-                  height: 30,
-                  width: MediaQuery.of(context).size.width,
-                  decoration: BoxDecoration(color: Color(0x66d6d6d6)
-
-                    ///: Color(0x66f3ceef),
-                  ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      SizedBox(
-                        width: 25,
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Text(
-                          'Purchase Account',
-                          style: TextStyle(
-                            fontFamily: 'Arial',
-                            fontSize: 12,
-                            color: Colors.black,
-                          ),
-                          textAlign: TextAlign.left,
-                        ),
-                      ),
-                      Spacer(),
-                      Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Text(
-                          '100.00',
-                          style: TextStyle(
-                            fontFamily: 'Arial',
-                            fontSize: 12,
-                            color: Colors.black,
-                          ),
-                          textAlign: TextAlign.left,
-                        ),
-                      ),
-                      SizedBox(
-                        width: 25,
-                      ),
-                    ],
-                  ),
-                ),
-
-                Container(
-                  height: 30,
-                  width: MediaQuery.of(context).size.width,
-                  decoration: BoxDecoration(color: Color(0x66f3ceef)
-
-                    ///: Color(0x66f3ceef),
-                  ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      SizedBox(
-                        width: 25,
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Text(
-                          'Sale Account',
-                          style: TextStyle(
-                            fontFamily: 'Arial',
-                            fontSize: 12,
-                            color: Colors.black,
-                          ),
-                          textAlign: TextAlign.left,
-                        ),
-                      ),
-                      Spacer(),
-                      Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Text(
-                          '-39090',
-                          style: TextStyle(
-                            fontFamily: 'Arial',
-                            fontSize: 12,
-                            color: Colors.black,
-                          ),
-                          textAlign: TextAlign.left,
-                        ),
-                      ),
-                      SizedBox(
-                        width: 25,
-                      ),
-                    ],
-                  ),
-                ),
-
-                Container(
-                  height: 30,
-                  width: MediaQuery.of(context).size.width,
-                  decoration: BoxDecoration(color: Color(0x66d6d6d6)
-
-                    ///: Color(0x66f3ceef),
-                  ),
-                ),
-
-
-
-                ///Balance
-                ///
-                ///
-                Container(
-                  height: 30,
-                  width: MediaQuery.of(context).size.width,
-                  decoration: BoxDecoration(color: Color(0x66f3ceef)
-
-                    ///: Color(0x66f3ceef),
-                  ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      SizedBox(
-                        width: 25,
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Text(
-                          'Balance',
-                          style: TextStyle(
-                            fontFamily: 'Arial',
-                            decoration: TextDecoration.underline,
-                            fontSize: 12,
-                            color: Colors.black,
-                          ),
-                          textAlign: TextAlign.left,
-                        ),
-                      ),
-                      Spacer(),
-                      Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Text(
-                          '-36900.08',
-                          style: TextStyle(
-                            fontFamily: 'Arial',
-                            decoration: TextDecoration.underline,
-                            fontSize: 12,
-                            color: Colors.black,
-                          ),
-                          textAlign: TextAlign.left,
-                        ),
-                      ),
-                      SizedBox(
-                        width: 25,
-                      ),
-                    ],
-                  ),
-                ),
-
-              ],
-            ),
-          ),
+                      ],
+                    ),
+                  );
+                },
+              )),
         ],
       ),
     );

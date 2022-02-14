@@ -4,16 +4,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_flexible_toast/flutter_flexible_toast.dart';
 import 'package:optimist_erp_app/data/customed_details.dart';
 import 'package:optimist_erp_app/data/user_data.dart';
-import 'package:optimist_erp_app/screens/van_page.dart';
+import 'package:optimist_erp_app/screens/returns/bill.dart';
 
-class SettlementPage extends StatefulWidget {
-  SettlementPage(
+class SalesSettlementPage extends StatefulWidget {
+  SalesSettlementPage(
       {Key key,
-      this.customerName,
-      this.date,
-      this.values,
-      this.itemCount,
-      this.radioValue})
+        this.customerName,
+        this.date,
+        this.values,
+        this.itemCount,
+        this.radioValue})
       : super(key: key);
   final int radioValue;
   final int itemCount;
@@ -22,10 +22,10 @@ class SettlementPage extends StatefulWidget {
   final Map<String, dynamic> values;
 
   @override
-  SettlementPageState createState() => SettlementPageState();
+  SalesSettlementPageState createState() => SalesSettlementPageState();
 }
 
-class SettlementPageState extends State<SettlementPage> {
+class SalesSettlementPageState extends State<SalesSettlementPage> {
   var voucherNo = TextEditingController();
   var billAmount = TextEditingController();
   var oldBalance = TextEditingController();
@@ -58,25 +58,25 @@ class SettlementPageState extends State<SettlementPage> {
   }
 
   payOn(String a) {
-    finalBalance = double.parse(Customer.balance) + double.parse(subTotal.text);
+
     setState(() {
-      finalBalance = finalBalance -
-          (double.parse(paidCard.text) + double.parse(paidCash.text));
-      totalReceived =
-          (double.parse(paidCard.text) + double.parse(paidCash.text));
+     // finalBalance = double.parse(Customer.balance) - double.parse(subTotal.text);
+      totalReceived = (double.parse(paidCard.text) + double.parse(paidCash.text));
+      finalBalance = double.parse(Customer.balance) - (double.parse(paidCard.text) + double.parse(paidCash.text));
+
     });
   }
 
   addValues() {
     reference
-        .child("Bills")
+        .child("Returns")
         .child(widget.date)
         .child(User.vanNo)
         .child(User.voucherNumber)
         .update(widget.values);
 
     reference
-      ..child("Bills")
+      ..child("Returns")
           .child(widget.date)
           .child(User.vanNo)
           .child(voucherNo.text)
@@ -96,7 +96,7 @@ class SettlementPageState extends State<SettlementPage> {
 
     if (User.voucherNumber != voucherNo.text) {
       reference
-        ..child("Bills")
+        ..child("Returns")
             .child(widget.date)
             .child(User.vanNo)
             .child(User.voucherNumber)
@@ -105,14 +105,14 @@ class SettlementPageState extends State<SettlementPage> {
           var data = snapshot.value;
 
           reference
-            ..child("Bills")
+            ..child("Returns")
                 .child(widget.date)
                 .child(User.vanNo)
                 .child(voucherNo.text)
                 .set(data);
 
           reference
-            ..child("Bills")
+            ..child("Returns")
                 .child(widget.date)
                 .child(User.vanNo)
                 .child(User.voucherNumber)
@@ -130,7 +130,7 @@ class SettlementPageState extends State<SettlementPage> {
           };
 
           reference
-            ..child("Bills")
+            ..child("Returns")
                 .child(widget.date)
                 .child(User.vanNo)
                 .child(voucherNo.text)
@@ -149,16 +149,18 @@ class SettlementPageState extends State<SettlementPage> {
       };
 
       reference
-        ..child("Bills")
+        ..child("Returns")
             .child(widget.date)
             .child(User.vanNo)
             .child(voucherNo.text)
             .update(values);
     }
-      ///update stock///
+
+
+    ///update stock///
     ///
     reference
-      ..child("Bills")
+      ..child("Returns")
           .child(widget.date)
           .child(User.vanNo)
           .child(voucherNo.text)
@@ -176,9 +178,8 @@ class SettlementPageState extends State<SettlementPage> {
               .once()
               .then((DataSnapshot snapshot) {
             Map<String, dynamic> newStock = {
-              User.vanNo : double.parse(snapshot.value.toString())-double.parse(values[i]['Qty'].toString()),
+              User.vanNo : double.parse(snapshot.value.toString())+double.parse(values[i]['Qty'].toString()),
             };
-
             reference
                 .child("Items")
                 .child(values[i]['ItemID'].toString())
@@ -199,24 +200,9 @@ class SettlementPageState extends State<SettlementPage> {
         .child(widget.values['CustomerID'])
         .update(updateBalance);
 
-    ///Updating to Sales Report
-    ///
-    Map<String, dynamic> updateSales = {
-      'Balance': finalBalance,
-      'Date': widget.date,
-      'GrandAmount': subTotal.text,
-      'Paid': totalReceived,
-      'PartyName': widget.customerName,
-    };
-
-    reference
-        .child("SalesReport")
-        .child(widget.date)
-        .child(voucherNo.text)
-        .update(updateSales);
 
     FlutterFlexibleToast.showToast(
-        message: "Added to Invoice",
+        message: "Added to Returns",
         toastGravity: ToastGravity.BOTTOM,
         icon: ICON.SUCCESS,
         radius: 50,
@@ -235,23 +221,16 @@ class SettlementPageState extends State<SettlementPage> {
           .child("VoucherNumber")
           .remove()
           .whenComplete(() => {
-                reference
-                  ..child("Vouchers")
-                      .child(User.vanNo)
-                      .child("VoucherNumber")
-                      .set(lastVoucher.toString())
-              });
+        reference
+          ..child("Vouchers")
+              .child(User.vanNo)
+              .child("VoucherNumber")
+              .set(lastVoucher.toString())
+      });
 
-    ///remove the order from orderList
-    reference
-      ..child("OrderList")
-          .child(widget.date)
-          .child(User.vanNo)
-          .child(User.orderNumber)
-          .remove();
 
     Navigator.push(context, MaterialPageRoute(builder: (context) {
-      return VanPage(
+      return BillPage(
         customerName: widget.customerName,
         voucherNumber: voucherNo.text,
         date: widget.date,
@@ -864,7 +843,7 @@ class SettlementPageState extends State<SettlementPage> {
       centerTitle: true,
       automaticallyImplyLeading: false,
       title: Text(
-        "Settlements",
+        "Return Settlements",
         style: TextStyle(color: Colors.black),
       ),
       iconTheme: IconThemeData(

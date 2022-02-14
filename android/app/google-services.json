@@ -81,6 +81,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "782174638682-sle0h05i8i8n8cc5ipm2vqruple9jfr5.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.optimist_erp_app",
+            "certificate_hash": "83b06fb128808eeba36841c444255b9ecc9b15a8"
+          }
+        },
+        {
           "client_id": "782174638682-uamlncf7b55qlci7dg48klursffprpum.apps.googleusercontent.com",
           "client_type": 3
         }

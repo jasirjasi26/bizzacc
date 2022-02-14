@@ -1,21 +1,17 @@
-import 'package:adobe_xd/page_link.dart';
-import 'package:adobe_xd/pinned.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:optimist_erp_app/data/user_data.dart';
 
 class StockReports extends StatefulWidget {
-  StockReports({Key key, this.title}) : super(key: key);
-
-  final String title;
 
   @override
   StockReportsState createState() => StockReportsState();
 }
 
 class StockReportsState extends State<StockReports> {
-  List<String> _locations = ['[None]', 'Export', 'Non Tax']; // Option 2
-  String _selectedLocation;
+  List<String> _locations = ['All','1', '2', '3','4','5','6']; // Option 2
+  String _selectedLocation='All';
   DatabaseReference reference;
   List<String> names = [];
   List<String> stock = [];
@@ -35,12 +31,11 @@ class StockReportsState extends State<StockReports> {
       pRate.clear();
       id.clear();
     });
-
-
-    await reference.child("Stocks").once().then((DataSnapshot snapshot) {
-      List<dynamic> values = snapshot.value;
-      for (int i = 0; i < values.length; i++) {
-        if (values[i] != null) {
+    if(_selectedLocation=='All'){
+      await reference.child("Stocks").once().then((DataSnapshot snapshot) {
+        List<dynamic> values = snapshot.value;
+        for (int i = 0; i < values.length; i++) {
+          if (values[i] != null) {
             if(values[i]['ItemName'].toString().toLowerCase().contains(name.text.toLowerCase())){
               setState(() {
                 names.add(values[i]['ItemName'].toString());
@@ -50,10 +45,29 @@ class StockReportsState extends State<StockReports> {
                 stock.add(values[i]['Stock']['All'].toString());
               });
             }
+          }
         }
-      }
-    });
-
+      });
+    }
+    else{
+      await reference.child("Items").once().then((DataSnapshot snapshot) {
+        List<dynamic> values = snapshot.value;
+        for (int i = 0; i < values.length; i++) {
+          if (values[i] != null) {
+            if(values[i]['ItemName'].toString().toLowerCase().contains(name.text.toLowerCase())){
+              setState(() {
+                String unit = values[i]["SaleUnit"].toString();
+                names.add(values[i]['ItemName'].toString());
+                sRate.add(values[i]["RateAndStock"][unit]["Rate"]);
+                pRate.add(values[i]["RateAndStock"][unit]["PurchaseRate"]);
+                id.add(values[i]['ItemID'].toString());
+                stock.add(values[i]["RateAndStock"][unit]["Stock"][int.parse(_selectedLocation)].toString());
+              });
+            }
+          }
+        }
+      });
+    }
   }
 
   void initState() {
@@ -61,7 +75,7 @@ class StockReportsState extends State<StockReports> {
     reference = FirebaseDatabase.instance
         .reference()
         .child("Companies")
-        .child("CYBRIX");
+        .child(User.database);
     getCustomerId(from);
 
     super.initState();
@@ -91,7 +105,7 @@ class StockReportsState extends State<StockReports> {
           .of(context)
           .size
           .width,
-      height: 80,
+      height: 140,
       child: Column(
         children: [
           Row(
@@ -134,74 +148,65 @@ class StockReportsState extends State<StockReports> {
                       )),
                 ),
               ),
-              // Padding(
-              //   padding: const EdgeInsets.only(left: 8.0, right: 8),
-              //   child: Container(
-              //       height: 30,
-              //       width: 30,
-              //       child: Image.asset(
-              //         "assets/images/calender.png",
-              //         fit: BoxFit.scaleDown,
-              //         //    color: Colors.white
-              //       )),
-              // ),
             ],
           ),
-          // SizedBox(height: 5,),
-          // Row(
-          //   children: [
-          //     SizedBox(width: 20,),
-          //     Card(
-          //       elevation: 5,
-          //       child: Container(
-          //         padding: const EdgeInsets.only(
-          //             left: 10.0,top: 5),
-          //         width: MediaQuery.of(context).size.width * 0.35,
-          //         height: 40,
-          //         decoration: BoxDecoration(
-          //           borderRadius: BorderRadius.circular(20),
-          //         ),
-          //         child: DropdownButton(
-          //           isDense: true,
-          //           //itemHeight: 50,
-          //           iconSize: 35,
-          //           iconEnabledColor: Color(0xffb0b0b0),
-          //           isExpanded: true,
-          //           hint: Text(
-          //             'Select Depo',
-          //             style: TextStyle(
-          //               fontFamily: 'Arial',
-          //               fontSize: 12,
-          //               color: const Color(0xffb0b0b0),
-          //             ),
-          //             textAlign: TextAlign.left,
-          //           ),
-          //           value: _selectedLocation,
-          //           onChanged: (newValue) {
-          //             setState(() {
-          //               _selectedLocation = newValue;
-          //             });
-          //           },
-          //           items: _locations.map((location) {
-          //             return DropdownMenuItem(
-          //               child: Padding(
-          //                 padding: const EdgeInsets.only(bottom:4.0,left: 0),
-          //                 child: new Text(
-          //                   location,
-          //                   style: TextStyle(
-          //                     fontFamily: 'Arial',
-          //                     fontSize: 12,
-          //                     color: const Color(0xffb0b0b0),
-          //                   ),
-          //                   textAlign: TextAlign.left,
-          //                 ),
-          //               ),
-          //               value: location,
-          //             );
-          //           }).toList(),
-          //         ),
-          //       ),
-          //     ),
+          SizedBox(height: 5,),
+          Row(
+            children: [
+              SizedBox(width: 20,),
+              Card(
+                elevation: 5,
+                child: Container(
+                  padding: const EdgeInsets.only(
+                      left: 10.0,top: 5),
+                  width: MediaQuery.of(context).size.width * 0.35,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: DropdownButton(
+                    isDense: true,
+                    //itemHeight: 50,
+                    iconSize: 35,
+                    iconEnabledColor: Color(0xffb0b0b0),
+                    isExpanded: true,
+                    hint: Text(
+                      'Select Depo',
+                      style: TextStyle(
+                        fontFamily: 'Arial',
+                        fontSize: 12,
+                        color: const Color(0xffb0b0b0),
+                      ),
+                      textAlign: TextAlign.left,
+                    ),
+                    value: _selectedLocation,
+                    onChanged: (newValue) {
+                      setState(() {
+                        _selectedLocation = newValue;
+                      });
+                      getCustomerId(_selectedLocation);
+                      print(_selectedLocation);
+                    },
+                    items: _locations.map((location) {
+                      return DropdownMenuItem(
+                        child: Padding(
+                          padding: const EdgeInsets.only(bottom:4.0,left: 0),
+                          child: new Text(
+                            location,
+                            style: TextStyle(
+                              fontFamily: 'Arial',
+                              fontSize: 12,
+                              color: const Color(0xffb0b0b0),
+                            ),
+                            textAlign: TextAlign.left,
+                          ),
+                        ),
+                        value: location,
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ),
           //
           //     Card(
           //       elevation: 5,
@@ -253,9 +258,9 @@ class StockReportsState extends State<StockReports> {
           //           }).toList(),
           //         ),
           //       ),
-          //     ),
-          //   ],
-          // ),
+             // ),
+            ],
+          ),
           // Padding(
           //   padding: const EdgeInsets.all(8.0),
           //   child: Row(

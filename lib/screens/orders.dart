@@ -1,14 +1,12 @@
-import 'package:adobe_xd/page_link.dart';
-import 'package:adobe_xd/pinned.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:optimist_erp_app/data/user_data.dart';
+import 'package:optimist_erp_app/screens/setleAfterOrder.dart';
+import 'package:optimist_erp_app/screens/van_page.dart';
 
 class OrdersPage extends StatefulWidget {
-  OrdersPage({Key key, this.title}) : super(key: key);
-
-  final String title;
 
   @override
   OrdersPageState createState() => OrdersPageState();
@@ -22,20 +20,25 @@ class OrdersPageState extends State<OrdersPage> {
   List<String> dates = [];
   List<String> code = [];
   List<String> vNo = [];
-
-  DateTime selectedDate = DateTime.now();
-  String from = "2021-12-15";
+  List<String> balance = [];
+  List<String> tax = [];
   var name = TextEditingController();
 
+  DateTime selectedDate = DateTime.now();
+  String from = DateTime.now().year.toString() +
+      "-" +
+      DateTime.now().month.toString() +
+      "-" +
+      DateTime.now().day.toString();
+
+  String to = DateTime.now().year.toString() +
+      "-" +
+      DateTime.now().month.toString() +
+      "-" +
+      DateTime.now().day.toString();
 
 
   Future<void> _selectDate(BuildContext context) async {
-    dates.clear();
-    code.clear();
-    amount.clear();
-    vNo.clear();
-    names.clear();
-
     final DateTime picked = await showDatePicker(
         context: context,
         initialDate: selectedDate,
@@ -44,40 +47,147 @@ class OrdersPageState extends State<OrdersPage> {
     if (picked != null && picked != selectedDate)
       setState(() {
         selectedDate = picked;
-        from=selectedDate.year.toString()+"-"+selectedDate.month.toString()+"-"+selectedDate.day.toString();
+        from = selectedDate.year.toString() +
+            "-" +
+            selectedDate.month.toString() +
+            "-" +
+            selectedDate.day.toString();
       });
 
     getCustomerId(from);
   }
 
-  Future<void> getCustomerId(String date) async {
-    await reference
-        .child("Bills")
-        .child(from)
-        .child(User.vanNo)
-        .once()
-        .then((DataSnapshot snapshot) {
-      Map<dynamic, dynamic> values = snapshot.value;
-      values.forEach((key, values) {
-        setState(() {
-          names.add(values['CustomerName'].toString());
-          amount.add(values['Amount'].toString());
-          dates.add(values['DeliveryDate'].toString());
-          vNo.add(values['OrderID'].toString());
-          code.add(values['CustomerID'].toString());
-        });
+  Future<void> _selectToDate(BuildContext context) async {
+    final DateTime picked = await showDatePicker(
+        context: context,
+        initialDate: selectedDate,
+        firstDate: DateTime(2015, 8),
+        lastDate: DateTime(2101));
+    if (picked != null && picked != selectedDate)
+      setState(() {
+        selectedDate = picked;
+        to = selectedDate.year.toString() +
+            "-" +
+            selectedDate.month.toString() +
+            "-" +
+            selectedDate.day.toString();
       });
-    });
+
+    getCustomerId(from);
   }
 
+  Future<void> getCustomerId(String customer) async {
+    setState(() {
+      dates.clear();
+      code.clear();
+      amount.clear();
+      vNo.clear();
+      names.clear();
+      balance.clear();
+      tax.clear();
+    });
 
+    if (select) {
+      await reference.child("OrderList").once().then((DataSnapshot snapshot) {
+        Map<dynamic, dynamic> values = snapshot.value;
+        values.forEach((key, values) async {
+          DateFormat inputFormat = DateFormat('yyyy-mm-dd');
+          DateTime input = inputFormat.parse(from);
+          DateTime inputTo = inputFormat.parse(to);
+          DateTime inputKey = inputFormat.parse(key);
+          String datefrom = DateFormat('yyyy-mm-dd').format(input);
+          String dateTo = DateFormat('yyyy-mm-dd').format(inputTo);
+          String dateKeys = DateFormat('yyyy-mm-dd').format(inputKey);
+
+          if (DateTime.parse(dateKeys).isAfter(DateTime.parse(datefrom)) &&
+                  DateTime.parse(dateKeys).isBefore(DateTime.parse(dateTo)) ||
+              DateTime.parse(dateKeys) == (DateTime.parse(dateTo)) ||
+              DateTime.parse(dateKeys) == (DateTime.parse(datefrom))) {
+            print(key);
+
+            await reference
+                .child("OrderList")
+                .child(key)
+                .child(User.vanNo)
+                .once()
+                .then((DataSnapshot snapshot) {
+              Map<dynamic, dynamic> values = snapshot.value;
+              values.forEach((key, values) {
+                if (values['CustomerName']
+                    .toString()
+                    .toLowerCase()
+                    .contains(name.text.toLowerCase())) {
+                  setState(() {
+                    names.add(values['CustomerName'].toString());
+                    amount.add(values['Amount'].toString());
+                    dates.add(values['VoucherDate'].toString());
+                    vNo.add(values['OrderID'].toString());
+                    code.add(values['CustomerID'].toString());
+                    balance.add(values['Balance'].toString());
+                    tax.add(values['TaxAmount'].toString());
+                  });
+                }
+              });
+            });
+          } else {
+            print("Noo data");
+          }
+        });
+      });
+    } else {
+      await reference.child("Bills").once().then((DataSnapshot snapshot) {
+        Map<dynamic, dynamic> values = snapshot.value;
+        values.forEach((key, values) async {
+          DateFormat inputFormat = DateFormat('yyyy-mm-dd');
+          DateTime input = inputFormat.parse(from);
+          DateTime inputTo = inputFormat.parse(to);
+          DateTime inputKey = inputFormat.parse(key);
+          String datefrom = DateFormat('yyyy-mm-dd').format(input);
+          String dateTo = DateFormat('yyyy-mm-dd').format(inputTo);
+          String dateKeys = DateFormat('yyyy-mm-dd').format(inputKey);
+
+          if (DateTime.parse(dateKeys).isAfter(DateTime.parse(datefrom)) &&
+                  DateTime.parse(dateKeys).isBefore(DateTime.parse(dateTo)) ||
+              DateTime.parse(dateKeys) == (DateTime.parse(dateTo)) ||
+              DateTime.parse(dateKeys) == (DateTime.parse(datefrom))) {
+            await reference
+                .child("Bills")
+                .child(key)
+                .child(User.vanNo)
+                .once()
+                .then((DataSnapshot snapshot) {
+              Map<dynamic, dynamic> values = snapshot.value;
+              values.forEach((key, values) {
+                if (values['CustomerName']
+                    .toString()
+                    .toLowerCase()
+                    .contains(name.text.toLowerCase())) {
+                  setState(() {
+                    names.add(values['CustomerName'].toString());
+                    amount.add(values['Amount'].toString());
+                    dates.add(values['VoucherDate'].toString());
+                    vNo.add(values['OrderID'].toString());
+                    code.add(values['CustomerID'].toString());
+                    balance.add(values['Balance'].toString());
+                    tax.add(values['TaxAmount'].toString());
+                  });
+                }
+              });
+            });
+          } else {
+            print("Noo data");
+          }
+        });
+      });
+    }
+  }
 
   void initState() {
     // TODO: implement initState
     reference = FirebaseDatabase.instance
         .reference()
         .child("Companies")
-        .child("CYBRIX");
+        .child(User.database);
     getCustomerId(from);
 
     super.initState();
@@ -103,6 +213,7 @@ class OrdersPageState extends State<OrdersPage> {
                             setState(() {
                               select = true;
                             });
+                            getCustomerId(from);
                           },
                           child: Text(
                             'Sales Order',
@@ -132,6 +243,7 @@ class OrdersPageState extends State<OrdersPage> {
                           setState(() {
                             select = false;
                           });
+                          getCustomerId(from);
                         },
                         child: Text(
                           'Sales Invoice',
@@ -172,10 +284,13 @@ class OrdersPageState extends State<OrdersPage> {
         children: [
           Row(
             children: [
+              SizedBox(
+                width: 10,
+              ),
               Padding(
                 padding: const EdgeInsets.all(5.0),
                 child: Container(
-                  width: MediaQuery.of(context).size.width * 0.8,
+                  width: MediaQuery.of(context).size.width * 0.9,
                   height: 50,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(16.0),
@@ -190,6 +305,7 @@ class OrdersPageState extends State<OrdersPage> {
                   ),
                   child: TextFormField(
                       controller: name,
+                      onChanged: getCustomerId,
                       decoration: InputDecoration(
                         hintText: 'Enter customer name here',
                         //filled: true,
@@ -206,17 +322,17 @@ class OrdersPageState extends State<OrdersPage> {
                       )),
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.only(left: 8.0, right: 8),
-                child: Container(
-                    height: 30,
-                    width: 30,
-                    child: Image.asset(
-                      "assets/images/calender.png",
-                      fit: BoxFit.scaleDown,
-                      //    color: Colors.white
-                    )),
-              ),
+              // Padding(
+              //   padding: const EdgeInsets.only(left: 8.0, right: 8),
+              //   child: Container(
+              //       height: 30,
+              //       width: 30,
+              //       child: Image.asset(
+              //         "assets/images/calender.png",
+              //         fit: BoxFit.scaleDown,
+              //         //    color: Colors.white
+              //       )),
+              // ),
             ],
           ),
           Padding(
@@ -224,7 +340,7 @@ class OrdersPageState extends State<OrdersPage> {
             child: Row(
               children: [
                 Text(
-                  '  Date : ',
+                  '  From : ',
                   style: TextStyle(
                     fontFamily: 'Arial',
                     fontSize: 13,
@@ -236,7 +352,7 @@ class OrdersPageState extends State<OrdersPage> {
                   width: 10,
                 ),
                 GestureDetector(
-                  onTap: (){
+                  onTap: () {
                     _selectDate(context);
                   },
                   child: Text(
@@ -252,27 +368,32 @@ class OrdersPageState extends State<OrdersPage> {
                 SizedBox(
                   width: 10,
                 ),
-                // Text(
-                //   'To',
-                //   style: TextStyle(
-                //     fontFamily: 'Arial',
-                //     fontSize: 13,
-                //     color: Color(0xffb0b0b0),
-                //   ),
-                //   textAlign: TextAlign.left,
-                // ),
-                // SizedBox(
-                //   width: 10,
-                // ),
-                // Text(
-                //   '25/12/2021',
-                //   style: TextStyle(
-                //       fontFamily: 'Arial',
-                //       fontSize: 13,
-                //       color: Colors.black,
-                //       decoration: TextDecoration.underline),
-                //   textAlign: TextAlign.left,
-                // ),
+                Text(
+                  'To',
+                  style: TextStyle(
+                    fontFamily: 'Arial',
+                    fontSize: 13,
+                    color: Color(0xffb0b0b0),
+                  ),
+                  textAlign: TextAlign.left,
+                ),
+                SizedBox(
+                  width: 10,
+                ),
+                GestureDetector(
+                  onTap: () {
+                    _selectToDate(context);
+                  },
+                  child: Text(
+                    to,
+                    style: TextStyle(
+                        fontFamily: 'Arial',
+                        fontSize: 13,
+                        color: Colors.black,
+                        decoration: TextDecoration.underline),
+                    textAlign: TextAlign.left,
+                  ),
+                ),
               ],
             ),
           ),
@@ -382,10 +503,13 @@ class OrdersPageState extends State<OrdersPage> {
                               textAlign: TextAlign.left,
                             ),
                           ),
+                          SizedBox(
+                            width: 10,
+                          ),
                           Padding(
                             padding: const EdgeInsets.all(8.0),
                             child: Text(
-                              ' Action   ',
+                              ' Actions   ',
                               style: TextStyle(
                                 fontFamily: 'Arial',
                                 fontSize: 12,
@@ -393,59 +517,14 @@ class OrdersPageState extends State<OrdersPage> {
                               ),
                               textAlign: TextAlign.left,
                             ),
+                          ),
+                          SizedBox(
+                            width: 15,
                           )
                         ],
                       ),
                     ),
                   )),
-              Container(
-                height: 30,
-                width: 600,
-                child: Row(
-                  children: [
-                    Spacer(),
-                    Padding(
-                      padding: const EdgeInsets.all(5.0),
-                      child: Container(
-                        padding: const EdgeInsets.all(3.0),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(4.0),
-                          color: const Color(0x80f2aeae),
-                        ),
-                        child: Text(
-                          '   Pending   ',
-                          style: TextStyle(
-                            fontFamily: 'Arial',
-                            fontSize: 12,
-                            color: const Color(0xfff50e0e),
-                          ),
-                          textAlign: TextAlign.left,
-                        ),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(5.0),
-                      child: Container(
-                        padding: const EdgeInsets.all(3.0),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(4.0),
-                          color: Colors.blue[900],
-                        ),
-                        child: Text(
-                          '   Pending   ',
-                          style: TextStyle(
-                            fontFamily: 'Arial',
-                            fontSize: 12,
-                            color: Colors.white,
-                          ),
-                          textAlign: TextAlign.left,
-                        ),
-                      ),
-                    )
-                  ],
-                ),
-              ),
-
               Container(
                 width: 600,
                 height: MediaQuery.of(context).size.height,
@@ -533,7 +612,7 @@ class OrdersPageState extends State<OrdersPage> {
                           Padding(
                             padding: const EdgeInsets.all(8.0),
                             child: Text(
-                              "pending",
+                              "Pending",
                               style: TextStyle(
                                 fontFamily: 'Arial',
                                 fontSize: 12,
@@ -544,14 +623,75 @@ class OrdersPageState extends State<OrdersPage> {
                           ),
                           Padding(
                             padding: const EdgeInsets.all(8.0),
-                            child: Text(
-                              "done",
-                              style: TextStyle(
-                                fontFamily: 'Arial',
-                                fontSize: 12,
-                                color: Colors.black,
+                            child: GestureDetector(
+                              onTap: () {
+                                Map<String, dynamic> values = {
+                                  'Amount': amount[index],
+                                  'Balance': balance[index],
+                                  'OrderId': vNo[index],
+                                  'TaxAmount': tax[index],
+                                  'CustomerID': code[index]
+                                };
+                                Navigator.push(context,
+                                    MaterialPageRoute(builder: (context) {
+                                  return Settlement2(
+                                    customerName: names[index],
+                                    date: dates[index],
+                                    values: values,
+                                    radioValue: 0,
+                                  );
+                                }));
+                              },
+                              child: Text(
+                                "Change",
+                                style: TextStyle(
+                                  fontFamily: 'Arial',
+                                  fontSize: 12,
+                                  color: Colors.blue,
+                                ),
+                                textAlign: TextAlign.left,
                               ),
-                              textAlign: TextAlign.left,
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: GestureDetector(
+                              onTap: () {
+
+                                reference
+                                  .child("OrderList")
+                                      .child(dates[index])
+                                      .child(User.vanNo)
+                                      .child(vNo[index])
+                                      .once()
+                                      .then((DataSnapshot snapshot) {
+                                       var   data = snapshot.value;
+                                        reference
+                                            .child("DeletedOrder")
+                                            .child(dates[index])
+                                            .child(User.vanNo)
+                                            .child(vNo[index])
+                                            .set(data).whenComplete(() => {
+                                          reference
+                                            ..child("OrderList")
+                                                .child(dates[index])
+                                                .child(User.vanNo)
+                                                .child(vNo[index]).remove(),
+
+                                          getCustomerId("")
+                                        });
+                                  });
+
+                              },
+                              child: Text(
+                                "Delete",
+                                style: TextStyle(
+                                  fontFamily: 'Arial',
+                                  fontSize: 12,
+                                  color: Colors.red,
+                                ),
+                                textAlign: TextAlign.left,
+                              ),
                             ),
                           ),
                         ],
@@ -566,7 +706,6 @@ class OrdersPageState extends State<OrdersPage> {
       ],
     );
   }
-
 
   salesInvoice() {
     return Column(
@@ -631,6 +770,7 @@ class OrdersPageState extends State<OrdersPage> {
                               ),
                             ),
                           ),
+                          SizedBox(),
                           Padding(
                             padding: const EdgeInsets.all(8.0),
                             child: Center(
@@ -645,10 +785,11 @@ class OrdersPageState extends State<OrdersPage> {
                               ),
                             ),
                           ),
+                          SizedBox(),
                           Padding(
                             padding: const EdgeInsets.all(8.0),
                             child: Text(
-                              ' Amt  ',
+                              'Bill Amount  ',
                               style: TextStyle(
                                 fontFamily: 'Arial',
                                 fontSize: 12,
@@ -660,7 +801,7 @@ class OrdersPageState extends State<OrdersPage> {
                           Padding(
                             padding: const EdgeInsets.all(8.0),
                             child: Text(
-                              ' Status  ',
+                              '   ',
                               style: TextStyle(
                                 fontFamily: 'Arial',
                                 fontSize: 12,
@@ -669,75 +810,29 @@ class OrdersPageState extends State<OrdersPage> {
                               textAlign: TextAlign.left,
                             ),
                           ),
-                          Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Text(
-                              ' Action   ',
-                              style: TextStyle(
-                                fontFamily: 'Arial',
-                                fontSize: 12,
-                                color: const Color(0xffffffff),
-                              ),
-                              textAlign: TextAlign.left,
-                            ),
-                          )
+                          // Padding(
+                          //   padding: const EdgeInsets.all(8.0),
+                          //   child: Text(
+                          //     ' Action   ',
+                          //     style: TextStyle(
+                          //       fontFamily: 'Arial',
+                          //       fontSize: 12,
+                          //       color: const Color(0xffffffff),
+                          //     ),
+                          //     textAlign: TextAlign.left,
+                          //   ),
+                          // )
                         ],
                       ),
                     ),
                   )),
-              Container(
-                height: 30,
-                width: 600,
-                child: Row(
-                  children: [
-                    Spacer(),
-                    Padding(
-                      padding: const EdgeInsets.all(5.0),
-                      child: Container(
-                        padding: const EdgeInsets.all(3.0),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(4.0),
-                          // color: const Color(0x80f2aeae),
-                        ),
-                        child: Container(
-                            height: 20,
-                            width: 20,
-                            child: Image.asset(
-                              "assets/images/eye.png",
-                              fit: BoxFit.scaleDown,
-                              //    color: Colors.blue
-                            )),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(5.0),
-                      child: Container(
-                        padding: const EdgeInsets.all(3.0),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(4.0),
-                          //color: Colors.blue[900],
-                        ),
-                        child: Container(
-                            height: 20,
-                            width: 20,
-                            child: Image.asset(
-                              "assets/images/download.png",
-                              fit: BoxFit.scaleDown,
-                              //color: Colors.white
-                            )),
-                      ),
-                    )
-                  ],
-                ),
-              ),
-
               Container(
                 width: 600,
                 height: MediaQuery.of(context).size.height,
                 child: ListView(
                   children: new List.generate(
                     names.length,
-                        (index) => Container(
+                    (index) => Container(
                       height: 30,
                       width: MediaQuery.of(context).size.width,
                       decoration: BoxDecoration(
@@ -803,6 +898,7 @@ class OrdersPageState extends State<OrdersPage> {
                               ),
                             ),
                           ),
+                          SizedBox(),
                           Padding(
                             padding: const EdgeInsets.all(3.0),
                             child: Text(
@@ -815,30 +911,50 @@ class OrdersPageState extends State<OrdersPage> {
                               textAlign: TextAlign.left,
                             ),
                           ),
+
                           Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Text(
-                              "pending",
-                              style: TextStyle(
-                                fontFamily: 'Arial',
-                                fontSize: 12,
-                                color: Colors.black,
+                            padding: const EdgeInsets.all(5.0),
+                            child: GestureDetector(
+                              onTap: () {
+                                Navigator.push(context,
+                                    MaterialPageRoute(builder: (context) {
+                                  return VanPage(
+                                      customerName: names[index],
+                                      voucherNumber: vNo[index],
+                                      date: dates[index],
+                                      billAmount: amount[index],
+                                      back: true);
+                                }));
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.all(3.0),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(4.0),
+                                  //color: Colors.blue[900],
+                                ),
+                                child: Container(
+                                    height: 20,
+                                    width: 20,
+                                    child: Image.asset(
+                                      "assets/images/download.png",
+                                      fit: BoxFit.scaleDown,
+                                      //color: Colors.white
+                                    )),
                               ),
-                              textAlign: TextAlign.left,
                             ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Text(
-                              "done",
-                              style: TextStyle(
-                                fontFamily: 'Arial',
-                                fontSize: 12,
-                                color: Colors.black,
-                              ),
-                              textAlign: TextAlign.left,
-                            ),
-                          ),
+                          )
+                          // Padding(
+                          //   padding: const EdgeInsets.all(8.0),
+                          //   child: Text(
+                          //     "done",
+                          //     style: TextStyle(
+                          //       fontFamily: 'Arial',
+                          //       fontSize: 12,
+                          //       color: Colors.black,
+                          //     ),
+                          //     textAlign: TextAlign.left,
+                          //   ),
+                          // ),
                         ],
                       ),
                     ),

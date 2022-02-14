@@ -5,8 +5,9 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'package:flutter/services.dart';
+import 'package:optimist_erp_app/data/user_data.dart';
 import 'package:optimist_erp_app/screens/home.dart';
-import 'package:optimist_erp_app/screens/product.dart';
+import 'package:optimist_erp_app/screens/all_products.dart';
 import 'package:textfield_search/textfield_search.dart';
 import '../screens/newOrderPage.dart';
 
@@ -15,16 +16,15 @@ class BottomBar extends StatefulWidget {
   BottomBarState createState() => BottomBarState();
 }
 
+
 class BottomBarState extends State<BottomBar> {
   int _currentIndex = 0;
   List<String> _locations = []; // Option 2
   String _selectedLocation; // Opt
-  var _children = [MyHomePage(), ProductPage(), Container(), Container()];
-  DatabaseReference reference;
+  var _children = [MyHomePage(), AllProductPage(), Container(), Container()];
   DatabaseReference types;
   DatabaseReference names;
   String label = "Enter Customer Name";
-  List<String> dummyList = [];
 
   void onTapped(int i) {
     if (i != 3) {
@@ -34,15 +34,7 @@ class BottomBarState extends State<BottomBar> {
     }
   }
 
-
   Future<void> getSalesTypes() async {
-    await names.once().then((DataSnapshot snapshot) {
-      Map<dynamic, dynamic> values = snapshot.value;
-      values.forEach((key, values) {
-        dummyList.add(values["Name"].toString());
-      });
-    });
-
     await types.once().then((DataSnapshot snapshot) {
       Map<dynamic, dynamic> values = snapshot.value;
       values.forEach((key, values) {
@@ -58,23 +50,17 @@ class BottomBarState extends State<BottomBar> {
     SystemChrome.setEnabledSystemUIOverlays(
         [SystemUiOverlay.top, SystemUiOverlay.bottom]);
 
-    reference = FirebaseDatabase.instance
-        .reference()
-        .child("Companies")
-        .child("Cybrix Mobile");
-
     types = FirebaseDatabase.instance
         .reference()
         .child("Companies")
-        .child("CYBRIX")
+        .child(User.database)
         .child("SalesTypes");
 
     names = FirebaseDatabase.instance
         .reference()
         .child("Companies")
-        .child("CYBRIX")
+        .child(User.database)
         .child("Customers");
-
 
     getSalesTypes();
 
@@ -295,6 +281,25 @@ class BottomBarState extends State<BottomBar> {
 
   void showBookingDialog() {
     var textEditingController= TextEditingController();
+    Future<List> getNames(String input) async {
+      List _list = new List();
+
+      await names.once().then((DataSnapshot snapshot) {
+        Map<dynamic, dynamic> values = snapshot.value;
+        values.forEach((key, values) {
+          if(values['Name'].toString().toLowerCase().contains(input.toLowerCase())){
+            _list.add(values['Name'].toString());
+          }
+          if(values['CustomerCode'].toString().toLowerCase().contains(input.toLowerCase())){
+            _list.add(values['CustomerCode'].toString());
+          }
+        });
+      });
+
+      return _list;
+    }
+
+
 
     showGeneralDialog(
       barrierLabel: "Barrier",
@@ -310,9 +315,8 @@ class BottomBarState extends State<BottomBar> {
                 child: Align(
                   alignment: Alignment.bottomCenter,
                   child: Container(
-                      height: MediaQuery.of(context).size.height * 0.75,
+                      height: MediaQuery.of(context).size.height * 0.7,
                       width: MediaQuery.of(context).size.width,
-                      //margin: EdgeInsets.only(bottom: 200,),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(40),
@@ -349,11 +353,18 @@ class BottomBarState extends State<BottomBar> {
                             padding:
                             const EdgeInsets.only(left: 50.0, right: 50),
                             child: Card(
+                              elevation: 5,
                               child: TextFieldSearch(
-                                  initialList: dummyList,
+                               // future: getNames,
+                                 // initialList: dummyList,
                                   label: label,
+                                  minStringLength: 0,
+                                  future: () {
+                                    return getNames(
+                                        textEditingController.text);
+                                  },
                                   decoration: InputDecoration(
-                                    hintText: 'Enter Customer Name',
+                                    hintText: 'Enter Customer Name / Code',
                                     contentPadding: EdgeInsets.only(
                                         left: 15, top: 15, right: 15),
                                     filled: false,
@@ -397,7 +408,7 @@ class BottomBarState extends State<BottomBar> {
                                     //itemHeight: 50,
                                     iconSize: 35,
                                     isExpanded: true,
-                                    hint: Text('Please choose sales type'),
+                                    hint: Text('Choose sales type'),
                                     value: _selectedLocation,
                                     onChanged: (newValue) {
                                       setState(() {
@@ -414,32 +425,6 @@ class BottomBarState extends State<BottomBar> {
                                         value: location,
                                       );
                                     }).toList(),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                          Center(
-                            child: Padding(
-                              padding: const EdgeInsets.only(
-                                  left: 50.0, right: 50, bottom: 25),
-                              child: Container(
-                                width: MediaQuery.of(context).size.width,
-                                child: Card(
-                                  elevation: 5,
-                                  child: Container(
-                                    child: TextFormField(
-                                        decoration: InputDecoration(
-                                      hintText: 'Enter Refer No',
-                                      filled: false,
-                                      contentPadding: EdgeInsets.only(
-                                          left: 15, top: 15, right: 15),
-                                      prefixIcon: Icon(
-                                        Icons.perm_contact_calendar,
-                                        size: 25.0,
-                                        color: Colors.white,
-                                      ),
-                                    )),
                                   ),
                                 ),
                               ),

@@ -6,26 +6,20 @@ import 'package:optimist_erp_app/data/customed_details.dart';
 import 'package:optimist_erp_app/data/user_data.dart';
 import 'package:optimist_erp_app/screens/van_page.dart';
 
-class SettlementPage extends StatefulWidget {
-  SettlementPage(
-      {Key key,
-      this.customerName,
-      this.date,
-      this.values,
-      this.itemCount,
-      this.radioValue})
+class Settlement2 extends StatefulWidget {
+  Settlement2(
+      {Key key, this.customerName, this.date, this.values, this.radioValue})
       : super(key: key);
   final int radioValue;
-  final int itemCount;
   final String date;
   final String customerName;
   final Map<String, dynamic> values;
 
   @override
-  SettlementPageState createState() => SettlementPageState();
+  SettlementPageState2 createState() => SettlementPageState2();
 }
 
-class SettlementPageState extends State<SettlementPage> {
+class SettlementPageState2 extends State<Settlement2> {
   var voucherNo = TextEditingController();
   var billAmount = TextEditingController();
   var oldBalance = TextEditingController();
@@ -36,10 +30,9 @@ class SettlementPageState extends State<SettlementPage> {
   var totalDisc = 0.0;
   double rounoff = 0;
   DatabaseReference reference;
-  double totalReceived = 0;
+  double totalReceived=0;
 
   roundOff() {
-
     double total;
     setState(() {
       total = double.parse(subTotal.text);
@@ -62,18 +55,96 @@ class SettlementPageState extends State<SettlementPage> {
     setState(() {
       finalBalance = finalBalance -
           (double.parse(paidCard.text) + double.parse(paidCash.text));
-      totalReceived =
-          (double.parse(paidCard.text) + double.parse(paidCash.text));
+      totalReceived=(double.parse(paidCard.text) + double.parse(paidCash.text));
     });
   }
 
-  addValues() {
+  addValues() async {
     reference
-        .child("Bills")
-        .child(widget.date)
-        .child(User.vanNo)
-        .child(User.voucherNumber)
-        .update(widget.values);
+      ..child("OrderList")
+          .child(widget.date)
+          .child(User.vanNo)
+          .child(widget.values['OrderId'])
+          .once()
+          .then((DataSnapshot snapshot) {
+        var data = snapshot.value;
+
+        reference
+          ..child("Bills")
+              .child(widget.date)
+              .child(User.vanNo)
+              .child(voucherNo.text)
+              .set(data);
+
+        Map<String, dynamic> values = {
+          'Balance': finalBalance,
+          'Amount': double.parse(subTotal.text),
+          'CardReceived': paidCard.text,
+          'CashReceived': paidCash.text,
+          'OrderID': voucherNo.text,
+          'RoundOff': rounoff.toStringAsFixed(2),
+          'TotalReceived': totalReceived,
+          'UpdatedTime': DateTime.now().toString(),
+        };
+
+        reference
+            .child("Bills")
+            .child(widget.date)
+            .child(User.vanNo)
+            .child(voucherNo.text)
+            .update(values);
+
+
+        ///update stock///
+        ///
+        reference
+          ..child("Bills")
+              .child(widget.date)
+              .child(User.vanNo)
+              .child(voucherNo.text)
+              .child("Items")
+              .once()
+              .then((DataSnapshot snapshot) {
+            List<dynamic> values = snapshot.value;
+            for (int i = 0; i < values.length; i++) {
+              reference
+                  .child("Items")
+                  .child(values[i]['ItemID'].toString())
+                  .child("RateAndStock")
+                  .child(values[i]['Unit'].toString()).child("Stock").child(User.vanNo)
+                  .once()
+                  .then((DataSnapshot snapshot) {
+
+                Map<String, dynamic> newStock = {
+                  User.vanNo : double.parse(snapshot.value.toString())-double.parse(values[i]['Qty'].toString()),
+                };
+                reference
+                    .child("Items")
+                    .child(values[i]['ItemID'].toString())
+                    .child("RateAndStock")
+                    .child(values[i]['Unit'].toString()).child("Stock").update(newStock);
+
+              });
+            }
+          });
+
+        ///Update Customer Balance
+        ///
+        Map<String, dynamic> updateBalance = {
+          'Balance': finalBalance,
+        };
+        reference
+            .child("Customers")
+            .child(widget.values['CustomerID'])
+            .update(updateBalance);
+
+        reference
+          ..child("OrderList")
+              .child(widget.date)
+              .child(User.vanNo)
+              .child(widget.values['OrderId'])
+              .remove();
+      });
 
     reference
       ..child("Bills")
@@ -94,116 +165,11 @@ class SettlementPageState extends State<SettlementPage> {
         }
       });
 
-    if (User.voucherNumber != voucherNo.text) {
-      reference
-        ..child("Bills")
-            .child(widget.date)
-            .child(User.vanNo)
-            .child(User.voucherNumber)
-            .once()
-            .then((DataSnapshot snapshot) {
-          var data = snapshot.value;
-
-          reference
-            ..child("Bills")
-                .child(widget.date)
-                .child(User.vanNo)
-                .child(voucherNo.text)
-                .set(data);
-
-          reference
-            ..child("Bills")
-                .child(widget.date)
-                .child(User.vanNo)
-                .child(User.voucherNumber)
-                .remove();
-
-          Map<String, dynamic> values = {
-            'Balance': finalBalance,
-            'Amount': double.parse(subTotal.text),
-            'CardReceived': paidCard.text,
-            'CashReceived': paidCash.text,
-            'OrderID': voucherNo.text,
-            'RoundOff': rounoff.toStringAsFixed(2),
-            'TotalReceived': totalReceived,
-            'UpdatedTime': DateTime.now().toString(),
-          };
-
-          reference
-            ..child("Bills")
-                .child(widget.date)
-                .child(User.vanNo)
-                .child(voucherNo.text)
-                .update(values);
-        });
-    } else {
-      Map<String, dynamic> values = {
-        'Balance': finalBalance,
-        'Amount': double.parse(subTotal.text),
-        'CardReceived': paidCard.text,
-        'CashReceived': paidCash.text,
-        'OrderID': voucherNo.text,
-        'RoundOff': rounoff.toStringAsFixed(2),
-        'TotalReceived': totalReceived,
-        'UpdatedTime': DateTime.now().toString(),
-      };
-
-      reference
-        ..child("Bills")
-            .child(widget.date)
-            .child(User.vanNo)
-            .child(voucherNo.text)
-            .update(values);
-    }
-      ///update stock///
-    ///
-    reference
-      ..child("Bills")
-          .child(widget.date)
-          .child(User.vanNo)
-          .child(voucherNo.text)
-          .child("Items")
-          .once()
-          .then((DataSnapshot snapshot) {
-        List<dynamic> values = snapshot.value;
-        for (int i = 0; i < values.length ; i++) {
-
-          reference
-              .child("Items")
-              .child(values[i]['ItemID'].toString())
-              .child("RateAndStock")
-              .child(values[i]['Unit'].toString()).child("Stock").child(User.vanNo)
-              .once()
-              .then((DataSnapshot snapshot) {
-            Map<String, dynamic> newStock = {
-              User.vanNo : double.parse(snapshot.value.toString())-double.parse(values[i]['Qty'].toString()),
-            };
-
-            reference
-                .child("Items")
-                .child(values[i]['ItemID'].toString())
-                .child("RateAndStock")
-                .child(values[i]['Unit'].toString()).child("Stock").update(newStock);
-
-          });
-        }
-      });
-
-    ///Update Customer Balance
-    ///
-    Map<String, dynamic> updateBalance = {
-      'Balance': finalBalance,
-    };
-    reference
-        .child("Customers")
-        .child(widget.values['CustomerID'])
-        .update(updateBalance);
-
     ///Updating to Sales Report
     ///
     Map<String, dynamic> updateSales = {
       'Balance': finalBalance,
-      'Date': widget.date,
+      'Date':widget.date,
       'GrandAmount': subTotal.text,
       'Paid': totalReceived,
       'PartyName': widget.customerName,
@@ -211,20 +177,8 @@ class SettlementPageState extends State<SettlementPage> {
 
     reference
         .child("SalesReport")
-        .child(widget.date)
-        .child(voucherNo.text)
+        .child(widget.date).child(voucherNo.text)
         .update(updateSales);
-
-    FlutterFlexibleToast.showToast(
-        message: "Added to Invoice",
-        toastGravity: ToastGravity.BOTTOM,
-        icon: ICON.SUCCESS,
-        radius: 50,
-        elevation: 10,
-        imageSize: 20,
-        textColor: Colors.white,
-        backgroundColor: Colors.black,
-        timeInSeconds: 2);
 
     ///updating the voucher number
 
@@ -242,13 +196,16 @@ class SettlementPageState extends State<SettlementPage> {
                       .set(lastVoucher.toString())
               });
 
-    ///remove the order from orderList
-    reference
-      ..child("OrderList")
-          .child(widget.date)
-          .child(User.vanNo)
-          .child(User.orderNumber)
-          .remove();
+    FlutterFlexibleToast.showToast(
+        message: "Added to Invoice",
+        toastGravity: ToastGravity.BOTTOM,
+        icon: ICON.SUCCESS,
+        radius: 50,
+        elevation: 10,
+        imageSize: 20,
+        textColor: Colors.white,
+        backgroundColor: Colors.black,
+        timeInSeconds: 2);
 
     Navigator.push(context, MaterialPageRoute(builder: (context) {
       return VanPage(
@@ -261,7 +218,19 @@ class SettlementPageState extends State<SettlementPage> {
     }));
   }
 
-  getVoucherNumber() async {
+  getOldBalance() async {
+    await reference.child("Customers").once().then((DataSnapshot snapshot) {
+      Map<dynamic, dynamic> values = snapshot.value;
+      values.forEach((key, values) {
+        if (widget.customerName == values["Name"]) {
+          setState(() {
+            Customer.balance = values["Balance"].toString();
+            Customer.CustomerName = values["Name"].toString();
+          });
+        }
+      });
+    });
+
     await reference
         .child("Vouchers")
         .child(User.vanNo)
@@ -277,17 +246,7 @@ class SettlementPageState extends State<SettlementPage> {
         });
       });
     });
-  }
 
-  void initState() {
-    // TODO: implement initState
-
-    reference = FirebaseDatabase.instance
-        .reference()
-        .child("Companies")
-        .child(User.database);
-
-    getVoucherNumber();
     setState(() {
       oldBalance.text = Customer.balance;
       billAmount.text = widget.values['Amount'].toString();
@@ -295,8 +254,18 @@ class SettlementPageState extends State<SettlementPage> {
       paidCash.text = "0";
       paidCard.text = "0";
       finalBalance =
-          double.parse(Customer.balance) + double.parse(subTotal.text);
+          double.parse(widget.values['Balance']) + double.parse(subTotal.text);
     });
+  }
+
+  void initState() {
+    // TODO: implement initState
+    reference = FirebaseDatabase.instance
+        .reference()
+        .child("Companies")
+        .child(User.database);
+
+    getOldBalance();
 
     super.initState();
   }
@@ -308,14 +277,6 @@ class SettlementPageState extends State<SettlementPage> {
       appBar: buildAppBar(context),
       body: WillPopScope(
         onWillPop: () async {
-          // You can do some work here.
-          // Returning true allows the pop to happen, returning false prevents it.
-          reference
-              .child("Bills")
-              .child(widget.date)
-              .child(User.vanNo)
-              .child(User.voucherNumber)
-              .remove();
           return true;
         },
         child: ListView(

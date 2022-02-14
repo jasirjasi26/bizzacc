@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:optimist_erp_app/data/user_data.dart';
+import 'package:optimist_erp_app/screens/login.dart';
 import 'package:optimist_erp_app/screens/mis_reports/sales_register.dart';
 
 import 'package:optimist_erp_app/screens/mis_reports/sales_ledger.dart';
 import 'package:optimist_erp_app/screens/mis_reports/stock_reports.dart';
 import 'package:optimist_erp_app/screens/orders.dart';
-import 'package:optimist_erp_app/screens/product.dart';
-import 'package:optimist_erp_app/screens/van_page.dart';
+import 'package:optimist_erp_app/screens/customers.dart';
+import 'package:optimist_erp_app/screens/all_products.dart';
+import 'package:optimist_erp_app/screens/reports/stock_report.dart';
 
 class MainDrawer extends StatefulWidget {
   const MainDrawer({
@@ -19,6 +21,8 @@ class MainDrawer extends StatefulWidget {
 }
 
 class MainDrawerState extends State<MainDrawer> {
+  bool misHeight = false;
+  bool reports = false;
 
   @override
   Widget build(BuildContext context) {
@@ -27,317 +31,313 @@ class MainDrawerState extends State<MainDrawer> {
         color: Colors.white,
         padding: EdgeInsets.only(top: 50),
         child: ListView(
-            children: <Widget>[
-              ListTile(
-                  visualDensity:
-                  VisualDensity(horizontal: -4, vertical: -4),
-                  leading: Container(
-                    height: 35,
-                    width: 35,
-                    child: Center(
-                      child: Container(
-                          height: 20,
-                          width: 20,
-                          child: Image.asset("assets/images/van.png",
-                              fit: BoxFit.scaleDown,
+          children: <Widget>[
+            ListTile(
+                visualDensity: VisualDensity(horizontal: -4, vertical: -4),
+                leading: Container(
+                  height: 35,
+                  width: 35,
+                  child: Center(
+                    child: Container(
+                        height: 20,
+                        width: 20,
+                        child: Image.asset(
+                          "assets/images/van.png",
+                          fit: BoxFit.scaleDown,
                           //    color: Colors.white
-                          )),
-                    ),
+                        )),
                   ),
-                  title: Text('Van number '+User.vanNo,
-                      style: TextStyle(color: Colors.black, fontSize: 18)),
-                  onTap: () {
-
-                  }),
-              ListTile(
-                  visualDensity:
-                  VisualDensity(horizontal: -4, vertical: -4),
-                  leading: Container(
-                    height: 35,
-                    width: 35,
-                    child: Center(
-                      child: Container(
-                          height: 20,
-                          width: 20,
-                          child: Image.asset("assets/images/phone.png",
-                              fit: BoxFit.scaleDown,
+                ),
+                title: Text('Van number ' + User.vanNo.toString(),
+                    style: TextStyle(color: Colors.black, fontSize: 18)),
+                onTap: () {}),
+            SizedBox(height: 5,),
+            ListTile(
+                visualDensity: VisualDensity(horizontal: -4, vertical: -4),
+                leading: Container(
+                  height: 35,
+                  width: 35,
+                  child: Center(
+                    child: Container(
+                        height: 20,
+                        width: 20,
+                        child: Image.asset(
+                          "assets/images/phone.png",
+                          fit: BoxFit.scaleDown,
                           //    color: Colors.white
-                          )),
-                    ),
+                        )),
                   ),
-                  title: Text(User.number,
-                      style: TextStyle(color: Colors.black, fontSize: 18)),
-                  onTap: () {
-                    // Navigator.push(context,
-                    //     MaterialPageRoute(builder: (context) {
-                    //      // return DoctorAppoinments();
-                    //     }));
-                  }),
-              Divider(height: 30,color: Colors.white,thickness: 0.2,),
-
-              ListTile(
-                  visualDensity:
-                  VisualDensity(horizontal: -4, vertical: -4),
-                  leading: Container(
-                    height: 35,
-                    width: 35,
-
-                    child: Center(
-                      child: Container(
-                          height: 20,
-                          width: 20,
-                          child: Image.asset("assets/images/customers.png",
-                              fit: BoxFit.scaleDown,
+                ),
+                title: Text(User.number.toString(),
+                    style: TextStyle(color: Colors.black, fontSize: 18)),
+                onTap: () {
+                  // Navigator.push(context,
+                  //     MaterialPageRoute(builder: (context) {
+                  //      // return DoctorAppoinments();
+                  //     }));
+                }),
+            SizedBox(height: 5,),
+            ListTile(
+                visualDensity: VisualDensity(horizontal: -4, vertical: -4),
+                leading: Container(
+                  height: 35,
+                  width: 35,
+                  child: Center(
+                    child: Container(
+                        height: 20,
+                        width: 20,
+                        child: Image.asset(
+                          "assets/images/customers.png",
+                          fit: BoxFit.scaleDown,
                           //    color: Colors.white
-                          )),
-                    ),
+                        )),
                   ),
-                  title: Text('Customers',
-                      style: TextStyle(color: Colors.black, fontSize: 18)),
-                  onTap: () {
-                    // Navigator.push(context,
-                    //     MaterialPageRoute(builder: (context) {
-                    //      // return DoctorPrescription();
-                    //     }));
-                  }),
-              //  : Container(),
-              // is_logged_in.value == true
-              //     ?
-
-              ListTile(
-                  visualDensity:
-                  VisualDensity(horizontal: -4, vertical: -4),
-                  leading: Container(
-                    height: 35,
-                    width: 35,
-                    child: Center(
-                      child: Container(
-                          height: 20,
-                          width: 20,
-                          child: Image.asset("assets/images/product.png",
-                              fit: BoxFit.scaleDown,
+                ),
+                title: Text('Customers',
+                    style: TextStyle(color: Colors.black, fontSize: 18)),
+                onTap: () {
+                  Navigator.push(context, MaterialPageRoute(builder: (context) {
+                    return CustomersList();
+                  }));
+                }),
+            //  : Container(),
+            // is_logged_in.value == true
+            //     ?
+            SizedBox(height: 5,),
+            ListTile(
+                visualDensity: VisualDensity(horizontal: -4, vertical: -4),
+                leading: Container(
+                  height: 35,
+                  width: 35,
+                  child: Center(
+                    child: Container(
+                        height: 20,
+                        width: 20,
+                        child: Image.asset(
+                          "assets/images/product.png",
+                          fit: BoxFit.scaleDown,
                           //    color: Colors.black
-                          )),
-                    ),
+                        )),
                   ),
-                  title: Text('Products',
-                      style: TextStyle(color: Colors.black, fontSize: 18)),
-                  onTap: () {
-
-                    Navigator.push(context,
-                        MaterialPageRoute(builder: (context) {
-                           return ProductPage(title: "title",);
-                        }));
-                  }),
-
-              ListTile(
-                  visualDensity:
-                  VisualDensity(horizontal: -4, vertical: -4),
-                  leading: Container(
-                    height: 35,
-                    width: 35,
-                    child: Center(
-                      child: Container(
-                          height: 20,
-                          width: 20,
-                          child: Image.asset("assets/images/stock.png",
-                              fit: BoxFit.scaleDown,
-                          //    color: Colors.black
-                          )),
-                    ),
+                ),
+                title: Text('Products',
+                    style: TextStyle(color: Colors.black, fontSize: 18)),
+                onTap: () {
+                  Navigator.push(context, MaterialPageRoute(builder: (context) {
+                    return AllProductPage(back: true,);
+                  }));
+                }),
+            SizedBox(height: 5,),
+            ListTile(
+                visualDensity: VisualDensity(horizontal: -4, vertical: -4),
+                leading: Container(
+                  height: 35,
+                  width: 35,
+                  child: Center(
+                    child: Container(
+                        height: 20,
+                        width: 20,
+                        child: Image.asset("assets/images/orders.png",
+                            fit: BoxFit.scaleDown, color: Colors.black)),
                   ),
-                  title: Text('Stock',
-                      style: TextStyle(color: Colors.black, fontSize: 18)),
-                  onTap: () {
-                    // Navigator.push(context,
-                    //     MaterialPageRoute(builder: (context) {
-                    //      // return ConsultationList();
-                    //     }));
-
-                  }),
-
-              Divider(height: 30,color: Colors.white,thickness: 0.2,),
-              ListTile(
-                  visualDensity:
-                  VisualDensity(horizontal: -4, vertical: -4),
-                  leading: Container(
-                    height: 35,
-                    width: 35,
-                    child: Center(
-                      child: Container(
-                          height: 20,
-                          width: 20,
-                          child: Image.asset("assets/images/orders.png",
-                              fit: BoxFit.scaleDown,
-                              color: Colors.black)),
-                    ),
-                  ),
-                  title: Text('Orders',
-                      style: TextStyle(color: Colors.black, fontSize: 18)),
-                  onTap: () {
-                    Navigator.push(context,
-                        MaterialPageRoute(builder: (context) {
-                          return OrdersPage();
-                        }));
-                  }),
-
-              ListTile(
-                  visualDensity:
-                  VisualDensity(horizontal: -4, vertical: -4),
-                  leading: Container(
-                    height: 35,
-                    width: 35,
-                    child: Center(
-                      child: Container(
-                          height: 20,
-                          width: 20,
-                          child: Image.asset("assets/images/misreports.png",
-                              fit: BoxFit.scaleDown,
+                ),
+                title: Text('Orders',
+                    style: TextStyle(color: Colors.black, fontSize: 18)),
+                onTap: () {
+                  Navigator.push(context, MaterialPageRoute(builder: (context) {
+                    return OrdersPage();
+                  }));
+                }),
+            SizedBox(height: 5,),
+            ListTile(
+                visualDensity: VisualDensity(horizontal: -4, vertical: -4),
+                leading: Container(
+                  height: 35,
+                  width: 35,
+                  child: Center(
+                    child: Container(
+                        height: 20,
+                        width: 20,
+                        child: Image.asset(
+                          "assets/images/misreports.png",
+                          fit: BoxFit.scaleDown,
                           //    color: Colors.white
-                          )),
+                        )),
+                  ),
+                ),
+                title: Text('Mis Reports',
+                    style: TextStyle(color: Colors.black, fontSize: 18)),
+                onTap: () {
+                  setState(() {
+                    misHeight = !misHeight;
+                  });
+                }),
+            SizedBox(height: 5,),
+            ///3 types
+            ///
+            misHeight
+                ? ListTile(
+                    trailing: Padding(
+                      padding: const EdgeInsets.only(right: 50.0),
+                      child: Text('Sales Register',
+                          style: TextStyle(color: Colors.black, fontSize: 18)),
                     ),
-                  ),
-                  title: Text('Mis Reports',
-                      style: TextStyle(color: Colors.black, fontSize: 18)),
-                  onTap: () {
-                    // Navigator.push(context,
-                    //     MaterialPageRoute(builder: (context) {
-                    //      // return DoctorLeaves();
-                    //     }));
-
-                  }),
-
-              ///3 types
-              ///
-              ListTile(
-                  trailing: Padding(
-                    padding: const EdgeInsets.only(right:50.0),
-                    child: Text('Sales Register',
-                        style: TextStyle(color: Colors.black, fontSize: 18)),
-                  ),
-                  onTap: () {
-                    Navigator.push(context,
-                        MaterialPageRoute(builder: (context) {
-                          return SalesRegister();
-                        }));
-                  }),
-              ListTile(
-                  trailing: Padding(
-                    padding: const EdgeInsets.only(right:50.0),
-                    child: Text('Stock Reports ',
-                        style: TextStyle(color: Colors.black, fontSize: 18)),
-                  ),
-                  onTap: () {
-                    Navigator.push(context,
-                        MaterialPageRoute(builder: (context) {
-                          return StockReports();
-                        }));
-                  }),
-              ListTile(
-                  trailing: Padding(
-                    padding: const EdgeInsets.only(right:50.0),
-                    child: Text('Sales Ledger  ',
-                        style: TextStyle(color: Colors.black, fontSize: 18)),
-                  ),
-                  onTap: () {
-                    Navigator.push(context,
-                        MaterialPageRoute(builder: (context) {
-                          return SalesLedger();
-                        }));
-                  }),
-
-              ListTile(
-                  visualDensity:
-                  VisualDensity(horizontal: -4, vertical: -4),
-                  leading: Container(
-                    height: 35,
-                    width: 35,
-                    child: Center(
-                      child: Container(
-                          height: 20,
-                          width: 20,
-                          child: Image.asset("assets/images/reports.png",
-                              fit: BoxFit.scaleDown,
+                    onTap: () {
+                      Navigator.push(context,
+                          MaterialPageRoute(builder: (context) {
+                        return SalesRegister();
+                      }));
+                    })
+                : Container(),
+            misHeight
+                ? ListTile(
+                    trailing: Padding(
+                      padding: const EdgeInsets.only(right: 50.0),
+                      child: Text('Stock Reports ',
+                          style: TextStyle(color: Colors.black, fontSize: 18)),
+                    ),
+                    onTap: () {
+                      Navigator.push(context,
+                          MaterialPageRoute(builder: (context) {
+                        return StockReports();
+                      }));
+                    })
+                : Container(),
+            misHeight
+                ? ListTile(
+                    trailing: Padding(
+                      padding: const EdgeInsets.only(right: 50.0),
+                      child: Text('Sales Ledger  ',
+                          style: TextStyle(color: Colors.black, fontSize: 18)),
+                    ),
+                    onTap: () {
+                      Navigator.push(context,
+                          MaterialPageRoute(builder: (context) {
+                        return SalesLedger();
+                      }));
+                    })
+                : Container(),
+            SizedBox(height: 5,),
+            ListTile(
+                visualDensity: VisualDensity(horizontal: -4, vertical: -4),
+                leading: Container(
+                  height: 35,
+                  width: 35,
+                  child: Center(
+                    child: Container(
+                        height: 20,
+                        width: 20,
+                        child: Image.asset(
+                          "assets/images/screens.reports.png",
+                          fit: BoxFit.scaleDown,
                           //    color: Colors.white
-                          )),
+                        )),
+                  ),
+                ),
+                title: Text('Reports',
+                    style: TextStyle(color: Colors.black, fontSize: 18)),
+                onTap: () {
+                  setState(() {
+                    reports = !reports;
+                  });
+                }),
+
+            ///3 types
+            ///
+            reports
+                ? ListTile(
+                    trailing: Padding(
+                      padding: const EdgeInsets.only(right: 20.0),
+                      child: Text('Sales Reports           ',
+                          style: TextStyle(color: Colors.black, fontSize: 18)),
                     ),
-                  ),
-                  title: Text('Reports',
-                      style: TextStyle(color: Colors.black, fontSize: 18)),
-                  onTap: () {
-                    // Navigator.push(context,
-                    //     MaterialPageRoute(builder: (context) {
-                    //       //return BannerRequest();
-                    //     }));
-
-                  }),
-
-              ///3 types
-              ///
-              ListTile(
-                  trailing: Padding(
-                    padding: const EdgeInsets.only(right:20.0),
-                    child: Text('Sales Reports           ',
-                        style: TextStyle(color: Colors.black, fontSize: 18)),
-                  ),
-                  onTap: () {
-                    // Navigator.push(context,
-                    //     MaterialPageRoute(builder: (context) {
-                    //       // return DoctorAppoinments();
-                    //     }));
-                  }),
-              ListTile(
-                  trailing: Padding(
-                    padding: const EdgeInsets.only(right:20.0),
-                    child: Text('Sales Return Report',
-                        style: TextStyle(color: Colors.black, fontSize: 18)),
-                  ),
-                  onTap: () {
-                    // Navigator.push(context,
-                    //     MaterialPageRoute(builder: (context) {
-                    //       // return DoctorAppoinments();
-                    //     }));
-                  }),
-              ListTile(
-                  trailing: Padding(
-                    padding: const EdgeInsets.only(right:20.0),
-                    child: Text('Stock Report            ',
-                        style: TextStyle(color: Colors.black, fontSize: 18)),
-                  ),
-                  onTap: () {
-                    // Navigator.push(context,
-                    //     MaterialPageRoute(builder: (context) {
-                    //       // return DoctorAppoinments();
-                    //     }));
-                  }),
-
-
-              ListTile(
-                  visualDensity:
-                  VisualDensity(horizontal: -4, vertical: -4),
-                  leading:Container(
-                    height: 35,
-                    width: 35,
-                    child: Center(
-                      child: Container(
-                          height: 20,
-                          width: 20,
-                          child: Image.asset("assets/images/wallet.png",
-                              fit: BoxFit.scaleDown,
+                    onTap: () {
+                      // Navigator.push(context,
+                      //     MaterialPageRoute(builder: (context) {
+                      //       // return DoctorAppoinments();
+                      //     }));
+                    })
+                : Container(),
+            reports
+                ? ListTile(
+                    trailing: Padding(
+                      padding: const EdgeInsets.only(right: 20.0),
+                      child: Text('Sales Return Report',
+                          style: TextStyle(color: Colors.black, fontSize: 18)),
+                    ),
+                    onTap: () {
+                      // Navigator.push(context,
+                      //     MaterialPageRoute(builder: (context) {
+                      //       // return DoctorAppoinments();
+                      //     }));
+                    })
+                : Container(),
+            reports
+                ? ListTile(
+                    trailing: Padding(
+                      padding: const EdgeInsets.only(right: 20.0),
+                      child: Text('Stock Report            ',
+                          style: TextStyle(color: Colors.black, fontSize: 18)),
+                    ),
+                    onTap: () {
+                      Navigator.push(context,
+                          MaterialPageRoute(builder: (context) {
+                            return StockReports1();
+                          }));
+                    })
+                : Container(),
+            SizedBox(height: 5,),
+            ListTile(
+                visualDensity: VisualDensity(horizontal: -4, vertical: -4),
+                leading: Container(
+                  height: 35,
+                  width: 35,
+                  child: Center(
+                    child: Container(
+                        height: 20,
+                        width: 20,
+                        child: Image.asset(
+                          "assets/images/wallet.png",
+                          fit: BoxFit.scaleDown,
                           //    color: Colors.white
-                          )),
-                    ),
+                        )),
                   ),
-                  title: Text('Wallet',
-                      style: TextStyle(color: Colors.black, fontSize: 18)),
-                  onTap: () {
+                ),
+                title: Text('Wallet',
+                    style: TextStyle(color: Colors.black, fontSize: 18)),
+                onTap: () {}),
 
-                  }),
-
-              SizedBox(height: 30,)
-            ],
-          ),
+            SizedBox(height: 5,),
+            ListTile(
+                visualDensity: VisualDensity(horizontal: -4, vertical: -4),
+                leading: Container(
+                  height: 35,
+                  width: 35,
+                  child: Center(
+                    child: Container(
+                        height: 20,
+                        width: 20,
+                        child: Image.asset(
+                          "assets/images/logout.png",
+                          fit: BoxFit.scaleDown,
+                          //    color: Colors.white
+                        )),
+                  ),
+                ),
+                title: Text('Logout',
+                    style: TextStyle(color: Colors.black, fontSize: 18)),
+                onTap: () {
+                  User().clear();
+                  Navigator.push(context, MaterialPageRoute(builder: (context) {
+                    return Login();
+                  }));
+                }),
+            SizedBox(
+              height: 30,
+            )
+          ],
         ),
+      ),
     );
   }
 }

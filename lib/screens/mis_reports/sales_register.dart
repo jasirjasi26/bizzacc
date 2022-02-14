@@ -1,6 +1,8 @@
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:optimist_erp_app/data/user_data.dart';
 
 class SalesRegister extends StatefulWidget {
   SalesRegister({Key key, this.title}) : super(key: key);
@@ -19,16 +21,20 @@ class SalesRegisterState extends State<SalesRegister> {
   List<String> paid = [];
   List<String> balance = [];
   DateTime selectedDate = DateTime.now();
-  String from="2021-12-15";
-  var name=TextEditingController();
+  String from = DateTime.now().year.toString() +
+      "-" +
+      DateTime.now().month.toString() +
+      "-" +
+      DateTime.now().day.toString();
+
+  String to = DateTime.now().year.toString() +
+      "-" +
+      DateTime.now().month.toString() +
+      "-" +
+      DateTime.now().day.toString();
+  var name = TextEditingController();
 
   Future<void> _selectDate(BuildContext context) async {
-    dates.clear();
-    party.clear();
-    amount.clear();
-    paid.clear();
-    balance.clear();
-
     final DateTime picked = await showDatePicker(
         context: context,
         initialDate: selectedDate,
@@ -37,7 +43,30 @@ class SalesRegisterState extends State<SalesRegister> {
     if (picked != null && picked != selectedDate)
       setState(() {
         selectedDate = picked;
-        from=selectedDate.year.toString()+"-"+selectedDate.month.toString()+"-"+selectedDate.day.toString();
+        from = selectedDate.year.toString() +
+            "-" +
+            selectedDate.month.toString() +
+            "-" +
+            selectedDate.day.toString();
+      });
+
+    getCustomerId(from);
+  }
+
+  Future<void> _selectToDate(BuildContext context) async {
+    final DateTime picked = await showDatePicker(
+        context: context,
+        initialDate: selectedDate,
+        firstDate: DateTime(2015, 8),
+        lastDate: DateTime(2101));
+    if (picked != null && picked != selectedDate)
+      setState(() {
+        selectedDate = picked;
+        to = selectedDate.year.toString() +
+            "-" +
+            selectedDate.month.toString() +
+            "-" +
+            selectedDate.day.toString();
       });
 
     getCustomerId(from);
@@ -52,19 +81,46 @@ class SalesRegisterState extends State<SalesRegister> {
       paid.clear();
       balance.clear();
     });
-    await reference.child("SalesReport").child(from).once().then((DataSnapshot snapshot) {
-      Map<dynamic, dynamic> values = snapshot.value;
-      values.forEach((key, values) {
-        if(values['PartyName'].toString().toLowerCase().contains(name.text.toLowerCase())){
-          setState(() {
-            dates.add(values['Date'].toString());
-            party.add(values['PartyName'].toString());
-            amount.add(values['GrandAmount'].toString());
-            paid.add(values['Paid'].toString());
-            balance.add(values['Balance'].toString());
-          });
-        }
 
+
+
+
+
+    await reference.child("SalesReport").once().then((DataSnapshot snapshot) {
+      Map<dynamic, dynamic> values = snapshot.value;
+      values.forEach((key, values) async {
+        DateFormat inputFormat = DateFormat('yyyy-mm-dd');
+        DateTime input = inputFormat.parse(from);
+        DateTime inputTo = inputFormat.parse(to);
+        DateTime inputKey = inputFormat.parse(key);
+        String datefrom = DateFormat('yyyy-mm-dd').format(input);
+        String dateTo = DateFormat('yyyy-mm-dd').format(inputTo);
+        String dateKeys = DateFormat('yyyy-mm-dd').format(inputKey);
+
+        if (DateTime.parse(dateKeys).isAfter(DateTime.parse(datefrom)) &&
+            DateTime.parse(dateKeys).isBefore(DateTime.parse(dateTo)) ||
+            DateTime.parse(dateKeys) == (DateTime.parse(dateTo)) ||
+            DateTime.parse(dateKeys) == (DateTime.parse(datefrom))) {
+          print(key);
+          await reference.child("SalesReport").child(key).once().then((DataSnapshot snapshot) {
+            Map<dynamic, dynamic> values = snapshot.value;
+            values.forEach((key, values) {
+              if(values['PartyName'].toString().toLowerCase().contains(name.text.toLowerCase())){
+                setState(() {
+                  dates.add(values['Date'].toString());
+                  party.add(values['PartyName'].toString());
+                  amount.add(values['GrandAmount'].toString());
+                  paid.add(values['Paid'].toString());
+                  balance.add(values['Balance'].toString());
+                });
+              }
+
+            });
+          });
+
+        } else {
+          print("Noo data");
+        }
       });
     });
 
@@ -75,7 +131,7 @@ class SalesRegisterState extends State<SalesRegister> {
     reference = FirebaseDatabase.instance
         .reference()
         .child("Companies")
-        .child("CYBRIX");
+        .child(User.database);
 getCustomerId(from);
 
     super.initState();
@@ -110,13 +166,14 @@ getCustomerId(from);
         children: [
           Row(
             children: [
+              SizedBox(width: 10,),
               Padding(
                 padding: const EdgeInsets.all(5.0),
                 child: Container(
                   width: MediaQuery
                       .of(context)
                       .size
-                      .width * 0.83,
+                      .width * 0.9,
                   height: 50,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(5.0),
@@ -148,22 +205,22 @@ getCustomerId(from);
                       )),
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.only(left: 8.0, right: 8),
-                child: GestureDetector(
-                  onTap:(){
-                    _selectDate(context);
-                  },
-                  child: Container(
-                      height: 30,
-                      width: 30,
-                      child: Image.asset(
-                        "assets/images/calender.png",
-                        fit: BoxFit.scaleDown,
-                        //    color: Colors.white
-                      )),
-                ),
-              ),
+              // Padding(
+              //   padding: const EdgeInsets.only(left: 8.0, right: 8),
+              //   child: GestureDetector(
+              //     onTap:(){
+              //       _selectDate(context);
+              //     },
+              //     child: Container(
+              //         height: 30,
+              //         width: 30,
+              //         child: Image.asset(
+              //           "assets/images/calender.png",
+              //           fit: BoxFit.scaleDown,
+              //           //    color: Colors.white
+              //         )),
+              //   ),
+             // ),
             ],
           ),
           SizedBox(height: 10,),
@@ -172,7 +229,7 @@ getCustomerId(from);
             child: Row(
               children: [
                 Text(
-                  '   Date  :',
+                  '   From  :',
                   style: TextStyle(
                     fontFamily: 'Arial',
                     fontSize: 14,
@@ -197,35 +254,35 @@ getCustomerId(from);
                     textAlign: TextAlign.left,
                   ),
                 ),
-                // SizedBox(
-                //   width: 10,
-                // ),
-                // Text(
-                //   'To',
-                //   style: TextStyle(
-                //     fontFamily: 'Arial',
-                //     fontSize: 13,
-                //     color: Color(0xffb0b0b0),
-                //   ),
-                //   textAlign: TextAlign.left,
-                // ),
-                // SizedBox(
-                //   width: 10,
-                // ),
-                // GestureDetector(
-                //   onTap:(){
-                //     _selectToDate(context);
-                //   },
-                //   child: Text(
-                //     to,
-                //     style: TextStyle(
-                //         fontFamily: 'Arial',
-                //         fontSize: 13,
-                //         color: Colors.black,
-                //         decoration: TextDecoration.underline),
-                //     textAlign: TextAlign.left,
-                //   ),
-                // ),
+                SizedBox(
+                  width: 10,
+                ),
+                Text(
+                  'To',
+                  style: TextStyle(
+                    fontFamily: 'Arial',
+                    fontSize: 13,
+                    color: Color(0xffb0b0b0),
+                  ),
+                  textAlign: TextAlign.left,
+                ),
+                SizedBox(
+                  width: 10,
+                ),
+                GestureDetector(
+                  onTap:(){
+                    _selectToDate(context);
+                  },
+                  child: Text(
+                    to,
+                    style: TextStyle(
+                        fontFamily: 'Arial',
+                        fontSize: 13,
+                        color: Colors.black,
+                        decoration: TextDecoration.underline),
+                    textAlign: TextAlign.left,
+                  ),
+                ),
               ],
             ),
           ),

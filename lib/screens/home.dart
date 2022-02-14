@@ -4,12 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:optimist_erp_app/data/user_data.dart';
 import 'package:optimist_erp_app/screens/orders.dart';
 import '../ui_elements/main_drawer.dart';
+import 'package:optimist_erp_app/screens/reciept_portal.dart';
+import 'package:optimist_erp_app/screens/returns/return_order.dart';
+import 'dart:ui';
+import 'package:textfield_search/textfield_search.dart';
+import 'package:optimist_erp_app/screens/returns/sales_returns.dart';
 
 class MyHomePage extends StatefulWidget {
-  MyHomePage({Key key, this.title}) : super(key: key);
-
-  final String title;
-
   @override
   _MyHomePageState createState() => _MyHomePageState();
 }
@@ -17,20 +18,124 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
   DatabaseReference reference;
-  String today=DateTime.now().year.toString() + "-" + DateTime.now().month.toString() + "-" + DateTime.now().day.toString();
+  String today = DateTime.now().year.toString() +
+      "-" +
+      DateTime.now().month.toString() +
+      "-" +
+      DateTime.now().day.toString();
+  int todaysPending = 0;
+  int todaysOrders = 0;
+  double totalSales=0;
+  double totalStocks = 0;
+  DatabaseReference names;
+  String label = "Enter Customer Name";
+  List<String> _locations = []; // Option 2
+  String _selectedLocation; //
+  DatabaseReference types;// Opt
 
 
-  Future<void> getBill() async {
-    reference..child("Bills").child(today).child(User.vanNo).once().then((DataSnapshot snapshot) {
-      List<dynamic> value = snapshot.value;
-      for (int i = 0; i < value.length; i++) {
-        if (value[i] != null) {
-          setState(() {
-            // item.add(value[i]['ItemName'].toString());
-            // totalDisc=totalDisc+double.parse(value[i]['DiscAmount'].toString());
-          });
-        }}
+  Future<void> getSalesTypes() async {
+    await types.once().then((DataSnapshot snapshot) {
+      Map<dynamic, dynamic> values = snapshot.value;
+      values.forEach((key, values) {
+        _locations.add(values["Name"].toString());
+      });
     });
+  }
+
+
+  Future<void> getOrders() async {
+    setState(() {
+      totalSales=0;
+      todaysPending = 0;
+      totalStocks = 0;
+      todaysOrders = 0;
+    });
+
+    await reference.child("Vouchers").child(User.vanNo).once().then((DataSnapshot snapshot) {
+      Map<dynamic, dynamic> values = snapshot.value;
+      values.forEach((key, values) {
+        setState(() {
+          if(key.toString()=="VoucherNumber"){
+            User.voucherNumber = User.voucherStarting +
+                (int.parse(values.toString()) + 1).toString();
+          }
+          if(key.toString()=="OrderNumber"){
+            User.orderNumber=User.orderStarting +
+                (int.parse(values.toString()) + 1).toString();
+          }
+        });
+      });
+    });
+
+
+    await reference.child("Stocks").once().then((DataSnapshot snapshot) {
+      List<dynamic> values = snapshot.value;
+      if (snapshot.value != null) {
+        for (int i = 0; i < values.length; i++) {
+          if (values[i] != null) {
+            setState(() {
+              totalStocks =
+                  totalStocks + double.parse(values[i]['Stock']['All']);
+            });
+          }
+        }
+      }
+    });
+
+    await reference
+        .child("OrderList")
+        .child(today)
+        .child(User.vanNo)
+        .once()
+        .then((DataSnapshot snapshot) {
+      Map<dynamic, dynamic> values = snapshot.value;
+      if(values!=null){
+        if(values.length>0){
+          setState(() {
+            todaysPending = values.length;
+          });
+        }
+      }
+    });
+
+    await reference
+        .child("Bills")
+        .child(today)
+        .child(User.vanNo)
+        .once()
+        .then((DataSnapshot snapshot) {
+      Map<dynamic, dynamic> values = snapshot.value;
+      if(values!=null){
+        if(values.length>0) {
+          setState(() {
+            todaysOrders = values.length + todaysPending;
+          });
+        }
+      }
+      else{
+        setState(() {
+          todaysOrders = todaysPending;
+        });
+      }
+    });
+
+
+    await reference
+        .child("SalesReport")
+        .child(today)
+        .once()
+        .then((DataSnapshot snapshot) {
+      Map<dynamic, dynamic> values = snapshot.value;
+      values.forEach((key, values) {
+        setState(() {
+          totalSales=totalSales+double.parse(values["GrandAmount"]);
+        });
+      });
+    });
+
+    print(User.orderNumber);
+    print(User.voucherNumber);
   }
 
 
@@ -39,12 +144,23 @@ class _MyHomePageState extends State<MyHomePage> {
     reference = FirebaseDatabase.instance
         .reference()
         .child("Companies")
-        .child("CYBRIX");
+        .child(User.database);
 
-    getBill();
+    types = FirebaseDatabase.instance
+        .reference()
+        .child("Companies")
+        .child(User.database)
+        .child("SalesTypes");
+
+    names = FirebaseDatabase.instance
+        .reference()
+        .child("Companies")
+        .child(User.database)
+        .child("Customers");
+    getOrders();
+    getSalesTypes();
     super.initState();
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -58,21 +174,24 @@ class _MyHomePageState extends State<MyHomePage> {
           // Returning true allows the pop to happen, returning false prevents it.
           return false;
         },
-        child: ListView(
-          children: [
-            SizedBox(
-              height: 10,
-            ),
-            homeBox(),
-            SizedBox(
-              height: 20,
-            ),
-            diffBox(),
-            SizedBox(
-              height: 20,
-            ),
-            overViewBox()
-          ],
+        child: RefreshIndicator(
+          onRefresh: getOrders,
+          child: ListView(
+            children: [
+              SizedBox(
+                height: 10,
+              ),
+              homeBox(),
+              SizedBox(
+                height: 20,
+              ),
+              diffBox(),
+              SizedBox(
+                height: 20,
+              ),
+              overViewBox()
+            ],
+          ),
         ),
       ),
     );
@@ -149,7 +268,7 @@ class _MyHomePageState extends State<MyHomePage> {
                             Padding(
                               padding: const EdgeInsets.only(left: 8.0),
                               child: Text(
-                                '24500',
+                                totalSales.toString(),
                                 style: TextStyle(
                                   fontFamily: 'Segoe UI',
                                   fontSize: 22,
@@ -171,18 +290,18 @@ class _MyHomePageState extends State<MyHomePage> {
                                 textAlign: TextAlign.left,
                               ),
                             ),
-                            Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Text(
-                                'Tap to view',
-                                style: TextStyle(
-                                  fontFamily: 'Segoe UI',
-                                  fontSize: 10,
-                                  color: const Color(0xffffffff),
-                                ),
-                                textAlign: TextAlign.left,
-                              ),
-                            ),
+                            // Padding(
+                            //   padding: const EdgeInsets.all(8.0),
+                            //   child: Text(
+                            //     'Tap to view',
+                            //     style: TextStyle(
+                            //       fontFamily: 'Segoe UI',
+                            //       fontSize: 10,
+                            //       color: const Color(0xffffffff),
+                            //     ),
+                            //     textAlign: TextAlign.left,
+                            //   ),
+                            // ),
                           ],
                         ),
                       ),
@@ -252,7 +371,7 @@ class _MyHomePageState extends State<MyHomePage> {
                             Padding(
                               padding: const EdgeInsets.only(left: 8.0),
                               child: Text(
-                                '24',
+                                todaysPending.toString(),
                                 style: TextStyle(
                                   fontFamily: 'Segoe UI',
                                   fontSize: 22,
@@ -274,18 +393,18 @@ class _MyHomePageState extends State<MyHomePage> {
                                 textAlign: TextAlign.left,
                               ),
                             ),
-                            Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Text(
-                                'Tap to view',
-                                style: TextStyle(
-                                  fontFamily: 'Segoe UI',
-                                  fontSize: 10,
-                                  color: const Color(0xffffffff),
-                                ),
-                                textAlign: TextAlign.left,
-                              ),
-                            ),
+                            // Padding(
+                            //   padding: const EdgeInsets.all(8.0),
+                            //   child: Text(
+                            //     'Tap to view',
+                            //     style: TextStyle(
+                            //       fontFamily: 'Segoe UI',
+                            //       fontSize: 10,
+                            //       color: const Color(0xffffffff),
+                            //     ),
+                            //     textAlign: TextAlign.left,
+                            //   ),
+                            // ),
                           ],
                         ),
                       ),
@@ -364,7 +483,7 @@ class _MyHomePageState extends State<MyHomePage> {
                             Padding(
                               padding: const EdgeInsets.only(left: 8.0),
                               child: Text(
-                                '1012',
+                                totalStocks.toStringAsFixed(0),
                                 style: TextStyle(
                                   fontFamily: 'Segoe UI',
                                   fontSize: 22,
@@ -386,18 +505,18 @@ class _MyHomePageState extends State<MyHomePage> {
                                 textAlign: TextAlign.left,
                               ),
                             ),
-                            Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Text(
-                                'Tap to view',
-                                style: TextStyle(
-                                  fontFamily: 'Segoe UI',
-                                  fontSize: 10,
-                                  color: const Color(0xffffffff),
-                                ),
-                                textAlign: TextAlign.left,
-                              ),
-                            ),
+                            // Padding(
+                            //   padding: const EdgeInsets.all(8.0),
+                            //   child: Text(
+                            //     'Tap to view',
+                            //     style: TextStyle(
+                            //       fontFamily: 'Segoe UI',
+                            //       fontSize: 10,
+                            //       color: const Color(0xffffffff),
+                            //     ),
+                            //     textAlign: TextAlign.left,
+                            //   ),
+                            // ),
                           ],
                         ),
                       ),
@@ -467,7 +586,7 @@ class _MyHomePageState extends State<MyHomePage> {
                             Padding(
                               padding: const EdgeInsets.only(left: 8.0),
                               child: Text(
-                                '144',
+                                todaysOrders.toString(),
                                 style: TextStyle(
                                   fontFamily: 'Segoe UI',
                                   fontSize: 22,
@@ -489,18 +608,18 @@ class _MyHomePageState extends State<MyHomePage> {
                                 textAlign: TextAlign.left,
                               ),
                             ),
-                            Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Text(
-                                'Tap to view',
-                                style: TextStyle(
-                                  fontFamily: 'Segoe UI',
-                                  fontSize: 10,
-                                  color: const Color(0xffffffff),
-                                ),
-                                textAlign: TextAlign.left,
-                              ),
-                            ),
+                            // Padding(
+                            //   padding: const EdgeInsets.all(8.0),
+                            //   child: Text(
+                            //     'Tap to view',
+                            //     style: TextStyle(
+                            //       fontFamily: 'Segoe UI',
+                            //       fontSize: 10,
+                            //       color: const Color(0xffffffff),
+                            //     ),
+                            //     textAlign: TextAlign.left,
+                            //   ),
+                            // ),
                           ],
                         ),
                       ),
@@ -597,8 +716,7 @@ class _MyHomePageState extends State<MyHomePage> {
             color: Colors.white,
             borderRadius: BorderRadius.circular(20.0),
             image: DecorationImage(
-              image: AssetImage(
-                  'assets/images/chart.png'),
+              image: AssetImage('assets/images/chart.png'),
               fit: BoxFit.cover,
             ),
             boxShadow: [
@@ -619,7 +737,10 @@ class _MyHomePageState extends State<MyHomePage> {
       children: [
         Row(
           children: [
-            SizedBox(width: 30,height: 50,),
+            SizedBox(
+              width: 30,
+              height: 50,
+            ),
             Text(
               'Overview',
               style: TextStyle(
@@ -698,22 +819,22 @@ class _MyHomePageState extends State<MyHomePage> {
                         style: TextStyle(color: Colors.grey, fontSize: 16),
                       ),
                       Spacer(),
-                      Container(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(15.0),
-                            color: Colors.green,
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.only(
-                                left: 10.0, right: 10, top: 3, bottom: 3),
-                            child: Center(
-                              child: Text(
-                                "256",
-                                style: TextStyle(
-                                    color: Colors.white, fontSize: 16),
-                              ),
-                            ),
-                          )),
+                      // Container(
+                      //     decoration: BoxDecoration(
+                      //       borderRadius: BorderRadius.circular(15.0),
+                      //       color: Colors.green,
+                      //     ),
+                      //     child: Padding(
+                      //       padding: const EdgeInsets.only(
+                      //           left: 10.0, right: 10, top: 3, bottom: 3),
+                      //       child: Center(
+                      //         child: Text(
+                      //           todaysPending.toString(),
+                      //           style: TextStyle(
+                      //               color: Colors.white, fontSize: 14),
+                      //         ),
+                      //       ),
+                      //     )),
                       SizedBox(
                         width: 20,
                       )
@@ -727,179 +848,193 @@ class _MyHomePageState extends State<MyHomePage> {
         SizedBox(
           height: 20,
         ),
-        Container(
-          height: 100,
-          width: MediaQuery.of(context).size.width * 0.9,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20.0),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0x29000000),
-                offset: Offset(6, 3),
-                blurRadius: 6,
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Container(
-                      height: 50,
-                      width: 50,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(15.0),
-                        color: Color(0xcfa8ebab),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0x29000000),
-                            offset: Offset(6, 3),
-                            blurRadius: 6,
-                          ),
-                        ],
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(10.0),
-                        child: Image.asset(
-                          'assets/images/sales_return.png',
-                          color: Colors.black,
-                          fit: BoxFit.scaleDown,
-                        ),
-                      ),
-                    ),
-                  ),
-                  Text(
-                    " Sales Return",
-                    style: TextStyle(color: Colors.grey, fontSize: 18),
-                  )
-                ],
-              ),
-              Padding(
-                padding: const EdgeInsets.only(left: 10.0, top: 5),
-                child: Row(
+        GestureDetector(
+          onTap: () {
+            Navigator.push(context, MaterialPageRoute(builder: (context) {
+              return ReturnsPage();
+            }));
+          },
+          child:  Container(
+            height: 100,
+            width: MediaQuery.of(context).size.width * 0.9,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20.0),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0x29000000),
+                  offset: Offset(6, 3),
+                  blurRadius: 6,
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   children: [
-                    Text(
-                      "Tap to view",
-                      style: TextStyle(color: Colors.grey, fontSize: 16),
-                    ),
-                    Spacer(),
-                    Container(
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Container(
+                        height: 50,
+                        width: 50,
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(15.0),
-                          color: Colors.green,
+                          color: Color(0xcfa8ebab),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0x29000000),
+                              offset: Offset(6, 3),
+                              blurRadius: 6,
+                            ),
+                          ],
                         ),
                         child: Padding(
-                          padding: const EdgeInsets.only(
-                              left: 10.0, right: 10, top: 3, bottom: 3),
-                          child: Center(
-                            child: Text(
-                              "256",
-                              style:
-                                  TextStyle(color: Colors.white, fontSize: 16),
-                            ),
+                          padding: const EdgeInsets.all(10.0),
+                          child: Image.asset(
+                            'assets/images/sales_return.png',
+                            color: Colors.black,
+                            fit: BoxFit.scaleDown,
                           ),
-                        )),
-                    SizedBox(
-                      width: 20,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      " Sales Return",
+                      style: TextStyle(color: Colors.grey, fontSize: 18),
                     )
                   ],
                 ),
-              )
-            ],
+                Padding(
+                  padding: const EdgeInsets.only(left: 10.0, top: 5),
+                  child: Row(
+                    children: [
+                      Text(
+                        "Tap to view",
+                        style: TextStyle(color: Colors.grey, fontSize: 16),
+                      ),
+                      Spacer(),
+                      // Container(
+                      //     decoration: BoxDecoration(
+                      //       borderRadius: BorderRadius.circular(15.0),
+                      //       color: Colors.green,
+                      //     ),
+                      //     child: Padding(
+                      //       padding: const EdgeInsets.only(
+                      //           left: 10.0, right: 10, top: 3, bottom: 3),
+                      //       child: Center(
+                      //         child: Text(
+                      //           "256",
+                      //           style:
+                      //               TextStyle(color: Colors.white, fontSize: 16),
+                      //         ),
+                      //       ),
+                      //     )),
+                      SizedBox(
+                        width: 20,
+                      )
+                    ],
+                  ),
+                )
+              ],
+            ),
           ),
         ),
         SizedBox(
           height: 20,
         ),
-        Container(
-          height: 100,
-          width: MediaQuery.of(context).size.width * 0.9,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20.0),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0x29000000),
-                offset: Offset(6, 3),
-                blurRadius: 6,
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Container(
-                      height: 50,
-                      width: 50,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(15.0),
-                        color: Color(0xfff5ddbb),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0x29000000),
-                            offset: Offset(6, 3),
-                            blurRadius: 6,
-                          ),
-                        ],
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(10.0),
-                        child: Image.asset(
-                          'assets/images/reciept_portal.png',
-                          color: Colors.black,
-                          fit: BoxFit.scaleDown,
-                        ),
-                      ),
-                    ),
-                  ),
-                  Text(
-                    " Reciept Portal",
-                    style: TextStyle(color: Colors.grey, fontSize: 18),
-                  )
-                ],
-              ),
-              Padding(
-                padding: const EdgeInsets.only(left: 10.0, top: 5),
-                child: Row(
+        GestureDetector(
+          onTap: (){
+            Navigator.push(context, MaterialPageRoute(builder: (context) {
+              return RecieptPortal();
+            }));
+          },
+          child: Container(
+            height: 100,
+            width: MediaQuery.of(context).size.width * 0.9,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20.0),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0x29000000),
+                  offset: Offset(6, 3),
+                  blurRadius: 6,
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   children: [
-                    Text(
-                      "Tap to view",
-                      style: TextStyle(color: Colors.grey, fontSize: 16),
-                    ),
-                    Spacer(),
-                    Container(
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Container(
+                        height: 50,
+                        width: 50,
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(15.0),
-                          color: Colors.green,
+                          color: Color(0xfff5ddbb),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0x29000000),
+                              offset: Offset(6, 3),
+                              blurRadius: 6,
+                            ),
+                          ],
                         ),
                         child: Padding(
-                          padding: const EdgeInsets.only(
-                              left: 10.0, right: 10, top: 3, bottom: 3),
-                          child: Center(
-                            child: Text(
-                              "256",
-                              style:
-                                  TextStyle(color: Colors.white, fontSize: 16),
-                            ),
+                          padding: const EdgeInsets.all(10.0),
+                          child: Image.asset(
+                            'assets/images/reciept_portal.png',
+                            color: Colors.black,
+                            fit: BoxFit.scaleDown,
                           ),
-                        )),
-                    SizedBox(
-                      width: 20,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      " Receipt Portal",
+                      style: TextStyle(color: Colors.grey, fontSize: 18),
                     )
                   ],
                 ),
-              )
-            ],
+                Padding(
+                  padding: const EdgeInsets.only(left: 10.0, top: 5),
+                  child: Row(
+                    children: [
+                      Text(
+                        "Tap to view",
+                        style: TextStyle(color: Colors.grey, fontSize: 16),
+                      ),
+                      Spacer(),
+                      // Container(
+                      //     decoration: BoxDecoration(
+                      //       borderRadius: BorderRadius.circular(15.0),
+                      //       color: Colors.green,
+                      //     ),
+                      //     child: Padding(
+                      //       padding: const EdgeInsets.only(
+                      //           left: 10.0, right: 10, top: 3, bottom: 3),
+                      //       child: Center(
+                      //         child: Text(
+                      //           "256",
+                      //           style:
+                      //               TextStyle(color: Colors.white, fontSize: 16),
+                      //         ),
+                      //       ),
+                      //     )),
+                      SizedBox(
+                        width: 20,
+                      )
+                    ],
+                  ),
+                )
+              ],
+            ),
           ),
         ),
         SizedBox(
@@ -927,7 +1062,7 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
         Center(
             child: Text(
-          User.name,
+          User.name.toString(),
           style: TextStyle(color: Colors.black, fontWeight: FontWeight.w900),
         )),
         SizedBox(

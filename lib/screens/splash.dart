@@ -1,11 +1,14 @@
 import 'dart:ui';
 import 'package:adobe_xd/page_link.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:flutter/services.dart';
+import 'package:optimist_erp_app/data/user_data.dart';
 import 'package:optimist_erp_app/screens/login.dart';
+import 'package:optimist_erp_app/ui_elements/bottomNavigation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-import 'home.dart';
 
 class Splash extends StatefulWidget {
   @override
@@ -13,17 +16,51 @@ class Splash extends StatefulWidget {
 }
 
 class _SplashState extends State<Splash> {
+  DatabaseReference db;
+  List<dynamic> databases = ["Select Database"];
+  String _selectedLocation;
+
+  getUser() async {
+    // Obtain shared preferences.
+    final prefs = await SharedPreferences.getInstance();
+    String name = prefs.getString("name");
+    String number = prefs.getString("number");
+    String vanNumber = prefs.getString("vanNo");
+    String dbs=prefs.getString("database");
+
+    if (name != null && number != null) {
+      User.number = number;
+      User.name = name;
+      User.vanNo = vanNumber;
+      User.database=dbs;
+      User.database=dbs;
+
+      Navigator.push(context, MaterialPageRoute(builder: (context) {
+        return BottomBar();
+      }));
+    }
+  }
+
   @override
   void initState() {
     //on Splash Screen hide statusbar
-    SystemChrome.setEnabledSystemUIOverlays([SystemUiOverlay.bottom]);
+    SystemChrome.setEnabledSystemUIOverlays(
+        [SystemUiOverlay.bottom, SystemUiOverlay.top]);
 
+    db = FirebaseDatabase.instance
+        .reference()
+        .child("Companies");
+
+    getUser();
     super.initState();
   }
+
+
 
   @override
   void dispose() {
     //before going to other screen show statusbar
+
     SystemChrome.setEnabledSystemUIOverlays(
         [SystemUiOverlay.top, SystemUiOverlay.bottom]);
     super.dispose();
@@ -32,18 +69,19 @@ class _SplashState extends State<Splash> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor:  Color.fromRGBO(77,102,169,1),
-
+      backgroundColor: Color.fromRGBO(77, 102, 169, 1),
       body: Stack(
         children: [
           Container(
             height: MediaQuery.of(context).size.height,
             width: MediaQuery.of(context).size.width,
-            child: Image.asset("assets/images/splashbackground.png",scale: 1.5,fit: BoxFit.cover),
+            child: Image.asset("assets/images/splashbackground.png",
+                scale: 1.5, fit: BoxFit.cover),
           ),
           Center(
             child: Padding(
-              padding:  EdgeInsets.only(top:MediaQuery.of(context).size.height * 0.35),
+              padding: EdgeInsets.only(
+                  top: MediaQuery.of(context).size.height * 0.35),
               child: Column(
                 children: [
                   Container(
@@ -51,12 +89,14 @@ class _SplashState extends State<Splash> {
                     width: 250,
                     decoration: BoxDecoration(
                       image: DecorationImage(
-                        image:  AssetImage('assets/images/logo.png'),
+                        image: AssetImage('assets/images/logo.png'),
                         fit: BoxFit.fill,
                       ),
                     ),
                   ),
-                  SizedBox(height: 25,),
+                  SizedBox(
+                    height: 25,
+                  ),
                   Text(
                     'It\'s Time To Inspire',
                     style: TextStyle(
@@ -67,22 +107,31 @@ class _SplashState extends State<Splash> {
                     textAlign: TextAlign.left,
                   ),
 
-                  SizedBox(height: MediaQuery.of(context).size.height * 0.3,),
+                  SizedBox(
+                    height: MediaQuery.of(context).size.height * 0.25,
+                  ),
+                  SizedBox(height: 30,),
                   GestureDetector(
-                    onTap: (){
-                      Navigator.push(context, MaterialPageRoute(builder: (context) {
-                        return Login(
-                        );
-                      }));
+                    onTap: () async {
+
+                        Navigator.push(context,
+                            MaterialPageRoute(builder: (context) {
+                              return Login();
+                            }));
+
                     },
                     child: Container(
-                      padding: EdgeInsets.only(left: 25,right: 25,top: 10,bottom: 10),
+                      padding: EdgeInsets.only(
+                          left: 25, right: 25, top: 10, bottom: 10),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(15.0),
                         gradient: LinearGradient(
                           begin: Alignment(0.0, -4.76),
                           end: Alignment(0.0, 1.0),
-                          colors: [const Color(0xffffffff), const Color(0xff1ebdf2)],
+                          colors: [
+                            const Color(0xffffffff),
+                            const Color(0xff1ebdf2)
+                          ],
                           stops: [0.0, 1.0],
                         ),
                         boxShadow: [
@@ -108,7 +157,6 @@ class _SplashState extends State<Splash> {
               ),
             ),
           ),
-
         ],
       ),
     );

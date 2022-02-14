@@ -1,7 +1,6 @@
 import 'package:bluetooth_print/bluetooth_print.dart';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:printing/printing.dart';
 import 'package:screenshot/screenshot.dart';
 import 'package:share/share.dart';
 import 'package:adobe_xd/pinned.dart';
@@ -15,15 +14,14 @@ import 'package:flutter/rendering.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'dart:io';
-import 'dart:typed_data';
 
-class VanPage extends StatefulWidget {
-  VanPage(
+class BillPage extends StatefulWidget {
+  BillPage(
       {Key key,
-      this.customerName,
-      this.date,
-      this.voucherNumber,
-      this.billAmount,this.back})
+        this.customerName,
+        this.date,
+        this.voucherNumber,
+        this.billAmount,this.back})
       : super(key: key);
 
   final String date;
@@ -33,10 +31,10 @@ class VanPage extends StatefulWidget {
   final bool back;
 
   @override
-  VanPageState createState() => VanPageState();
+  BillPageState createState() => BillPageState();
 }
 
-class VanPageState extends State<VanPage> {
+class BillPageState extends State<BillPage> {
   final _screenshotController = ScreenshotController();
   final pdf = pw.Document();
   DatabaseReference reference;
@@ -57,51 +55,6 @@ class VanPageState extends State<VanPage> {
   String totalBill = "-";
 
 
-   _generatePdf() async {
-    // final pdf = pw.Document( compress: true);
-    // //final font = await PdfGoogleFonts.nunitoExtraLight();
-    //
-    // pdf.addPage(
-    //   pw.Page(
-    //     //pageFormat: format,
-    //     build: (context) {
-    //       return pw.Column(
-    //         children: [
-    //           pw.SizedBox(
-    //             width: double.infinity,
-    //             child: pw.FittedBox(
-    //               child: pw.Text("mmmm", style: pw.TextStyle()),
-    //             ),
-    //           ),
-    //           pw.SizedBox(height: 20),
-    //           pw.Flexible(child: pw.FlutterLogo())
-    //         ],
-    //       );
-    //     },
-    //   ),
-    // );
-
-     final imageFile = await _screenshotController.capture();
-
-     final image = pw.MemoryImage(
-       File(imageFile.path).readAsBytesSync(),
-     );
-
-     pdf.addPage(pw.Page(
-         pageFormat: PdfPageFormat.a4,
-         build: (pw.Context context) {
-           return pw.Center(
-             child: pw.Image(image),
-           ); // Center
-         }));
-
-    final output = await getTemporaryDirectory();
-    final file = File("${output.path}/"+widget.voucherNumber+".pdf");
-    await file.writeAsBytes(await pdf.save());
-    Share.shareFiles([file.path], text: "Shared from Cybrix");
-   // return pdf.save();
-  }
-
   takeBillPdf() async {
     final imageFile = await _screenshotController.capture();
 
@@ -121,12 +74,11 @@ class VanPageState extends State<VanPage> {
     final file = File("${output.path}/"+widget.voucherNumber+".pdf");
     await file.writeAsBytes(await pdf.save());
     Share.shareFiles([file.path], text: "Shared from Cybrix");
-    return file;
   }
 
   Future<void> getBill() async {
     reference
-      ..child("Bills")
+      ..child("Returns")
           .child(widget.date)
           .child(User.vanNo)
           .child(widget.voucherNumber)
@@ -148,26 +100,26 @@ class VanPageState extends State<VanPage> {
         }
       });
 
-    reference.child("Bills")
-      .child(widget.date)
-          .child(User.vanNo)
-          .child(widget.voucherNumber)
-          .once()
-          .then((DataSnapshot snapshot) async {
-        Map<dynamic, dynamic> values = snapshot.value;
-        values.forEach((key, value) {
-          setState(() {
-            cash = values['CashReceived'].toString();
-            card = values['CardReceived'].toString();
-            roundOff = values['RoundOff'].toString();
-            balance = values['Balance'].toString();
-            totaltax = values['TaxAmount'].toString();
-            bill = values['Amount'].toString();
-            totalDisc = values['TotalDiscount'].toString();
-            totalBill = values['BillAmount'].toString();
-          });
+    reference.child("Returns")
+        .child(widget.date)
+        .child(User.vanNo)
+        .child(widget.voucherNumber)
+        .once()
+        .then((DataSnapshot snapshot) async {
+      Map<dynamic, dynamic> values = snapshot.value;
+      values.forEach((key, value) {
+        setState(() {
+          cash = values['CashReceived'].toString();
+          card = values['CardReceived'].toString();
+          roundOff = values['RoundOff'].toString();
+          balance = values['Balance'].toString();
+          totaltax = values['TaxAmount'].toString();
+          bill = values['Amount'].toString();
+          totalDisc = values['TotalDiscount'].toString();
+          totalBill = values['BillAmount'].toString();
         });
       });
+    });
   }
 
   void initState() {
@@ -209,7 +161,7 @@ class VanPageState extends State<VanPage> {
                   children: [
                     Padding(
                       padding:
-                          const EdgeInsets.only(top: 15.0, left: 15, right: 15),
+                      const EdgeInsets.only(top: 15.0, left: 15, right: 15),
                       child: Row(
                         children: [
                           Padding(
@@ -233,7 +185,7 @@ class VanPageState extends State<VanPage> {
                 ),
               ),
             ),
-           widget.back ? Container()  : Positioned(
+            widget.back ? Container()  : Positioned(
               bottom: 40,
               child: Container(
                 width: MediaQuery.of(context).size.width,
@@ -242,8 +194,8 @@ class VanPageState extends State<VanPage> {
                     onTap: () {
                       Navigator.push(context,
                           MaterialPageRoute(builder: (context) {
-                        return BottomBar();
-                      }));
+                            return BottomBar();
+                          }));
                     },
                     child: Container(
                       width: 100,
@@ -539,7 +491,7 @@ class VanPageState extends State<VanPage> {
             ),
             children: new List.generate(
               item.length,
-              (index) => Container(
+                  (index) => Container(
                 height: 30,
                 width: MediaQuery.of(context).size.width,
                 decoration: BoxDecoration(
@@ -901,14 +853,10 @@ class VanPageState extends State<VanPage> {
           padding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 10.0),
           child: GestureDetector(
             onTap: () {
-              _generatePdf();
-             //  PdfPreview(
-             //    //build: () => _generatePdf(),
-             //  );
-              // Navigator.pushReplacement(
-              //     context,
-              //     MaterialPageRoute(
-              //         builder: (BuildContext context) => Bluetooth()));
+              Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                      builder: (BuildContext context) => Bluetooth()));
             },
             child: Container(
               height: 18,

@@ -1,13 +1,13 @@
-import 'package:adobe_xd/pinned.dart';
+
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:optimist_erp_app/data/user_data.dart';
 
 class AllProductPage extends StatefulWidget {
-  AllProductPage({Key key, this.title}) : super(key: key);
+  AllProductPage({Key key, this.back}) : super(key: key);
 
-  final String title;
+  final bool back;
 
   @override
   AllProductPageState createState() => AllProductPageState();
@@ -62,7 +62,7 @@ class AllProductPageState extends State<AllProductPage> {
     items = FirebaseDatabase.instance
         .reference()
         .child("Companies")
-        .child("CYBRIX")
+        .child(User.database)
         .child("Items");
 
     getCustomerId("1");
@@ -74,17 +74,22 @@ class AllProductPageState extends State<AllProductPage> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: buildAppBar(context),
-      body: ListView(
-        children: [
-          SizedBox(
-            height: 10,
-          ),
-          searchRow(),
-          SizedBox(
-            height: 10,
-          ),
-          homeData()
-        ],
+      body: WillPopScope(
+        onWillPop: () async {
+          return widget.back;
+        },
+        child: ListView(
+          children: [
+            SizedBox(
+              height: 10,
+            ),
+            searchRow(),
+            SizedBox(
+              height: 10,
+            ),
+            homeData()
+          ],
+        ),
       ),
     );
   }
@@ -180,28 +185,28 @@ class AllProductPageState extends State<AllProductPage> {
           child: GridView.builder(
             itemCount: names.length,
             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              childAspectRatio: 1,
+              crossAxisCount: 3,
+              childAspectRatio: 0.65,
             ),
             itemBuilder: (_, index) => Padding(
               padding: const EdgeInsets.all(0.0),
               child: Container(
-                height: 300,
+                height: 180,
                 width: MediaQuery.of(context).size.width / 3,
                 child: Column(
                   children: [
                     Card(
                       child: Container(
-                          height: MediaQuery.of(context).size.width / 3 - 25,
-                          width: MediaQuery.of(context).size.width / 3 - 25,
+                          height: MediaQuery.of(context).size.width / 3 - 30,
+                          width: MediaQuery.of(context).size.width / 3 - 30,
                           child: Image.asset(
-                            "assets/images/vegitable.png",
-                            fit: BoxFit.cover,
+                            "assets/images/cybrix logo.png",
+                            fit: BoxFit.scaleDown,
                             //    color: Colors.white
                           )),
                     ),
                     Container(
-                      height: 60,
+                      height: 80,
                       child: Column(
                         children: [
                           Text(
@@ -334,7 +339,7 @@ class AllProductPageState extends State<AllProductPage> {
     return AppBar(
       backgroundColor: Colors.blue[900],
       centerTitle: false,
-      title: Text("Product"),
+      title: Text("Products"),
       elevation: 1.0,
       titleSpacing: 0,
       toolbarHeight: 70,

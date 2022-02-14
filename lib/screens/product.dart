@@ -14,8 +14,6 @@ class ProductPage extends StatefulWidget {
 
 class ProductPageState extends State<ProductPage> {
   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
-  List<String> _locations = ['A', 'B', 'C', 'D']; // Option 2
-  String _selectedLocation; // Opt
 
   @override
   Widget build(BuildContext context) {
@@ -665,7 +663,7 @@ class ProductPageState extends State<ProductPage> {
     return AppBar(
       backgroundColor: widget.title == "title" ? Colors.blue[900] : Colors.white,
       centerTitle: false,
-      title: widget.title == "title" ? Text("Product") : Text("  Product",style: TextStyle(color: Colors.black),),
+      title: widget.title == "title" ? Text("All Products") : Text(" All Products",style: TextStyle(color: Colors.black),),
       elevation: widget.title == "title" ? 1.0 : 0,
       titleSpacing: 0,
       toolbarHeight: 70,

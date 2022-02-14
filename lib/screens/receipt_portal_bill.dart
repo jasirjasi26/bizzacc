@@ -1,7 +1,6 @@
 import 'package:bluetooth_print/bluetooth_print.dart';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:printing/printing.dart';
 import 'package:screenshot/screenshot.dart';
 import 'package:share/share.dart';
 import 'package:adobe_xd/pinned.dart';
@@ -10,20 +9,18 @@ import 'package:flutter/cupertino.dart';
 import 'package:optimist_erp_app/ui_elements/bluetooth_print.dart';
 import 'package:optimist_erp_app/data/user_data.dart';
 import 'package:optimist_erp_app/ui_elements/bottomNavigation.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'dart:io';
-import 'dart:typed_data';
 
-class VanPage extends StatefulWidget {
-  VanPage(
+class ReceiptBill extends StatefulWidget {
+  ReceiptBill(
       {Key key,
-      this.customerName,
-      this.date,
-      this.voucherNumber,
-      this.billAmount,this.back})
+        this.customerName,
+        this.date,
+        this.voucherNumber,
+        this.billAmount,this.back})
       : super(key: key);
 
   final String date;
@@ -33,74 +30,18 @@ class VanPage extends StatefulWidget {
   final bool back;
 
   @override
-  VanPageState createState() => VanPageState();
+  ReceiptBillState createState() => ReceiptBillState();
 }
 
-class VanPageState extends State<VanPage> {
+class ReceiptBillState extends State<ReceiptBill> {
   final _screenshotController = ScreenshotController();
   final pdf = pw.Document();
   DatabaseReference reference;
-  List<String> total = [];
-  List<String> item = [];
-  List<String> rate = [];
-  List<String> qty = [];
-  List<String> tax = [];
-  List<dynamic> disc = [];
   String cash = "-";
   String card = "-";
-  String roundOff = "-";
   String balance = "-";
-  String totaltax = "-";
-  String totalDisc = "-";
-  String bill = "-";
   String generatedPdfFilePath;
-  String totalBill = "-";
 
-
-   _generatePdf() async {
-    // final pdf = pw.Document( compress: true);
-    // //final font = await PdfGoogleFonts.nunitoExtraLight();
-    //
-    // pdf.addPage(
-    //   pw.Page(
-    //     //pageFormat: format,
-    //     build: (context) {
-    //       return pw.Column(
-    //         children: [
-    //           pw.SizedBox(
-    //             width: double.infinity,
-    //             child: pw.FittedBox(
-    //               child: pw.Text("mmmm", style: pw.TextStyle()),
-    //             ),
-    //           ),
-    //           pw.SizedBox(height: 20),
-    //           pw.Flexible(child: pw.FlutterLogo())
-    //         ],
-    //       );
-    //     },
-    //   ),
-    // );
-
-     final imageFile = await _screenshotController.capture();
-
-     final image = pw.MemoryImage(
-       File(imageFile.path).readAsBytesSync(),
-     );
-
-     pdf.addPage(pw.Page(
-         pageFormat: PdfPageFormat.a4,
-         build: (pw.Context context) {
-           return pw.Center(
-             child: pw.Image(image),
-           ); // Center
-         }));
-
-    final output = await getTemporaryDirectory();
-    final file = File("${output.path}/"+widget.voucherNumber+".pdf");
-    await file.writeAsBytes(await pdf.save());
-    Share.shareFiles([file.path], text: "Shared from Cybrix");
-   // return pdf.save();
-  }
 
   takeBillPdf() async {
     final imageFile = await _screenshotController.capture();
@@ -121,53 +62,24 @@ class VanPageState extends State<VanPage> {
     final file = File("${output.path}/"+widget.voucherNumber+".pdf");
     await file.writeAsBytes(await pdf.save());
     Share.shareFiles([file.path], text: "Shared from Cybrix");
-    return file;
   }
 
   Future<void> getBill() async {
-    reference
-      ..child("Bills")
-          .child(widget.date)
-          .child(User.vanNo)
-          .child(widget.voucherNumber)
-          .child("Items")
-          .once()
-          .then((DataSnapshot snapshot) {
-        List<dynamic> value = snapshot.value;
-        for (int i = 0; i < value.length; i++) {
-          if (value[i] != null) {
-            setState(() {
-              item.add(value[i]['ItemName'].toString());
-              qty.add(value[i]['Qty'].toString());
-              tax.add(value[i]['TaxAmount'].toString());
-              total.add(value[i]['Total'].toString());
-              rate.add(value[i]['Rate'].toString());
-              //totalDisc=totalDisc+double.parse(value[i]['DiscAmount'].toString());
-            });
-          }
-        }
-      });
-
-    reference.child("Bills")
-      .child(widget.date)
-          .child(User.vanNo)
-          .child(widget.voucherNumber)
-          .once()
-          .then((DataSnapshot snapshot) async {
-        Map<dynamic, dynamic> values = snapshot.value;
-        values.forEach((key, value) {
-          setState(() {
-            cash = values['CashReceived'].toString();
-            card = values['CardReceived'].toString();
-            roundOff = values['RoundOff'].toString();
-            balance = values['Balance'].toString();
-            totaltax = values['TaxAmount'].toString();
-            bill = values['Amount'].toString();
-            totalDisc = values['TotalDiscount'].toString();
-            totalBill = values['BillAmount'].toString();
-          });
+    reference.child("ReceiptPortal")
+        .child(widget.date)
+        .child(User.vanNo)
+        .child(widget.voucherNumber)
+        .once()
+        .then((DataSnapshot snapshot) async {
+      Map<dynamic, dynamic> values = snapshot.value;
+      values.forEach((key, value) {
+        setState(() {
+          cash = values['CashReceived'].toString();
+          card = values['CardReceived'].toString();
+          balance = values['Balance'].toString();
         });
       });
+    });
   }
 
   void initState() {
@@ -209,7 +121,7 @@ class VanPageState extends State<VanPage> {
                   children: [
                     Padding(
                       padding:
-                          const EdgeInsets.only(top: 15.0, left: 15, right: 15),
+                      const EdgeInsets.only(top: 15.0, left: 15, right: 15),
                       child: Row(
                         children: [
                           Padding(
@@ -233,7 +145,7 @@ class VanPageState extends State<VanPage> {
                 ),
               ),
             ),
-           widget.back ? Container()  : Positioned(
+            widget.back ? Container()  : Positioned(
               bottom: 40,
               child: Container(
                 width: MediaQuery.of(context).size.width,
@@ -242,8 +154,8 @@ class VanPageState extends State<VanPage> {
                     onTap: () {
                       Navigator.push(context,
                           MaterialPageRoute(builder: (context) {
-                        return BottomBar();
-                      }));
+                            return BottomBar();
+                          }));
                     },
                     child: Container(
                       width: 100,
@@ -445,182 +357,6 @@ class VanPageState extends State<VanPage> {
           ),
         ),
         Padding(
-          padding: const EdgeInsets.only(
-            left: 15,
-            right: 15,
-          ),
-          child: Container(
-            width: MediaQuery.of(context).size.width,
-            color: Colors.grey[500],
-            child: Padding(
-              padding: const EdgeInsets.only(
-                left: 0,
-                right: 0,
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Container(
-                    width: 180,
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Text(
-                        'ITEM',
-                        style: TextStyle(
-                          fontFamily: 'Arial',
-                          fontSize: 10,
-                          color: Colors.white,
-                        ),
-                        textAlign: TextAlign.left,
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Text(
-                      'QTY',
-                      style: TextStyle(
-                        fontFamily: 'Arial',
-                        fontSize: 10,
-                        color: Colors.white,
-                      ),
-                      textAlign: TextAlign.left,
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Text(
-                      'RATE',
-                      style: TextStyle(
-                        fontFamily: 'Arial',
-                        fontSize: 10,
-                        color: Colors.white,
-                      ),
-                      textAlign: TextAlign.left,
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Text(
-                      'TAX',
-                      style: TextStyle(
-                        fontFamily: 'Arial',
-                        fontSize: 10,
-                        color: Colors.white,
-                      ),
-                      textAlign: TextAlign.left,
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Text(
-                      'TOTAL',
-                      style: TextStyle(
-                        fontFamily: 'Arial',
-                        fontSize: 10,
-                        color: Colors.white,
-                      ),
-                      textAlign: TextAlign.left,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-        Container(
-          // height: 200,
-          width: MediaQuery.of(context).size.width,
-          child: ListView(
-            shrinkWrap: true,
-            padding: const EdgeInsets.only(
-              left: 15,
-              right: 15,
-            ),
-            children: new List.generate(
-              item.length,
-              (index) => Container(
-                height: 30,
-                width: MediaQuery.of(context).size.width,
-                decoration: BoxDecoration(
-                  color: index.floor().isEven
-                      ? Color(0x66d6d6d6)
-                      : Color(0x66f3ceef),
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Container(
-                      width: MediaQuery.of(context).size.width*0.45,
-                      child: Padding(
-                        padding: const EdgeInsets.all(3.0),
-                        child: Text(
-                          item[index],
-                          style: TextStyle(
-                            fontFamily: 'Arial',
-                            fontSize: 10,
-                            color: Colors.black,
-                          ),
-                          textAlign: TextAlign.left,
-                        ),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Text(
-                        qty[index],
-                        style: TextStyle(
-                          fontFamily: 'Arial',
-                          fontSize: 10,
-                          color: Colors.black,
-                        ),
-                        textAlign: TextAlign.left,
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Text(
-                        rate[index],
-                        style: TextStyle(
-                          fontFamily: 'Arial',
-                          fontSize: 10,
-                          color: Colors.black,
-                        ),
-                        textAlign: TextAlign.left,
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Text(
-                        tax[index],
-                        style: TextStyle(
-                          fontFamily: 'Arial',
-                          fontSize: 10,
-                          color: Colors.black,
-                        ),
-                        textAlign: TextAlign.left,
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Text(
-                        total[index],
-                        style: TextStyle(
-                          fontFamily: 'Arial',
-                          fontSize: 10,
-                          color: Colors.black,
-                        ),
-                        textAlign: TextAlign.left,
-                      ),
-                    )
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-        Padding(
           padding: const EdgeInsets.only(left: 15.0, top: 25, right: 15),
           child: Column(
             children: [
@@ -662,93 +398,12 @@ class VanPageState extends State<VanPage> {
             child: Column(
               children: [
                 Padding(
-                  padding: EdgeInsets.only(left: 15.0, right: 15),
+                  padding: EdgeInsets.only(left: 15.0, right: 15,bottom: 5),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'Total Bill',
-                        style: TextStyle(
-                          fontFamily: 'Arial',
-                          fontSize: 12,
-                          color: const Color(0xff5b5b5b),
-                          fontWeight: FontWeight.w500,
-                        ),
-                        textAlign: TextAlign.left,
-                      ),
-                      Text(
-                        totalBill.toString(),
-                        style: TextStyle(
-                          fontFamily: 'Arial',
-                          fontSize: 12,
-                          color: const Color(0xff5b5b5b),
-                        ),
-                        textAlign: TextAlign.left,
-                      ),
-                    ],
-                  ),
-                ),
-                Padding(
-                  padding: EdgeInsets.only(left: 15.0, right: 15),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Tax',
-                        style: TextStyle(
-                          fontFamily: 'Arial',
-                          fontSize: 12,
-                          color: const Color(0xff5b5b5b),
-                          fontWeight: FontWeight.w500,
-                        ),
-                        textAlign: TextAlign.left,
-                      ),
-                      Text(
-                        totaltax,
-                        style: TextStyle(
-                          fontFamily: 'Arial',
-                          fontSize: 12,
-                          color: const Color(0xff5b5b5b),
-                        ),
-                        textAlign: TextAlign.left,
-                      ),
-                    ],
-                  ),
-                ),
-                Padding(
-                  padding: EdgeInsets.only(left: 15.0, right: 15),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'RoundOff',
-                        style: TextStyle(
-                          fontFamily: 'Arial',
-                          fontSize: 12,
-                          color: const Color(0xff5b5b5b),
-                          fontWeight: FontWeight.w500,
-                        ),
-                        textAlign: TextAlign.left,
-                      ),
-                      Text(
-                        roundOff,
-                        style: TextStyle(
-                          fontFamily: 'Arial',
-                          fontSize: 12,
-                          color: const Color(0xff5b5b5b),
-                        ),
-                        textAlign: TextAlign.left,
-                      ),
-                    ],
-                  ),
-                ),
-                Padding(
-                  padding: EdgeInsets.only(left: 15.0, right: 15),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Cash',
+                        'Cash Received',
                         style: TextStyle(
                           fontFamily: 'Arial',
                           fontSize: 12,
@@ -770,12 +425,12 @@ class VanPageState extends State<VanPage> {
                   ),
                 ),
                 Padding(
-                  padding: EdgeInsets.only(left: 15.0, right: 15),
+                  padding: EdgeInsets.only(left: 15.0, right: 15,bottom: 5),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'Card',
+                        'Card Received',
                         style: TextStyle(
                           fontFamily: 'Arial',
                           fontSize: 12,
@@ -797,66 +452,12 @@ class VanPageState extends State<VanPage> {
                   ),
                 ),
                 Padding(
-                  padding: EdgeInsets.only(left: 15.0, right: 15),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Discount',
-                        style: TextStyle(
-                          fontFamily: 'Arial',
-                          fontSize: 12,
-                          color: const Color(0xff5b5b5b),
-                          fontWeight: FontWeight.w500,
-                        ),
-                        textAlign: TextAlign.left,
-                      ),
-                      Text(
-                        totalDisc.toString(),
-                        style: TextStyle(
-                          fontFamily: 'Arial',
-                          fontSize: 12,
-                          color: const Color(0xff5b5b5b),
-                        ),
-                        textAlign: TextAlign.left,
-                      ),
-                    ],
-                  ),
-                ),
-                Padding(
-                  padding: EdgeInsets.only(left: 15.0, right: 15),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Balance',
-                        style: TextStyle(
-                          fontFamily: 'Arial',
-                          fontSize: 12,
-                          color: const Color(0xff5b5b5b),
-                          fontWeight: FontWeight.w500,
-                        ),
-                        textAlign: TextAlign.left,
-                      ),
-                      Text(
-                        balance,
-                        style: TextStyle(
-                          fontFamily: 'Arial',
-                          fontSize: 12,
-                          color: const Color(0xff5b5b5b),
-                        ),
-                        textAlign: TextAlign.left,
-                      ),
-                    ],
-                  ),
-                ),
-                Padding(
                   padding: EdgeInsets.only(left: 15.0, right: 15, top: 10),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'Net Bill Amount',
+                        'Total Balance',
                         style: TextStyle(
                           fontFamily: 'Arial',
                           fontSize: 13,
@@ -866,7 +467,7 @@ class VanPageState extends State<VanPage> {
                         textAlign: TextAlign.left,
                       ),
                       Text(
-                        bill,
+                        balance,
                         style: TextStyle(
                           fontFamily: 'Arial',
                           fontSize: 13,
@@ -901,14 +502,10 @@ class VanPageState extends State<VanPage> {
           padding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 10.0),
           child: GestureDetector(
             onTap: () {
-              _generatePdf();
-             //  PdfPreview(
-             //    //build: () => _generatePdf(),
-             //  );
-              // Navigator.pushReplacement(
-              //     context,
-              //     MaterialPageRoute(
-              //         builder: (BuildContext context) => Bluetooth()));
+              Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                      builder: (BuildContext context) => Bluetooth()));
             },
             child: Container(
               height: 18,

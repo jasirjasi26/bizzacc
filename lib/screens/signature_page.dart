@@ -1,10 +1,6 @@
-import 'dart:convert';
-import 'dart:typed_data';
 import 'dart:ui' as ui;
-import 'package:adobe_xd/pinned.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_signature_pad/flutter_signature_pad.dart';
 import 'package:syncfusion_flutter_signaturepad/signaturepad.dart';
 
 class SignaturePage extends StatefulWidget {

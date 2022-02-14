@@ -1,8 +1,11 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:optimist_erp_app/screens/home.dart';
 import 'package:optimist_erp_app/screens/splash.dart';
+import 'package:optimist_erp_app/screens/van_page.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
   runApp(MyApp());
 }
 
@@ -15,6 +18,7 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
+      //home: VanPage(back: true,billAmount: "",date: "",voucherNumber: "",customerName: "",),
       home: Splash(),
     );
   }

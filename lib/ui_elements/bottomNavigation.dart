@@ -16,53 +16,24 @@ class BottomBar extends StatefulWidget {
   BottomBarState createState() => BottomBarState();
 }
 
-
 class BottomBarState extends State<BottomBar> {
   int _currentIndex = 0;
   List<String> _locations = []; // Option 2
   String _selectedLocation; // Opt
-  var _children = [MyHomePage(), AllProductPage(), Container(), Container()];
-  DatabaseReference types;
-  DatabaseReference names;
+  var _children = [MyHomePage(), Container()];
   String label = "Enter Customer Name";
 
   void onTapped(int i) {
-    if (i != 3) {
-      setState(() {
-        _currentIndex = i;
-      });
-    }
-  }
-
-  Future<void> getSalesTypes() async {
-    await types.once().then((DataSnapshot snapshot) {
-      Map<dynamic, dynamic> values = snapshot.value;
-      values.forEach((key, values) {
-        _locations.add(values["Name"].toString());
-      });
+    setState(() {
+      _currentIndex = i;
     });
   }
-
 
   void initState() {
     // TODO: implement initState
     //re appear statusbar in case it was not there in the previous page
     SystemChrome.setEnabledSystemUIOverlays(
         [SystemUiOverlay.top, SystemUiOverlay.bottom]);
-
-    types = FirebaseDatabase.instance
-        .reference()
-        .child("Companies")
-        .child(User.database)
-        .child("SalesTypes");
-
-    names = FirebaseDatabase.instance
-        .reference()
-        .child("Companies")
-        .child(User.database)
-        .child("Customers");
-
-    getSalesTypes();
 
     super.initState();
   }
@@ -72,117 +43,32 @@ class BottomBarState extends State<BottomBar> {
     return Scaffold(
       extendBody: true,
       body: _children[_currentIndex],
-      floatingActionButtonLocation: FloatingActionButtonLocation.endDocked,
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       floatingActionButton: GestureDetector(
-        onTap: () {
-          showBookingDialog();
-        },
-        child: Container(
-          width: 80,
-          height: 80,
-          child: Stack(
-            children: <Widget>[
-              Pinned.fromPins(
-                Pin(start: 0.0, end: 0.0),
-                Pin(start: 0.0, end: 0.0),
-                child: Container(
-                  decoration: BoxDecoration(
-                    borderRadius:
-                        BorderRadius.all(Radius.elliptical(9999.0, 9999.0)),
-                    gradient: LinearGradient(
-                      begin: Alignment(-2.74, -2.92),
-                      end: Alignment(0.73, 0.78),
-                      colors: [
-                        const Color(0xffffffff),
-                        const Color(0xff1f3877)
-                      ],
-                      stops: [0.0, 1.0],
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0x29000000),
-                        offset: Offset(6, 3),
-                        blurRadius: 6,
-                      ),
-                    ],
+          onTap: () {
+            showBookingDialog();
+          },
+          child: Card(
+            elevation: 10,
+            color: const Color(0xff20474f),
+            child: Container(
+                width: 90,
+                height: 40,
+                margin: EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(5.0),
+                  color: const Color(0xff20474f),
+                ),
+                child: Center(
+                  child: Image.asset(
+                    'assets/images/add.png',
+                    //color: Colors.transparent,
+                    fit: BoxFit.cover,
+                    height: 20,
+                    width: 20,
                   ),
-                ),
-              ),
-              Pinned.fromPins(
-                Pin(size: 18.6, middle: 0.4153),
-                Pin(size: 24.2, middle: 0.3096),
-                child:
-                    // Adobe XD layer: 'surface1' (group)
-                    Stack(
-                  children: <Widget>[
-                    Pinned.fromPins(
-                      Pin(start: 0.0, end: 0.0),
-                      Pin(start: 0.0, end: 0.0),
-                      child: Image.asset(
-                        'assets/images/new.png',
-                        //color: Colors.blue,
-                        fit: BoxFit.scaleDown,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Pinned.fromPins(
-                Pin(size: 16.0, middle: 0.6667),
-                Pin(size: 16.0, middle: 0.5926),
-                child: Stack(
-                  children: <Widget>[
-                    Pinned.fromPins(
-                      Pin(start: 0.0, end: 0.0),
-                      Pin(start: 0.0, end: 0.0),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.all(
-                              Radius.elliptical(9999.0, 9999.0)),
-                          color: const Color(0xff1d336c),
-                        ),
-                      ),
-                    ),
-                    Pinned.fromPins(
-                      Pin(size: 31.0, middle: 0.4571),
-                      Pin(size: 78.0, middle: 0.8039),
-                      child: Stack(
-                        children: <Widget>[
-                          Pinned.fromPins(
-                            Pin(start: 0.0, end: 0.0),
-                            Pin(start: 0.0, end: 0.0),
-                            child: Image.asset(
-                              'assets/images/add.png',
-                              //color: Colors.transparent,
-                              fit: BoxFit.cover,
-                              height: 20,
-                              width: 20,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Pinned.fromPins(
-                Pin(size: 31.0, middle: 0.4571),
-                Pin(size: 8.0, middle: 0.8039),
-                child: Text(
-                  'New Order',
-                  style: TextStyle(
-                    fontFamily: 'Segoe UI',
-                    fontSize: 8,
-                    color: const Color(0xffffffff),
-                    fontWeight: FontWeight.w700,
-                  ),
-                  textAlign: TextAlign.left,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+                )),
+          )),
       bottomNavigationBar: BottomAppBar(
         color: Colors.transparent,
         clipBehavior: Clip.antiAlias,
@@ -198,7 +84,7 @@ class BottomBarState extends State<BottomBar> {
             items: [
               BottomNavigationBarItem(
                   icon: Image.asset(
-                    "assets/images/home_icon.png",
+                    "assets/images/home.png",
                     color: _currentIndex == 0
                         ? Colors.cyan[800]
                         : Color.fromRGBO(153, 153, 153, 1),
@@ -218,27 +104,7 @@ class BottomBarState extends State<BottomBar> {
                   )),
               BottomNavigationBarItem(
                   icon: Image.asset(
-                    "assets/images/product_icon.png",
-                    color: _currentIndex == 1
-                        ? Colors.cyan[800]
-                        : Color.fromRGBO(153, 153, 153, 1),
-                    height: 20,
-                  ),
-                  title: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Text(
-                      "Product",
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: _currentIndex == 1
-                            ? Colors.cyan[800]
-                            : Color.fromRGBO(153, 153, 153, 1),
-                      ),
-                    ),
-                  )),
-              BottomNavigationBarItem(
-                  icon: Image.asset(
-                    "assets/images/inventory_icon.png",
+                    "assets/images/inventory.png",
                     color: _currentIndex == 2
                         ? Colors.cyan[800]
                         : Color.fromRGBO(153, 153, 153, 1),
@@ -256,22 +122,6 @@ class BottomBarState extends State<BottomBar> {
                       ),
                     ),
                   )),
-              BottomNavigationBarItem(
-                  icon: Image.asset(
-                    "assets/images/inventory_icon.png",
-                    color: Colors.white,
-                    height: 0,
-                  ),
-                  title: Padding(
-                    padding: EdgeInsets.all(0.0),
-                    child: Text(
-                      "",
-                      style: TextStyle(
-                        fontSize: 0,
-                        color: Colors.white,
-                      ),
-                    ),
-                  )),
             ],
           ),
         ),
@@ -280,26 +130,24 @@ class BottomBarState extends State<BottomBar> {
   }
 
   void showBookingDialog() {
-    var textEditingController= TextEditingController();
+    var textEditingController = TextEditingController();
     Future<List> getNames(String input) async {
       List _list = new List();
-
-      await names.once().then((DataSnapshot snapshot) {
-        Map<dynamic, dynamic> values = snapshot.value;
-        values.forEach((key, values) {
-          if(values['Name'].toString().toLowerCase().contains(input.toLowerCase())){
-            _list.add(values['Name'].toString());
-          }
-          if(values['CustomerCode'].toString().toLowerCase().contains(input.toLowerCase())){
-            _list.add(values['CustomerCode'].toString());
-          }
-        });
-      });
+      //
+      // await names.once().then((DataSnapshot snapshot) {
+      //   Map<dynamic, dynamic> values = snapshot.value;
+      //   values.forEach((key, values) {
+      //     if(values['Name'].toString().toLowerCase().contains(input.toLowerCase())){
+      //       _list.add(values['Name'].toString());
+      //     }
+      //     if(values['CustomerCode'].toString().toLowerCase().contains(input.toLowerCase())){
+      //       _list.add(values['CustomerCode'].toString());
+      //     }
+      //   });
+      // });
 
       return _list;
     }
-
-
 
     showGeneralDialog(
       barrierLabel: "Barrier",
@@ -315,11 +163,11 @@ class BottomBarState extends State<BottomBar> {
                 child: Align(
                   alignment: Alignment.bottomCenter,
                   child: Container(
-                      height: MediaQuery.of(context).size.height * 0.7,
+                      height: MediaQuery.of(context).size.height * 0.65,
                       width: MediaQuery.of(context).size.width,
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(40),
+                        //borderRadius: BorderRadius.circular(40),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -333,7 +181,7 @@ class BottomBarState extends State<BottomBar> {
                                     right: 30.0, top: 25, bottom: 20),
                                 child: GestureDetector(
                                   onTap: () {
-                                    Navigator.pop(context,true);
+                                    Navigator.pop(context, true);
                                   },
                                   child: Container(
                                     child: Image.asset(
@@ -349,19 +197,57 @@ class BottomBarState extends State<BottomBar> {
                           SizedBox(
                             height: 20,
                           ),
+                          Center(
+                            child: Container(
+                              height: 45,
+                              width: 200,
+                              decoration: BoxDecoration(
+                                color: const Color(0xff20474f),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Container(
+                                child: Row(
+                                  children: [
+                                    Spacer(),
+                                    Padding(
+                                      padding: EdgeInsets.all(0),
+                                      child: Container(
+                                        height: 25,
+                                        width: 25,
+                                        child: Image.asset(
+                                          "assets/images/addcustomer.png",
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ),
+                                    Text(
+                                      "  Add New Customer",
+                                      style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w500),
+                                    ),
+                                    Spacer(),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                          SizedBox(
+                            height: 20,
+                          ),
                           Padding(
                             padding:
-                            const EdgeInsets.only(left: 50.0, right: 50),
+                                const EdgeInsets.only(left: 50.0, right: 50),
                             child: Card(
                               elevation: 5,
                               child: TextFieldSearch(
-                               // future: getNames,
-                                 // initialList: dummyList,
+                                  // future: getNames,
+                                  // initialList: dummyList,
                                   label: label,
                                   minStringLength: 0,
                                   future: () {
-                                    return getNames(
-                                        textEditingController.text);
+                                    return getNames(textEditingController.text);
                                   },
                                   decoration: InputDecoration(
                                     hintText: 'Enter Customer Name / Code',
@@ -430,91 +316,149 @@ class BottomBarState extends State<BottomBar> {
                               ),
                             ),
                           ),
-                          Center(
-                            child: GestureDetector(
-                              onTap: () {
-                                if(textEditingController.text.isNotEmpty&&_selectedLocation.isNotEmpty){
-                                  Navigator.push(context,
-                                      MaterialPageRoute(builder: (context) {
-                                        return NewOrderPage(customerName: textEditingController.text,refNo: "0",salesType: _selectedLocation,);
-                                      }));
-                                }
-                              },
-                              child: Container(
-                                height: 45,
-                                width: 150,
-                                decoration: BoxDecoration(
-                                  color: Color(0xfffb4ce5),
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: Container(
-                                  child: Row(
-                                    children: [
-                                      Spacer(),
-                                      Padding(
-                                        padding: EdgeInsets.all(5),
-                                        child: Container(
-                                          height: 20,
-                                          width: 20,
-                                          child: Image.asset(
-                                            "assets/images/save.png",
-                                            color: Colors.white,
-                                            fit: BoxFit.scaleDown,
-                                          ),
+                          SizedBox(
+                            height: 10,
+                          ),
+                          Row(
+                            children: [
+                              Spacer(),
+                              Center(
+                                child: GestureDetector(
+                                  onTap: () {
+                                    // if (textEditingController.text.isNotEmpty &&
+                                    //     _selectedLocation.isNotEmpty) {
+                                    //   Navigator.push(context,
+                                    //       MaterialPageRoute(builder: (context) {
+                                    //     return NewOrderPage(
+                                    //       customerName:
+                                    //           textEditingController.text,
+                                    //       refNo: "0",
+                                    //       salesType: _selectedLocation,
+                                    //     );
+                                    //   }));
+                                    // }
+                                    Navigator.push(context,
+                                        MaterialPageRoute(builder: (context) {
+                                          return NewOrderPage(
+                                            customerName:
+                                            textEditingController.text,
+                                            refNo: "0",
+                                            salesType: _selectedLocation,
+                                          );
+                                        }));
+                                  },
+                                  child: Container(
+                                    height: 45,
+                                    width: 120,
+                                    decoration: BoxDecoration(
+                                      gradient: LinearGradient(
+                                        begin: Alignment(0.0, -1.0),
+                                        end: Alignment(0.0, 1.0),
+                                        colors: [
+                                          const Color(0xff00ecb2),
+                                          const Color(0xff12b3e3)
+                                        ],
+                                        stops: [0.0, 1.0],
+                                      ),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: const Color(0xffcdcdcd),
+                                          offset: Offset(6, 3),
+                                          blurRadius: 6,
                                         ),
+                                      ],
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: Container(
+                                      child: Row(
+                                        children: [
+                                          Spacer(),
+                                          Padding(
+                                            padding: EdgeInsets.all(5),
+                                            child: Container(
+                                              height: 20,
+                                              width: 20,
+                                              child: Image.asset(
+                                                "assets/images/save.png",
+                                                color: Colors.white,
+                                                fit: BoxFit.scaleDown,
+                                              ),
+                                            ),
+                                          ),
+                                          Text(
+                                            " Save",
+                                            style: TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.w500),
+                                          ),
+                                          Spacer(),
+                                        ],
                                       ),
-                                      Text(
-                                        " Save",
-                                        style: TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.w500),
-                                      ),
-                                      Spacer(),
-                                    ],
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
-                          ),
-                          SizedBox(
-                            height: 20,
-                          ),
-                          Center(
-                            child: Container(
-                              height: 45,
-                              width: 250,
-                              decoration: BoxDecoration(
-                                color: Color(0xfffaa731),
-                                borderRadius: BorderRadius.circular(10),
+                              SizedBox(
+                                width: 15,
                               ),
-                              child: Container(
-                                child: Row(
-                                  children: [
-                                    Spacer(),
-                                    Padding(
-                                      padding: EdgeInsets.all(0),
-                                      child: Container(
-                                        height: 25,
-                                        width: 25,
-                                        child: Image.asset(
-                                          "assets/images/addcustomer.png",
-                                          color: Colors.white,
+                              Center(
+                                child: GestureDetector(
+                                  onTap: () {},
+                                  child: Container(
+                                    height: 45,
+                                    width: 120,
+                                    decoration: BoxDecoration(
+                                      gradient: LinearGradient(
+                                        begin: Alignment(0.0, -1.0),
+                                        end: Alignment(0.0, 1.0),
+                                        colors: [
+                                          const Color(0xff00ecb2),
+                                          const Color(0xff12b3e3)
+                                        ],
+                                        stops: [0.0, 1.0],
+                                      ),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: const Color(0xffcdcdcd),
+                                          offset: Offset(6, 3),
+                                          blurRadius: 6,
                                         ),
+                                      ],
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: Container(
+                                      child: Row(
+                                        children: [
+                                          Spacer(),
+                                          Padding(
+                                            padding: EdgeInsets.all(5),
+                                            child: Container(
+                                              height: 20,
+                                              width: 20,
+                                              child: Image.asset(
+                                                "assets/images/save.png",
+                                                color: Colors.white,
+                                                fit: BoxFit.scaleDown,
+                                              ),
+                                            ),
+                                          ),
+                                          Text(
+                                            "Cancel",
+                                            style: TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.w500),
+                                          ),
+                                          Spacer(),
+                                        ],
                                       ),
                                     ),
-                                    Text(
-                                      "  Add New Customer",
-                                      style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.w500),
-                                    ),
-                                    Spacer(),
-                                  ],
+                                  ),
                                 ),
                               ),
-                            ),
+                              Spacer(),
+                            ],
                           ),
                           SizedBox(
                             height: 20,

@@ -9,7 +9,6 @@ import 'package:optimist_erp_app/screens/login.dart';
 import 'package:optimist_erp_app/ui_elements/bottomNavigation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-
 class Splash extends StatefulWidget {
   @override
   _SplashState createState() => _SplashState();
@@ -26,14 +25,14 @@ class _SplashState extends State<Splash> {
     String name = prefs.getString("name");
     String number = prefs.getString("number");
     String vanNumber = prefs.getString("vanNo");
-    String dbs=prefs.getString("database");
+    String dbs = prefs.getString("database");
 
     if (name != null && number != null) {
       User.number = number;
       User.name = name;
       User.vanNo = vanNumber;
-      User.database=dbs;
-      User.database=dbs;
+      User.database = dbs;
+      User.database = dbs;
 
       Navigator.push(context, MaterialPageRoute(builder: (context) {
         return BottomBar();
@@ -47,15 +46,11 @@ class _SplashState extends State<Splash> {
     SystemChrome.setEnabledSystemUIOverlays(
         [SystemUiOverlay.bottom, SystemUiOverlay.top]);
 
-    db = FirebaseDatabase.instance
-        .reference()
-        .child("Companies");
+    db = FirebaseDatabase.instance.reference().child("Companies");
 
     getUser();
     super.initState();
   }
-
-
 
   @override
   void dispose() {
@@ -69,89 +64,70 @@ class _SplashState extends State<Splash> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color.fromRGBO(77, 102, 169, 1),
+      // backgroundColor: const Color(0xff2a7980),
       body: Stack(
         children: [
           Container(
             height: MediaQuery.of(context).size.height,
             width: MediaQuery.of(context).size.width,
-            child: Image.asset("assets/images/splashbackground.png",
+            child: Image.asset("assets/images/bizacc_splash.png",
                 scale: 1.5, fit: BoxFit.cover),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment(0.0, -7.59),
+                end: Alignment(0.0, 1.0),
+                colors: [const Color(0xff2a7980), const Color(0xff20474f)],
+                stops: [0.0, 1.0],
+              ),
+            ),
           ),
           Center(
             child: Padding(
               padding: EdgeInsets.only(
-                  top: MediaQuery.of(context).size.height * 0.35),
+                  top: MediaQuery.of(context).size.height * 0.3),
               child: Column(
                 children: [
-                  Container(
-                    height: 80,
-                    width: 250,
-                    decoration: BoxDecoration(
-                      image: DecorationImage(
-                        image: AssetImage('assets/images/logo.png'),
-                        fit: BoxFit.fill,
-                      ),
-                    ),
+                  SizedBox(
+                    height: MediaQuery.of(context).size.height * 0.5,
                   ),
                   SizedBox(
-                    height: 25,
+                    height: 30,
                   ),
-                  Text(
-                    'It\'s Time To Inspire',
-                    style: TextStyle(
-                      fontFamily: 'Arial',
-                      fontSize: 25,
-                      color: const Color(0xfff7fdfd),
-                    ),
-                    textAlign: TextAlign.left,
-                  ),
-
-                  SizedBox(
-                    height: MediaQuery.of(context).size.height * 0.25,
-                  ),
-                  SizedBox(height: 30,),
                   GestureDetector(
                     onTap: () async {
-
-                        Navigator.push(context,
-                            MaterialPageRoute(builder: (context) {
-                              return Login();
-                            }));
-
+                      Navigator.push(context,
+                          MaterialPageRoute(builder: (context) {
+                        return Login();
+                      }));
                     },
                     child: Container(
-                      padding: EdgeInsets.only(
-                          left: 25, right: 25, top: 10, bottom: 10),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(15.0),
-                        gradient: LinearGradient(
-                          begin: Alignment(0.0, -4.76),
-                          end: Alignment(0.0, 1.0),
-                          colors: [
-                            const Color(0xffffffff),
-                            const Color(0xff1ebdf2)
-                          ],
-                          stops: [0.0, 1.0],
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0x291ebdf2),
-                            offset: Offset(6, 3),
-                            blurRadius: 6,
+                        width: 160,
+                        height: 45,
+                        padding: EdgeInsets.only(
+                            left: 25, right: 25, top: 10, bottom: 10),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(8.0),
+                          gradient: LinearGradient(
+                            begin: Alignment(0.0, -1.0),
+                            end: Alignment(0.0, 1.0),
+                            colors: [
+                              const Color(0xff00ecb2),
+                              const Color(0xff12b3e3)
+                            ],
+                            stops: [0.0, 1.0],
                           ),
-                        ],
-                      ),
-                      child: Text(
-                        'Get Started',
-                        style: TextStyle(
-                          fontFamily: 'Arial',
-                          fontSize: 25,
-                          color: const Color(0xfff7fdfd),
                         ),
-                        textAlign: TextAlign.left,
-                      ),
-                    ),
+                        child: Center(
+                          child: Text(
+                            'Get Started',
+                            style: TextStyle(
+                              fontFamily: 'Arial',
+                              fontSize: 20,
+                              color: const Color(0xfff7fdfd),
+                            ),
+                            textAlign: TextAlign.left,
+                          ),
+                        )),
                   ),
                 ],
               ),

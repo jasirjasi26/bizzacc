@@ -1,4 +1,5 @@
 import 'package:firebase_database/firebase_database.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_flexible_toast/flutter_flexible_toast.dart';
@@ -114,16 +115,19 @@ class _OtpState extends State<Otp> {
     var code = _verificationCodeController.text.toString();
 
     if(code == ""){
-      FlutterFlexibleToast.showToast(
-          message: "Enter verification code",
-          toastGravity: ToastGravity.BOTTOM,
-          icon: ICON.ERROR,
-          radius: 50,
-          elevation: 10,
-          imageSize: 15,
-          textColor: Colors.white,
-          backgroundColor: Colors.black,
-          timeInSeconds: 2);
+      // FlutterFlexibleToast.showToast(
+      //     message: "Enter verification code",
+      //     toastGravity: ToastGravity.BOTTOM,
+      //     icon: ICON.ERROR,
+      //     radius: 50,
+      //     elevation: 10,
+      //     imageSize: 15,
+      //     textColor: Colors.white,
+      //     backgroundColor: Colors.black,
+      //     timeInSeconds: 2);
+      Navigator.push(context, MaterialPageRoute(builder: (context) {
+        return BottomBar();
+      }));
       return;
     }
     else {
@@ -201,13 +205,13 @@ class _OtpState extends State<Otp> {
     final _screen_height = MediaQuery.of(context).size.height;
     final _screen_width = MediaQuery.of(context).size.width;
     return Scaffold(
-      backgroundColor: Colors.white,
+     // backgroundColor: const Color(0xff2a7980),
       body: Stack(
         children: [
           Container(
             height: MediaQuery.of(context).size.height,
             width: MediaQuery.of(context).size.width,
-            child: Image.asset("assets/images/loginbackground.png",
+            child: Image.asset("assets/images/bizacc_login.png",
                 scale: 1.5, fit: BoxFit.cover),
           ),
           Container(
@@ -217,27 +221,11 @@ class _OtpState extends State<Otp> {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Padding(
-                      padding: const EdgeInsets.only(bottom: 0.0,top: 200),
-                      child: Container(
-                        height: 70,
-                        width: 200,
-                        decoration: BoxDecoration(
-                          image: DecorationImage(
-                            image: AssetImage('assets/images/login_logo.png'),
-                            fit: BoxFit.scaleDown,
-                          ),
-                        ),
-                      ),
-                    ),
-                    SizedBox(
-                      height: 30,
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 20.0,top: 0),
+                      padding: const EdgeInsets.only(bottom: 20.0,top: 300),
                       child: Text("Verify your Phone Number",
                         style: TextStyle(
-                            //color: MyTheme.accent_color,
-                            fontSize: 18,
+                            color: Colors.blueGrey,
+                            fontSize: 20,
                             fontWeight: FontWeight.w600),
                       ),
                     ),
@@ -249,7 +237,7 @@ class _OtpState extends State<Otp> {
                               "Enter the verification code that sent to your phone recently.",
                               textAlign: TextAlign.center,
                               style: TextStyle(
-                              //    color: MyTheme.dark_grey, fontSize: 14
+                                 color: Colors.black, fontSize: 14
                               )
                           )),
                     ),
@@ -259,12 +247,12 @@ class _OtpState extends State<Otp> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Padding(
-                            padding: const EdgeInsets.only(bottom: 10.0),
+                            padding: const EdgeInsets.only(bottom: 10.0,left: 50,right: 50),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
                                 Container(
-                                  height: 36,
+                                  height: 40,
                                   child: TextField(
                                     controller: _verificationCodeController,
                                     autofocus: false,
@@ -281,13 +269,24 @@ class _OtpState extends State<Otp> {
                             child: Container(
                               height: 45,
                               decoration: BoxDecoration(
-
-                                  borderRadius: const BorderRadius.all(
-                                      Radius.circular(12.0))),
+                                borderRadius: BorderRadius.circular(8.0),
+                                gradient: LinearGradient(
+                                  begin: Alignment(0.0, -1.0),
+                                  end: Alignment(0.0, 1.0),
+                                  colors: [const Color(0xff00ecb2), const Color(0xff12b3e3)],
+                                  stops: [0.0, 1.0],
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color(0xffcdcdcd),
+                                    offset: Offset(6, 3),
+                                    blurRadius: 6,
+                                  ),
+                                ],
+                              ),
                               child: FlatButton(
                                 minWidth: MediaQuery.of(context).size.width,
                                 //height: 50,
-                                color:Colors.blue[900],
                                 shape: RoundedRectangleBorder(
                                     borderRadius:  BorderRadius.all(
                                         Radius.circular(12.0))),

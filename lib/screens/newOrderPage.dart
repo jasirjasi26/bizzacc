@@ -2,6 +2,7 @@ import 'package:adobe_xd/pinned.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_flexible_toast/flutter_flexible_toast.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:optimist_erp_app/data/customed_details.dart';
 import 'package:optimist_erp_app/data/user_data.dart';
 import 'package:optimist_erp_app/screens/settlement_page.dart';
@@ -32,7 +33,7 @@ class NewOrderPage extends StatefulWidget {
 
 class NewOrderPageState extends State<NewOrderPage> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-  String db=User.database;
+  String db = User.database;
   final _screenshotController = ScreenshotController();
   final pdf = pw.Document();
   int _radioValue1 = 0;
@@ -116,26 +117,26 @@ class NewOrderPageState extends State<NewOrderPage> {
     });
   }
 
-
-  takeUnit(String cunit){
+  takeUnit(String cunit) {
     reference
         .child("Items")
         .child(itemId)
-        .child("RateAndStock").child(cunit)
+        .child("RateAndStock")
+        .child(cunit)
         .once()
         .then((DataSnapshot snapshot) {
       Map<dynamic, dynamic> values = snapshot.value;
       values.forEach((key, values) {
-        if(key.toString()=="Rate"){
+        if (key.toString() == "Rate") {
           setState(() {
-            rate=values.toString();
-            saleRate.text=values.toString();
+            rate = values.toString();
+            saleRate.text = values.toString();
           });
         }
-        if(key.toString()=="Stock"){
-          int d=int.parse(User.vanNo);
+        if (key.toString() == "Stock") {
+          int d = int.parse(User.vanNo);
           setState(() {
-            stock=values[d].toString();
+            stock = values[d].toString();
           });
         }
       });
@@ -196,7 +197,6 @@ class NewOrderPageState extends State<NewOrderPage> {
                     setState(() {
                       unitlist.add(key.toString());
                     });
-
                   });
                 });
               }
@@ -214,8 +214,6 @@ class NewOrderPageState extends State<NewOrderPage> {
                   stock = value[i]["RateAndStock"][unit]["Stock"]
                           [int.parse(User.vanNo)]
                       .toString();
-
-
 
                   saleRate.text = rate;
                   code = value[i]["Code"].toString();
@@ -244,7 +242,6 @@ class NewOrderPageState extends State<NewOrderPage> {
                     setState(() {
                       unitlist.add(key.toString());
                     });
-
                   });
                 });
               }
@@ -306,7 +303,6 @@ class NewOrderPageState extends State<NewOrderPage> {
                     setState(() {
                       unitlist.add(key.toString());
                     });
-
                   });
                 });
               });
@@ -351,7 +347,6 @@ class NewOrderPageState extends State<NewOrderPage> {
                     setState(() {
                       unitlist.add(key.toString());
                     });
-
                   });
                 });
               });
@@ -684,26 +679,23 @@ class NewOrderPageState extends State<NewOrderPage> {
 
   void initState() {
     // TODO: implement initState
-    setState(() {
-      db=User.database;
-    });
-
     reference = FirebaseDatabase.instance
         .reference()
         .child("Companies")
-        .child(User.database);
+        .child("CYBRIX");
 
     items = FirebaseDatabase.instance
         .reference()
         .child("Companies")
-        .child(User.database)
+        .child("CYBRIX")
         .child("Items");
 
     names = FirebaseDatabase.instance
         .reference()
         .child("Companies")
-        .child(User.database)
+        .child("CYBRIX")
         .child("Customers");
+
     getCustomerId();
     super.initState();
   }
@@ -718,10 +710,10 @@ class NewOrderPageState extends State<NewOrderPage> {
         controller: _screenshotController,
         child: ListView(
           children: [
+            homeData(),
             SizedBox(
-              height: 10,
-            ),
-            homeData()
+              height: 30,
+            )
           ],
         ),
       ),
@@ -733,290 +725,395 @@ class NewOrderPageState extends State<NewOrderPage> {
       children: [
         Row(
           children: [
-            Spacer(),
-            Text(
-              'Customer Name :  ' + Customer.CustomerName,
-              style: TextStyle(
-                  fontFamily: 'Arial',
-                  fontSize: 13,
-                  color: Colors.blueAccent,
-                  fontWeight: FontWeight.bold),
-              textAlign: TextAlign.left,
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text(
+                'Customer Name : ' + Customer.CustomerName,
+                style: TextStyle(
+                    fontFamily: 'Arial',
+                    fontSize: 13,
+                    color: Colors.greenAccent,
+                    fontWeight: FontWeight.bold),
+                textAlign: TextAlign.left,
+              ),
             ),
             Spacer(),
           ],
         ),
         Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SizedBox(
-              width: 20,
-            ),
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: Column(
                 children: [
-                  Container(
-                    height: 50,
-                    width: 50,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(8.0),
-                      gradient: LinearGradient(
-                        begin: Alignment(0.0, -2.03),
-                        end: Alignment(0.0, 1.0),
-                        colors: [
-                          const Color(0xfffafafa),
-                          const Color(0xff845cfd)
-                        ],
-                        stops: [0.0, 1.0],
-                      ),
-                    ),
-                    child: Image.asset(
-                      'assets/images/scanimage.png',
-                      fit: BoxFit.fill,
-                    ),
+                  SizedBox(
+                    height: 5,
                   ),
-                  Padding(
-                    padding: const EdgeInsets.all(2.0),
+                  Text(
+                    'Order Date : ' + today,
+                    style: TextStyle(
+                      fontFamily: 'Arial',
+                      fontSize: 12,
+                      color: Colors.blueGrey,
+                    ),
+                    textAlign: TextAlign.left,
+                  ),
+                  SizedBox(
+                    height: 5,
+                  ),
+                  GestureDetector(
+                    onTap: _selectDate,
                     child: Text(
-                      "Scan",
-                      style: TextStyle(fontSize: 10),
+                      'Delivery Date : ' + from,
+                      style: TextStyle(
+                          fontFamily: 'Arial',
+                          fontSize: 12,
+                          color: Colors.blueGrey,
+                          decoration: TextDecoration.underline),
+                      textAlign: TextAlign.left,
                     ),
                   )
                 ],
               ),
             ),
-
-            // Padding(
-            //   padding: const EdgeInsets.all(8.0),
-            //   child: Column(
-            //     children: [
-            //       Container(
-            //         height: 50,
-            //         width: 50,
-            //         decoration: BoxDecoration(
-            //           borderRadius: BorderRadius.circular(8.0),
-            //           gradient: LinearGradient(
-            //             begin: Alignment(0.0, -2.15),
-            //             end: Alignment(0.0, 1.0),
-            //             colors: [
-            //               const Color(0xffffffff),
-            //               const Color(0xff22bef1)
-            //             ],
-            //             stops: [0.0, 1.0],
-            //           ),
-            //         ),
-            //         child: Center(
-            //           child: Image.asset(
-            //             'assets/images/addprson.png',
-            //             fit: BoxFit.scaleDown,
-            //             height: 25,
-            //             width: 25,
-            //           ),
-            //         ),
-            //       ),
-            //       Padding(
-            //         padding: const EdgeInsets.all(2.0),
-            //         child: Text(
-            //           "Add Customer",
-            //           style: TextStyle(fontSize: 10),
-            //         ),
-            //       )
-            //     ],
-            //   ),
-            // ),
-            GestureDetector(
-              onTap: () {
-                showBookingDialog(_scaffoldKey.currentContext, "", 0, 0);
-              },
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Column(
-                  children: [
-                    Container(
-                      height: 50,
-                      width: 50,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(8.0),
-                        gradient: LinearGradient(
-                          begin: Alignment(0.0, -1.62),
-                          end: Alignment(0.0, 1.0),
-                          colors: [
-                            const Color(0xffffffff),
-                            const Color(0xff388e3c)
-                          ],
-                          stops: [0.0, 1.0],
-                        ),
-                      ),
-                      child: Center(
-                        child: Image.asset(
-                          'assets/images/additem.png',
-                          fit: BoxFit.scaleDown,
-                          height: 25,
-                          width: 25,
-                        ),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(2.0),
-                      child: Text(
-                        "Add item",
-                        style: TextStyle(fontSize: 10),
-                      ),
-                    )
-                  ],
+            Spacer(),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: GestureDetector(
+                onTap: () {
+                  takeBillPdf();
+                },
+                child: Center(
+                  child: Container(
+                      height: 35,
+                      width: 30,
+                      child: // Adobe XD layer: 'surface1' (group)
+                          Stack(
+                        children: <Widget>[
+                          Pinned.fromPins(
+                            Pin(start: 0.0, end: 0.0),
+                            Pin(size: 6.8, middle: 0.3704),
+                            child: SvgPicture.string(
+                              '<svg viewBox="4.0 11.2 24.8 6.8" ><path transform="translate(0.0, -3.79)" d="M 4 21.8271312713623 L 28.825927734375 21.8271312713623 L 28.825927734375 17.48259353637695 C 28.825927734375 16.11040115356445 27.71552467346191 15 26.34333419799805 15 L 6.482592582702637 15 C 5.110376834869385 15 4 16.11040115356445 4 17.48259353637695 L 4 21.8271312713623 Z" fill="#616161" stroke="none" stroke-width="1" stroke-miterlimit="4" stroke-linecap="butt" /></svg>',
+                              allowDrawingOutsideViewBox: true,
+                              fit: BoxFit.fill,
+                            ),
+                          ),
+                          Pinned.fromPins(
+                            Pin(start: 3.1, end: 3.1),
+                            Pin(size: 1.9, middle: 0.2),
+                            child: SvgPicture.string(
+                              '<svg viewBox="7.1 9.3 18.6 1.9" ><path transform="translate(-1.9, -2.66)" d="M 9 12 L 27.61944580078125 12 L 27.61944580078125 13.8619441986084 L 9 13.8619441986084 L 9 12 Z" fill="#424242" stroke="none" stroke-width="1" stroke-miterlimit="4" stroke-linecap="butt" /></svg>',
+                              allowDrawingOutsideViewBox: true,
+                              fit: BoxFit.fill,
+                            ),
+                          ),
+                          Pinned.fromPins(
+                            Pin(start: 0.0, end: 0.0),
+                            Pin(size: 7.4, middle: 0.7692),
+                            child: SvgPicture.string(
+                              '<svg viewBox="4.0 17.4 24.8 7.4" ><path transform="translate(0.0, -7.59)" d="M 6.482592582702637 32.44777679443359 L 26.34333419799805 32.44777679443359 C 27.71552467346191 32.44777679443359 28.825927734375 31.33737754821777 28.825927734375 29.96518516540527 L 28.825927734375 25 L 4 25 L 4 29.96518516540527 C 4 31.33737754821777 5.110376834869385 32.44777679443359 6.482592582702637 32.44777679443359" fill="#424242" stroke="none" stroke-width="1" stroke-miterlimit="4" stroke-linecap="butt" /></svg>',
+                              allowDrawingOutsideViewBox: true,
+                              fit: BoxFit.fill,
+                            ),
+                          ),
+                          Pinned.fromPins(
+                            Pin(size: 1.2, end: 1.9),
+                            Pin(size: 1.2, middle: 0.3611),
+                            child: SvgPicture.string(
+                              '<svg viewBox="25.7 13.1 1.2 1.2" ><path transform="translate(-13.28, -4.93)" d="M 39 18.62064743041992 C 39 18.96250152587891 39.2787971496582 19.24129676818848 39.62064743041992 19.24129676818848 C 39.96250152587891 19.24129676818848 40.24129867553711 18.96250152587891 40.24129867553711 18.62064743041992 C 40.24129867553711 18.27879524230957 39.96250152587891 18 39.62064743041992 18 C 39.2787971496582 18 39 18.27879524230957 39 18.62064743041992" fill="#00e676" stroke="none" stroke-width="1" stroke-miterlimit="4" stroke-linecap="butt" /></svg>',
+                              allowDrawingOutsideViewBox: true,
+                              fit: BoxFit.fill,
+                            ),
+                          ),
+                          Pinned.fromPins(
+                            Pin(start: 3.1, end: 3.1),
+                            Pin(size: 1.9, middle: 0.6857),
+                            child: SvgPicture.string(
+                              '<svg viewBox="7.1 19.9 18.6 1.9" ><path transform="translate(-1.9, -9.1)" d="M 26.68847274780273 30.86194610595703 L 9.930972099304199 30.86194610595703 C 9.417000770568848 30.86194610595703 9 30.44493103027344 9 29.93097305297852 C 9 29.41701507568359 9.417000770568848 29 9.930972099304199 29 L 26.68847274780273 29 C 27.20243072509766 29 27.61944580078125 29.41701507568359 27.61944580078125 29.93097305297852 C 27.61944580078125 30.44493103027344 27.20243072509766 30.86194610595703 26.68847274780273 30.86194610595703" fill="#242424" stroke="none" stroke-width="1" stroke-miterlimit="4" stroke-linecap="butt" /></svg>',
+                              allowDrawingOutsideViewBox: true,
+                              fit: BoxFit.fill,
+                            ),
+                          ),
+                          Pinned.fromPins(
+                            Pin(start: 4.3, end: 4.3),
+                            Pin(size: 6.2, start: 0.0),
+                            child: SvgPicture.string(
+                              '<svg viewBox="8.3 5.0 16.1 6.2" ><path transform="translate(-2.66, 0.0)" d="M 11 5 L 27.1368522644043 5 L 27.1368522644043 11.20648193359375 L 11 11.20648193359375 L 11 5 Z" fill="#90caf9" stroke="none" stroke-width="1" stroke-miterlimit="4" stroke-linecap="butt" /></svg>',
+                              allowDrawingOutsideViewBox: true,
+                              fit: BoxFit.fill,
+                            ),
+                          ),
+                          Pinned.fromPins(
+                            Pin(start: 4.3, end: 4.3),
+                            Pin(size: 6.8, end: 0.0),
+                            child: SvgPicture.string(
+                              '<svg viewBox="8.3 21.8 16.1 6.8" ><path transform="translate(-2.66, -10.24)" d="M 11 32 L 27.1368522644043 32 L 27.1368522644043 38.82712936401367 L 11 38.82712936401367 L 11 32 Z" fill="#90caf9" stroke="none" stroke-width="1" stroke-miterlimit="4" stroke-linecap="butt" /></svg>',
+                              allowDrawingOutsideViewBox: true,
+                              fit: BoxFit.fill,
+                            ),
+                          ),
+                          Pinned.fromPins(
+                            Pin(start: 4.3, end: 4.3),
+                            Pin(size: 1.2, middle: 0.6944),
+                            child: SvgPicture.string(
+                              '<svg viewBox="8.3 20.5 16.1 1.2" ><path transform="translate(-2.66, -9.48)" d="M 11 30 L 27.1368522644043 30 L 27.1368522644043 31.24129676818848 L 11 31.24129676818848 L 11 30 Z" fill="#42a5f5" stroke="none" stroke-width="1" stroke-miterlimit="4" stroke-linecap="butt" /></svg>',
+                              allowDrawingOutsideViewBox: true,
+                              fit: BoxFit.fill,
+                            ),
+                          ),
+                          Pinned.fromPins(
+                            Pin(size: 10.6, middle: 0.5217),
+                            Pin(size: 1.2, middle: 0.8056),
+                            child: SvgPicture.string(
+                              '<svg viewBox="11.4 23.0 10.6 1.2" ><path transform="translate(-4.55, -11.0)" d="M 16 34 L 26.55101776123047 34 L 26.55101776123047 35.24129867553711 L 16 35.24129867553711 L 16 34 Z" fill="#1976d2" stroke="none" stroke-width="1" stroke-miterlimit="4" stroke-linecap="butt" /></svg>',
+                              allowDrawingOutsideViewBox: true,
+                              fit: BoxFit.fill,
+                            ),
+                          ),
+                          Pinned.fromPins(
+                            Pin(size: 8.1, middle: 0.4444),
+                            Pin(size: 1.2, end: 1.9),
+                            child: SvgPicture.string(
+                              '<svg viewBox="11.4 25.5 8.1 1.2" ><path transform="translate(-4.55, -12.52)" d="M 16 38 L 24.06842803955078 38 L 24.06842803955078 39.24129486083984 L 16 39.24129486083984 L 16 38 Z" fill="#1976d2" stroke="none" stroke-width="1" stroke-miterlimit="4" stroke-linecap="butt" /></svg>',
+                              allowDrawingOutsideViewBox: true,
+                              fit: BoxFit.fill,
+                            ),
+                          ),
+                        ],
+                      )),
                 ),
               ),
             ),
-            Spacer(),
-            Column(
-              children: [
-                SizedBox(
-                  height: 5,
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: GestureDetector(
+                onTap: () {
+                  takeBillPdf();
+                },
+                child: Center(
+                  child: Container(
+                      height: 35,
+                      width: 25,
+                      child: // Adobe XD layer: 'surface1' (group)
+                          Stack(
+                        children: <Widget>[
+                          Pinned.fromPins(
+                            Pin(start: 0.0, end: 0.0),
+                            Pin(start: 0.0, end: 0.0),
+                            child: SvgPicture.string(
+                              '<svg viewBox="8.0 3.0 16.8 22.0" ><path  d="M 24.76190567016602 25 L 8 25 L 8 3 L 19.5238094329834 3 L 24.76190567016602 8.238094329833984 L 24.76190567016602 25 Z" fill="#ff5722" stroke="none" stroke-width="1" stroke-miterlimit="4" stroke-linecap="butt" /></svg>',
+                              allowDrawingOutsideViewBox: true,
+                              fit: BoxFit.fill,
+                            ),
+                          ),
+                          Pinned.fromPins(
+                            Pin(size: 5.0, end: 0.8),
+                            Pin(size: 5.0, start: 0.8),
+                            child: SvgPicture.string(
+                              '<svg viewBox="19.0 3.8 5.0 5.0" ><path transform="translate(-10.0, -0.71)" d="M 33.97619247436523 9.476189613342285 L 29 9.476189613342285 L 29 4.5 L 33.97619247436523 9.476189613342285 Z" fill="#fbe9e7" stroke="none" stroke-width="1" stroke-miterlimit="4" stroke-linecap="butt" /></svg>',
+                              allowDrawingOutsideViewBox: true,
+                              fit: BoxFit.fill,
+                            ),
+                          ),
+                          Pinned.fromPins(
+                            Pin(size: 3.5, middle: 0.2286),
+                            Pin(size: 5.2, middle: 0.6255),
+                            child: SvgPicture.string(
+                              '<svg viewBox="11.0 13.5 3.5 5.2" ><path transform="translate(-2.76, -9.55)" d="M 14.85250568389893 26.42709541320801 L 14.85250568389893 28.26042938232422 L 13.80080032348633 28.26042938232422 L 13.80080032348633 23.04689979553223 L 15.576828956604 23.04689979553223 C 16.09246635437012 23.04689979553223 16.50370788574219 23.20650482177734 16.81066131591797 23.5277042388916 C 17.11756134033203 23.84691429138184 17.27103805541992 24.26229667663574 17.27103805541992 24.77384757995605 C 17.27103805541992 25.28330612182617 17.11756134033203 25.68637466430664 16.81474685668945 25.98306083679199 C 16.51193237304688 26.27980041503906 16.09246635437012 26.42709541320801 15.55430507659912 26.42709541320801 L 14.85250568389893 26.42709541320801 Z M 14.85250568389893 25.54929542541504 L 15.576828956604 25.54929542541504 C 15.77734279632568 25.54929542541504 15.932861328125 25.48381996154785 16.04129028320312 25.35286712646484 C 16.15181541442871 25.22191429138184 16.20702362060547 25.03161430358887 16.20702362060547 24.77997589111328 C 16.20702362060547 24.52011299133301 16.14977264404297 24.31341934204102 16.03924942016602 24.1579532623291 C 15.92673397064209 24.00447654724121 15.77530002593994 23.92674255371094 15.58704280853271 23.9246997833252 L 14.85250568389893 23.9246997833252 L 14.85250568389893 25.54929542541504 Z" fill="#ffebee" stroke="none" stroke-width="1" stroke-miterlimit="4" stroke-linecap="butt" /></svg>',
+                              allowDrawingOutsideViewBox: true,
+                              fit: BoxFit.fill,
+                            ),
+                          ),
+                          Pinned.fromPins(
+                            Pin(size: 3.4, middle: 0.5391),
+                            Pin(size: 5.2, middle: 0.6255),
+                            child: SvgPicture.string(
+                              '<svg viewBox="15.2 13.5 3.4 5.2" ><path transform="translate(-6.56, -9.55)" d="M 21.76560020446777 28.26042938232422 L 21.76560020446777 23.04689979553223 L 23.14264297485352 23.04689979553223 C 23.75240898132324 23.04689979553223 24.23735237121582 23.23924446105957 24.59951400756836 23.62591934204102 C 24.95963287353516 24.01264762878418 25.14584732055664 24.5425853729248 25.15197563171387 25.21578598022461 L 25.15197563171387 26.06084823608398 C 25.15197563171387 26.74630546569824 24.97188949584961 27.28441429138184 24.60972785949707 27.67522811889648 C 24.24756622314453 28.06604194641113 23.7503662109375 28.26042938232422 23.11398887634277 28.26042938232422 L 21.76560020446777 28.26042938232422 Z M 22.81730461120605 23.9246997833252 L 22.81730461120605 27.38671493530273 L 23.1324291229248 27.38671493530273 C 23.48437690734863 27.38671493530273 23.72988510131836 27.29468154907227 23.87314796447754 27.10846710205078 C 24.016357421875 26.92429542541504 24.0920467376709 26.6050853729248 24.10027122497559 26.1508903503418 L 24.10027122497559 25.24648094177246 C 24.10027122497559 24.75949668884277 24.0306568145752 24.41985511779785 23.8956184387207 24.22751426696777 C 23.75853729248047 24.03516960144043 23.52732849121094 23.93491363525391 23.19994735717773 23.9246997833252 L 22.81730461120605 23.9246997833252 Z" fill="#ffebee" stroke="none" stroke-width="1" stroke-miterlimit="4" stroke-linecap="butt" /></svg>',
+                              allowDrawingOutsideViewBox: true,
+                              fit: BoxFit.fill,
+                            ),
+                          ),
+                          Pinned.fromPins(
+                            Pin(size: 2.9, middle: 0.8182),
+                            Pin(size: 5.2, middle: 0.6255),
+                            child: SvgPicture.string(
+                              '<svg viewBox="19.4 13.5 2.9 5.2" ><path transform="translate(-10.32, -9.55)" d="M 32.36255264282227 26.1324520111084 L 30.72564697265625 26.1324520111084 L 30.72564697265625 28.26042938232422 L 29.67189979553223 28.26042938232422 L 29.67189979553223 23.04689979553223 L 32.55898284912109 23.04689979553223 L 32.55898284912109 23.9246997833252 L 30.72564697265625 23.9246997833252 L 30.72564697265625 25.26078033447266 L 32.36255264282227 25.26078033447266 L 32.36255264282227 26.1324520111084 Z" fill="#ffebee" stroke="none" stroke-width="1" stroke-miterlimit="4" stroke-linecap="butt" /></svg>',
+                              allowDrawingOutsideViewBox: true,
+                              fit: BoxFit.fill,
+                            ),
+                          ),
+                        ],
+                      )),
                 ),
-                Text(
-                  'Order Date : ' + today,
-                  style: TextStyle(
-                    fontFamily: 'Arial',
-                    fontSize: 12,
-                    color: Colors.blueAccent,
-                  ),
-                  textAlign: TextAlign.left,
-                ),
-                SizedBox(
-                  height: 5,
-                ),
-                GestureDetector(
-                  onTap: _selectDate,
-                  child: Text(
-                    'Delivery Date : ' + from,
-                    style: TextStyle(
-                        fontFamily: 'Arial',
-                        fontSize: 12,
-                        color: Colors.blueAccent,
-                        decoration: TextDecoration.underline),
-                    textAlign: TextAlign.left,
-                  ),
-                )
-              ],
+              ),
             ),
-            SizedBox(
-              width: 10,
-            )
           ],
         ),
         Container(
-            height: MediaQuery.of(context).size.height * 0.3,
+          width: MediaQuery.of(context).size.width,
+          color: Color(0xff20474f),
+          height: 35,
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
+              children: [
+                Container(
+                  width: MediaQuery.of(context).size.width * 0.33,
+                  child: Text(
+                    'Item',
+                    style: TextStyle(
+                      fontFamily: 'Arial',
+                      fontSize: 14,
+                      color: const Color(0xffffffff),
+                    ),
+                    textAlign: TextAlign.left,
+                  ),
+                ),
+                Spacer(),
+                Container(
+                  width: MediaQuery.of(context).size.width * 0.13,
+                  child: Text(
+                    'Qty',
+                    style: TextStyle(
+                      fontFamily: 'Arial',
+                      fontSize: 14,
+                      color: const Color(0xffffffff),
+                    ),
+                    textAlign: TextAlign.left,
+                  ),
+                ),
+                Container(
+                  width: MediaQuery.of(context).size.width * 0.13,
+                  child: Text(
+                    'Rate',
+                    style: TextStyle(
+                      fontFamily: 'Arial',
+                      fontSize: 14,
+                      color: const Color(0xffffffff),
+                    ),
+                    textAlign: TextAlign.left,
+                  ),
+                ),
+                Container(
+                  width: MediaQuery.of(context).size.width * 0.13,
+                  child: Text(
+                    'Disc',
+                    style: TextStyle(
+                      fontFamily: 'Arial',
+                      fontSize: 14,
+                      color: const Color(0xffffffff),
+                    ),
+                    textAlign: TextAlign.left,
+                  ),
+                ),
+                Container(
+                  width: MediaQuery.of(context).size.width * 0.13,
+                  child: Text(
+                    'Total',
+                    style: TextStyle(
+                      fontFamily: 'Arial',
+                      fontSize: 14,
+                      color: const Color(0xffffffff),
+                    ),
+                    textAlign: TextAlign.left,
+                  ),
+                ),
+                SizedBox(width: MediaQuery.of(context).size.width * 0.1),
+              ],
+            ),
+          ),
+        ),
+        Container(
+            height: MediaQuery.of(context).size.height * 0.2,
             child: ListView.builder(
               itemCount: itemname.length,
               itemBuilder: (context, i) {
                 return Padding(
-                  padding: const EdgeInsets.all(10.0),
+                  padding: const EdgeInsets.all(0.0),
                   child: Container(
-                    height: 100,
+                    height: 30,
+                    color: i.floor().isEven ? Colors.blueGrey : Colors.blueGrey[900],
                     width: MediaQuery.of(context).size.width,
-                    child: Stack(
-                      children: <Widget>[
-                        Pinned.fromPins(
-                          Pin(start: 0.0, end: 0.0),
-                          Pin(start: 0.0, end: 0.0),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(16.0),
-                              color: const Color(0xffffffff),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: const Color(0x29000000),
-                                  offset: Offset(6, 3),
-                                  blurRadius: 12,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        Pinned.fromPins(
-                          Pin(size: 146.0, start: 12.0),
-                          Pin(size: 35.0, start: 13.0),
+                    child: Row(
+                      children: [
+                        SizedBox(width: 10,),
+                        Container(
+                          width: MediaQuery.of(context).size.width * 0.33,
                           child: Text(
                             itemname[i].toString(),
                             style: TextStyle(
                               fontFamily: 'Arial',
-                              fontSize: 15,
-                              color: const Color(0xff182d66),
+                              fontSize: 12,
+                              color: Colors.white,
                             ),
                             textAlign: TextAlign.left,
                           ),
                         ),
-                        Pinned.fromPins(
-                          Pin(size: 147.0, start: 12.0),
-                          Pin(size: 14.0, middle: 0.565),
+                        Spacer(),
+                        Container(
+                          width: MediaQuery.of(context).size.width * 0.13,
                           child: Text(
-                            quantity[i].toString() +
-                                "  " +
-                                units[i].toString() +
-                                ",  Rate : " +
-                                rateList[i].toString(),
+                            quantity[i].toString() +" "+
+                                units[i].toString(),
                             style: TextStyle(
                               fontFamily: 'Arial',
                               fontSize: 12,
-                              color: const Color(0xff5b5b5b),
+                              color: Colors.white,
                             ),
                             textAlign: TextAlign.left,
                           ),
                         ),
-                        Pinned.fromPins(Pin(size: 50.0, end: 40.0),
-                            Pin(size: 14.0, middle: 0.1625),
-                            child: GestureDetector(
-                              onTap: () {
-                                editItem(i, quantity[i]);
-                              },
-                              child: Icon(
-                                Icons.edit,
-                                color: Colors.green,
-                                size: 18,
-                              ),
-                            )),
-                        Pinned.fromPins(Pin(size: 50.0, end: 10.0),
-                            Pin(size: 14.0, middle: 0.1625),
-                            child: GestureDetector(
-                              onTap: () {
-                                deleteItem(i);
-                              },
-                              child: Icon(
-                                Icons.delete,
-                                color: Colors.red,
-                                size: 18,
-                              ),
-                            )),
-                        Pinned.fromPins(
-                          Pin(size: 120.0, end: 20.0),
-                          Pin(size: 25.0, middle: 0.5625),
-                          child: Text(
-                            "Discount " +
-                                '[' +
-                                allDiscounts[i].toString() +
-                                ']   ' +
-                                totalamount[i].toString(),
+                        Container(
+                          width: MediaQuery.of(context).size.width * 0.13,
+                          child: Text(rateList[i].toString(),
                             style: TextStyle(
                               fontFamily: 'Arial',
                               fontSize: 12,
-                              color: const Color(0xff182d66),
+                              color:Colors.white,
                             ),
                             textAlign: TextAlign.left,
                           ),
                         ),
-                        Pinned.fromPins(
-                          Pin(size: 60.0, end: 18.0),
-                          Pin(size: 25.0, end: 13.0),
+                        Container(
+                          width: MediaQuery.of(context).size.width * 0.13,
+                          child: Text(
+                            allDiscounts[i].toString(),
+                            style: TextStyle(
+                              fontFamily: 'Arial',
+                              fontSize: 12,
+                              color: Colors.white,
+                            ),
+                            textAlign: TextAlign.left,
+                          ),
+                        ),
+                        Container(
+                          width: MediaQuery.of(context).size.width * 0.13,
                           child: Text(
                             discountedFinalRate[i].toString(),
                             style: TextStyle(
                               fontFamily: 'Arial',
                               fontSize: 12,
-                              color: const Color(0xff182d66),
+                              color: Colors.white,
                             ),
                             textAlign: TextAlign.left,
                           ),
                         ),
+                        Container(
+                          width: MediaQuery.of(context).size.width * 0.1,
+                          child: GestureDetector(
+                            onTap: () {
+                              deleteItem(i);
+                            },
+                            child: Icon(
+                              Icons.clear,
+                              color: Colors.red,
+                              size: 20,
+                            ),
+                          ),
+                        )
                       ],
                     ),
                   ),
@@ -1157,19 +1254,18 @@ class NewOrderPageState extends State<NewOrderPage> {
                     width: 150,
                     height: 40,
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(8.0),
                       gradient: LinearGradient(
-                        begin: Alignment(0.0, -4.12),
+                        begin: Alignment(0.0, -1.0),
                         end: Alignment(0.0, 1.0),
                         colors: [
-                          const Color(0xffffffff),
-                          const Color(0xfffaa731)
+                          const Color(0xff00ecb2),
+                          const Color(0xff22bef1)
                         ],
                         stops: [0.0, 1.0],
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xfffae7cb),
+                          color: const Color(0x80747474),
                           offset: Offset(6, 3),
                           blurRadius: 6,
                         ),
@@ -1199,19 +1295,18 @@ class NewOrderPageState extends State<NewOrderPage> {
                     width: 150,
                     height: 40,
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(8.0),
                       gradient: LinearGradient(
-                        begin: Alignment(0.0, -4.12),
+                        begin: Alignment(0.0, -1.0),
                         end: Alignment(0.0, 1.0),
                         colors: [
-                          const Color(0xffffffff),
-                          const Color(0xfffb4ce5)
+                          const Color(0xff00ecb2),
+                          const Color(0xff22bef1)
                         ],
                         stops: [0.0, 1.0],
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xfffae7cb),
+                          color: const Color(0x80747474),
                           offset: Offset(6, 3),
                           blurRadius: 6,
                         ),
@@ -1295,9 +1390,6 @@ class NewOrderPageState extends State<NewOrderPage> {
                 ],
               ),
             ),
-            SizedBox(
-              height: 20,
-            ),
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: Column(
@@ -1313,6 +1405,7 @@ class NewOrderPageState extends State<NewOrderPage> {
                       child: Image.asset(
                         'assets/images/approvalscan.png',
                         fit: BoxFit.scaleDown,
+                        color: Colors.blueGrey,
                         height: 50,
                         width: 50,
                       ),
@@ -1327,76 +1420,69 @@ class NewOrderPageState extends State<NewOrderPage> {
                   Row(
                     children: [
                       Spacer(),
-                      _radioValue1 == 1
-                          ? GestureDetector(
-                              onTap: () {
-                                if (totalBill > 0) {
-                                  if (from != "Select a date") {
-                                    addtoOrders();
-                                  } else {
-                                    FlutterFlexibleToast.showToast(
-                                        message: "Please select date...",
-                                        // toastLength: Toast.LENGTH_LONG,
-                                        toastGravity: ToastGravity.BOTTOM,
-                                        icon: ICON.ERROR,
-                                        radius: 50,
-                                        elevation: 10,
-                                        imageSize: 15,
-                                        textColor: Colors.white,
-                                        backgroundColor: Colors.black,
-                                        timeInSeconds: 2);
-                                  }
-                                } else {
-                                  FlutterFlexibleToast.showToast(
-                                      message: "Please add items",
-                                      // toastLength: Toast.LENGTH_LONG,
-                                      toastGravity: ToastGravity.BOTTOM,
-                                      icon: ICON.ERROR,
-                                      radius: 50,
-                                      elevation: 10,
-                                      imageSize: 20,
-                                      textColor: Colors.white,
-                                      backgroundColor: Colors.black,
-                                      timeInSeconds: 2);
-                                }
-                              },
-                              child: Container(
-                                height: 50,
-                                width: 150,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(8.0),
-                                  gradient: LinearGradient(
-                                    begin: Alignment(0.01, -0.72),
-                                    end: Alignment(0.0, 1.0),
-                                    colors: [
-                                      const Color(0xff385194),
-                                      const Color(0xff182d66)
-                                    ],
-                                    stops: [0.0, 1.0],
-                                  ),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: const Color(0x80182d66),
-                                      offset: Offset(6, 3),
-                                      blurRadius: 6,
-                                    ),
-                                  ],
-                                ),
-                                child: Center(
-                                  child: Text(
-                                    'Save',
-                                    style: TextStyle(
-                                      fontFamily: 'Arial',
-                                      fontSize: 18,
-                                      color: const Color(0xfff7fdfd),
-                                    ),
-                                    textAlign: TextAlign.left,
-                                  ),
-                                ),
+                      GestureDetector(
+                        onTap: () {
+                          if (totalBill > 0) {
+                            if (from != "Select a date") {
+                              addtoOrders();
+                            } else {
+                              FlutterFlexibleToast.showToast(
+                                  message: "Please select date...",
+                                  // toastLength: Toast.LENGTH_LONG,
+                                  toastGravity: ToastGravity.BOTTOM,
+                                  icon: ICON.ERROR,
+                                  radius: 50,
+                                  elevation: 10,
+                                  imageSize: 15,
+                                  textColor: Colors.white,
+                                  backgroundColor: Colors.black,
+                                  timeInSeconds: 2);
+                            }
+                          } else {
+                            FlutterFlexibleToast.showToast(
+                                message: "Please add items",
+                                // toastLength: Toast.LENGTH_LONG,
+                                toastGravity: ToastGravity.BOTTOM,
+                                icon: ICON.ERROR,
+                                radius: 50,
+                                elevation: 10,
+                                imageSize: 20,
+                                textColor: Colors.white,
+                                backgroundColor: Colors.black,
+                                timeInSeconds: 2);
+                          }
+                        },
+                        child: Container(
+                          height: 50,
+                          width: 120,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(8.0),
+                            color: const Color(0xff20474f),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0x85747474),
+                                offset: Offset(6, 3),
+                                blurRadius: 6,
                               ),
-                            )
-                          : Container(),
-                     _radioValue1 == 0 ? GestureDetector(
+                            ],
+                          ),
+                          child: Center(
+                            child: Text(
+                              'Save',
+                              style: TextStyle(
+                                fontFamily: 'Arial',
+                                fontSize: 18,
+                                color: const Color(0xfff7fdfd),
+                              ),
+                              textAlign: TextAlign.left,
+                            ),
+                          ),
+                        ),
+                      ),
+                      SizedBox(
+                        width: 15,
+                      ),
+                      GestureDetector(
                         onTap: () {
                           if (totalBill > 0) {
                             if (from != "Select a date") {
@@ -1433,18 +1519,10 @@ class NewOrderPageState extends State<NewOrderPage> {
                           width: 150,
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(8.0),
-                            gradient: LinearGradient(
-                              begin: Alignment(0.01, -0.72),
-                              end: Alignment(0.0, 1.0),
-                              colors: [
-                                const Color(0xff385194),
-                                const Color(0xff182d66)
-                              ],
-                              stops: [0.0, 1.0],
-                            ),
+                            color: const Color(0xff20474f),
                             boxShadow: [
                               BoxShadow(
-                                color: const Color(0x80182d66),
+                                color: const Color(0x85747474),
                                 offset: Offset(6, 3),
                                 blurRadius: 6,
                               ),
@@ -1462,7 +1540,7 @@ class NewOrderPageState extends State<NewOrderPage> {
                             ),
                           ),
                         ),
-                      ) :Container(),
+                      ),
                       Spacer(),
                     ],
                   )
@@ -1475,14 +1553,12 @@ class NewOrderPageState extends State<NewOrderPage> {
     );
   }
 
-  Future<void> showBookingDialog(
-      BuildContext context, String tempName, int indexToDelete, int quantity) {
+  Future<void> showBookingDialog(BuildContext context) {
     var textEditingController = TextEditingController();
     var byPer = TextEditingController();
     var byPri = TextEditingController();
 
     setState(() {
-      textEditingController.text = tempName;
       saleQty.text = "1";
     });
 
@@ -1543,37 +1619,16 @@ class NewOrderPageState extends State<NewOrderPage> {
               child: Align(
                 alignment: Alignment.bottomCenter,
                 child: Container(
-                    height: MediaQuery.of(context).size.height * 0.85,
+                    height: MediaQuery.of(context).size.height * 0.75,
                     width: MediaQuery.of(context).size.width,
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(40),
+                      borderRadius: BorderRadius.circular(5),
                     ),
                     child: Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: ListView(
                         children: [
-                          Row(
-                            children: [
-                              Spacer(),
-                              Padding(
-                                padding: EdgeInsets.only(
-                                    right: 30.0, top: 25, bottom: 20),
-                                child: GestureDetector(
-                                  onTap: () {
-                                    Navigator.pop(context);
-                                  },
-                                  child: Container(
-                                    child: Image.asset(
-                                      "assets/images/closebutton.png",
-                                      color: Color.fromRGBO(153, 153, 153, 1),
-                                      height: 20,
-                                    ),
-                                  ),
-                                ),
-                              )
-                            ],
-                          ),
                           Padding(
                             padding: const EdgeInsets.only(
                                 left: 10.0, right: 50, bottom: 5),
@@ -1708,7 +1763,7 @@ class NewOrderPageState extends State<NewOrderPage> {
                                       iconSize: 35,
                                       isExpanded: true,
                                       hint: Text(unit),
-                                     // value: unit==null ? "": unit,
+                                      // value: unit==null ? "": unit,
                                       onChanged: (newValue) {
                                         setState(() {
                                           unit = newValue;
@@ -1718,7 +1773,7 @@ class NewOrderPageState extends State<NewOrderPage> {
                                       items: unitlist.map((location) {
                                         return DropdownMenuItem(
                                           child: Padding(
-                                            padding:  EdgeInsets.only(
+                                            padding: EdgeInsets.only(
                                                 top: 10, left: 8),
                                             child: new Text(location),
                                           ),
@@ -1820,7 +1875,7 @@ class NewOrderPageState extends State<NewOrderPage> {
                                     },
                                     child: Icon(
                                       Icons.remove,
-                                      color: Colors.red,
+                                      color: Colors.blueGrey,
                                     )),
                                 Container(
                                   width:
@@ -1868,7 +1923,7 @@ class NewOrderPageState extends State<NewOrderPage> {
                                     },
                                     child: Icon(
                                       Icons.add,
-                                      color: Colors.green,
+                                      color: Colors.blueGrey,
                                     )),
                               ],
                             ),
@@ -2028,19 +2083,18 @@ class NewOrderPageState extends State<NewOrderPage> {
                                   width: 150,
                                   height: 40,
                                   decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(8.0),
                                     gradient: LinearGradient(
-                                      begin: Alignment(0.0, -4.12),
+                                      begin: Alignment(0.0, -1.0),
                                       end: Alignment(0.0, 1.0),
                                       colors: [
-                                        const Color(0xffffffff),
-                                        const Color(0xfffaa731)
+                                        const Color(0xff00ecb2),
+                                        const Color(0xff22bef1)
                                       ],
                                       stops: [0.0, 1.0],
                                     ),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: const Color(0xfffae7cb),
+                                        color: const Color(0x80747474),
                                         offset: Offset(6, 3),
                                         blurRadius: 6,
                                       ),
@@ -2055,99 +2109,127 @@ class NewOrderPageState extends State<NewOrderPage> {
                           SizedBox(
                             height: 40,
                           ),
-                          Center(
-                            child: GestureDetector(
-                              onTap: () {
-                                if (textEditingController.text.isNotEmpty &&
-                                    saleQty.text != "0" &&
-                                    lastSaleRate > 0) {
-                                  if (byPri.text.isEmpty &&
-                                      byPer.text.isEmpty) {
-                                    addItem(
-                                        textEditingController.text,
-                                        unit,
-                                        totalAmount.toString(),
-                                        int.parse(saleQty.text),
-                                        itemId,
-                                        tax.toString(),
-                                        vat.toString(),
-                                        gst.toString(),
-                                        rate,
-                                        code,
-                                        totalAmount.toString(),
-                                        "0");
-                                  } else {
-                                    addItem(
-                                        textEditingController.text,
-                                        unit,
-                                        lastSaleRate.toString(),
-                                        int.parse(saleQty.text),
-                                        itemId,
-                                        tax.toString(),
-                                        vat.toString(),
-                                        gst.toString(),
-                                        rate,
-                                        code,
-                                        totalAmount.toString(),
-                                        byPer.text);
-                                  }
+                          Row(
+                            children: [
+                              Spacer(),
+                              Center(
+                                child: GestureDetector(
+                                  onTap: () {
+                                    if (textEditingController.text.isNotEmpty &&
+                                        saleQty.text != "0" &&
+                                        lastSaleRate > 0) {
+                                      if (byPri.text.isEmpty &&
+                                          byPer.text.isEmpty) {
+                                        addItem(
+                                            textEditingController.text,
+                                            unit,
+                                            totalAmount.toString(),
+                                            int.parse(saleQty.text),
+                                            itemId,
+                                            tax.toString(),
+                                            vat.toString(),
+                                            gst.toString(),
+                                            rate,
+                                            code,
+                                            totalAmount.toString(),
+                                            "0");
+                                      } else {
+                                        addItem(
+                                            textEditingController.text,
+                                            unit,
+                                            lastSaleRate.toString(),
+                                            int.parse(saleQty.text),
+                                            itemId,
+                                            tax.toString(),
+                                            vat.toString(),
+                                            gst.toString(),
+                                            rate,
+                                            code,
+                                            totalAmount.toString(),
+                                            byPer.text);
+                                      }
 
-                                  if (tempName != "") {
-                                    deleteItem(indexToDelete);
-                                  }
+                                      setState(() {
+                                        unit = "";
+                                        textEditingController.text = "";
+                                        rate = "";
+                                        saleQty.text = "";
+                                        saleRate.text = "";
+                                        unitController.text = "";
+                                        totalAmount = 0.0;
+                                        tax = 0;
+                                        vat = 0;
+                                        depoStock.text = "";
+                                        lastSaleRate = 0;
+                                      });
 
-                                  setState(() {
-                                    unit = "";
-                                    textEditingController.text = "";
-                                    rate = "";
-                                    saleQty.text = "";
-                                    saleRate.text = "";
-                                    unitController.text = "";
-                                    totalAmount = 0.0;
-                                    tax = 0;
-                                    vat = 0;
-                                    depoStock.text = "";
-                                    lastSaleRate = 0;
-                                  });
-
-                                  Navigator.pop(context);
-                                }
-                              },
-                              child: Container(
-                                height: 50,
-                                width: 100,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(8.0),
-                                  gradient: LinearGradient(
-                                    begin: Alignment(0.01, -0.72),
-                                    end: Alignment(0.0, 1.0),
-                                    colors: [
-                                      const Color(0xff385194),
-                                      const Color(0xff182d66)
-                                    ],
-                                    stops: [0.0, 1.0],
-                                  ),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: const Color(0x80182d66),
-                                      offset: Offset(6, 3),
-                                      blurRadius: 6,
+                                      Navigator.pop(context);
+                                    }
+                                  },
+                                  child: Container(
+                                    height: 50,
+                                    width: 120,
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(8.0),
+                                      color: const Color(0xff20474f),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: const Color(0x85747474),
+                                          offset: Offset(6, 3),
+                                          blurRadius: 6,
+                                        ),
+                                      ],
                                     ),
-                                  ],
-                                ),
-                                child: Center(
-                                  child: Text(
-                                    'Save',
-                                    style: TextStyle(
-                                      fontFamily: 'Arial',
-                                      fontSize: 18,
-                                      color: const Color(0xfff7fdfd),
+                                    child: Center(
+                                      child: Text(
+                                        'Save',
+                                        style: TextStyle(
+                                          fontFamily: 'Arial',
+                                          fontSize: 18,
+                                          color: const Color(0xfff7fdfd),
+                                        ),
+                                        textAlign: TextAlign.left,
+                                      ),
                                     ),
-                                    textAlign: TextAlign.left,
                                   ),
                                 ),
                               ),
-                            ),
+
+                              SizedBox(width: 15,),
+
+                              GestureDetector(
+                                onTap: () {
+                                  Navigator.pop(context);
+                                },
+                                child: Container(
+                                  height: 50,
+                                  width: 120,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(8.0),
+                                    color: const Color(0xff20474f),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: const Color(0x85747474),
+                                        offset: Offset(6, 3),
+                                        blurRadius: 6,
+                                      ),
+                                    ],
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      'Cancel',
+                                      style: TextStyle(
+                                        fontFamily: 'Arial',
+                                        fontSize: 18,
+                                        color: const Color(0xfff7fdfd),
+                                      ),
+                                      textAlign: TextAlign.left,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              Spacer()
+                            ],
                           ),
                           SizedBox(
                             height: 40,
@@ -2235,7 +2317,7 @@ class NewOrderPageState extends State<NewOrderPage> {
               child: Align(
                 alignment: Alignment.bottomCenter,
                 child: Container(
-                    height: MediaQuery.of(context).size.height * 0.85,
+                    height: MediaQuery.of(context).size.height * 0.75,
                     width: MediaQuery.of(context).size.width,
                     decoration: BoxDecoration(
                       color: Colors.white,
@@ -2379,8 +2461,8 @@ class NewOrderPageState extends State<NewOrderPage> {
                                   width: 10,
                                 ),
                                 Container(
-                                  width: MediaQuery.of(context).size.width *
-                                      0.35,
+                                  width:
+                                      MediaQuery.of(context).size.width * 0.35,
                                   height: 50,
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(16.0),
@@ -2408,8 +2490,8 @@ class NewOrderPageState extends State<NewOrderPage> {
                                     items: unitlist.map((location) {
                                       return DropdownMenuItem(
                                         child: Padding(
-                                          padding:  EdgeInsets.only(
-                                              top: 10, left: 8),
+                                          padding:
+                                              EdgeInsets.only(top: 10, left: 8),
                                           child: new Text(location),
                                         ),
                                         value: location,
@@ -2713,19 +2795,18 @@ class NewOrderPageState extends State<NewOrderPage> {
                                   width: 150,
                                   height: 40,
                                   decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(8.0),
                                     gradient: LinearGradient(
-                                      begin: Alignment(0.0, -4.12),
+                                      begin: Alignment(0.0, -1.0),
                                       end: Alignment(0.0, 1.0),
                                       colors: [
-                                        const Color(0xffffffff),
-                                        const Color(0xfffaa731)
+                                        const Color(0xff00ecb2),
+                                        const Color(0xff22bef1)
                                       ],
                                       stops: [0.0, 1.0],
                                     ),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: const Color(0xfffae7cb),
+                                        color: const Color(0x80747474),
                                         offset: Offset(6, 3),
                                         blurRadius: 6,
                                       ),
@@ -2803,18 +2884,10 @@ class NewOrderPageState extends State<NewOrderPage> {
                                 width: 100,
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(8.0),
-                                  gradient: LinearGradient(
-                                    begin: Alignment(0.01, -0.72),
-                                    end: Alignment(0.0, 1.0),
-                                    colors: [
-                                      const Color(0xff385194),
-                                      const Color(0xff182d66)
-                                    ],
-                                    stops: [0.0, 1.0],
-                                  ),
+                                  color: const Color(0xff20474f),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: const Color(0x80182d66),
+                                      color: const Color(0x85747474),
                                       offset: Offset(6, 3),
                                       blurRadius: 6,
                                     ),
@@ -2875,49 +2948,85 @@ class NewOrderPageState extends State<NewOrderPage> {
 
   AppBar buildAppBar(BuildContext context) {
     return AppBar(
-      backgroundColor: Colors.blue[900],
+      backgroundColor: Color(0xff20474f),
       centerTitle: false,
       title: Text("New Order"),
       elevation: 1.0,
       actions: [
-        Padding(
-          padding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 10.0),
-          child: GestureDetector(
-            onTap: () {
-              takeBillPdf();
-            },
-            child: Container(
-              height: 18,
-              width: 40,
-              child: Image.asset(
-                'assets/images/print.png',
-                fit: BoxFit.fill,
-              ),
+        Column(
+          children: [
+            Spacer(),
+            Row(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Column(
+                    children: [
+                      Container(
+                        height: 50,
+                        width: 50,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(8.0),
+                        ),
+                        child: Image.asset(
+                          'assets/images/scanimage.png',
+                          fit: BoxFit.fill,
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(2.0),
+                        child: Text(
+                          "Scan",
+                          style: TextStyle(fontSize: 10),
+                        ),
+                      )
+                    ],
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () {
+                    showBookingDialog(_scaffoldKey.currentContext);
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Column(
+                      children: [
+                        Container(
+                          height: 50,
+                          width: 50,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(8.0),
+                          ),
+                          child: Center(
+                            child: Image.asset(
+                              'assets/images/additem.png',
+                              fit: BoxFit.scaleDown,
+                              height: 25,
+                              width: 25,
+                            ),
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(2.0),
+                          child: Text(
+                            "Add item",
+                            style: TextStyle(fontSize: 10),
+                          ),
+                        )
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ),
-        ),
-        Padding(
-          padding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 10.0),
-          child: GestureDetector(
-            onTap: () {
-              takeBillPdf();
-            },
-            child: Container(
-              height: 15,
-              width: 25,
-              child: Image.asset(
-                'assets/images/pdf.png',
-                fit: BoxFit.fill,
-              ),
-            ),
-          ),
+          ],
         ),
         SizedBox(
-          width: 15,
-        ),
+          width: 10,
+        )
       ],
       titleSpacing: 0,
-      toolbarHeight: 70,
+      toolbarHeight: 120,
     );
   }
 }

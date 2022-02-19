@@ -2,9 +2,6 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:optimist_erp_app/data/user_data.dart';
-import 'package:optimist_erp_app/ui_elements/bottomNavigation.dart';
-import 'package:firebase_database/firebase_database.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import 'otp.dart';
 
@@ -18,29 +15,16 @@ class LoginState extends State<Login> {
   String code;
   List<String> userNumbers = []; // Option 2
   String _selectedLocation;
-  DatabaseReference types;
   var number = TextEditingController();
   var database = TextEditingController();
 
-  Future<void> getCountryAndNumbers() async {
-    await types.once().then((DataSnapshot snapshot) {
-      Map<dynamic, dynamic> values = snapshot.value;
-      values.forEach((key, values) {
-        setState(() {
-          _locations.add(values.toString());
-        });
-      });
-    });
-  }
 
   @override
   void initState() {
     //on Splash Screen hide statusbar
     SystemChrome.setEnabledSystemUIOverlays(
         [SystemUiOverlay.bottom, SystemUiOverlay.top]);
-    types = FirebaseDatabase.instance.reference().child("CountryCodes");
 
-    getCountryAndNumbers();
     super.initState();
   }
 
@@ -55,7 +39,7 @@ class LoginState extends State<Login> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color.fromRGBO(77, 102, 169, 1),
+      //backgroundColor: Color.fromRGBO(77, 102, 169, 1),
       body: WillPopScope(
         onWillPop: () async {
           return false;
@@ -63,70 +47,71 @@ class LoginState extends State<Login> {
         child: Stack(
           children: [
             Container(
+              margin: EdgeInsets.only(top: 120),
               height: MediaQuery.of(context).size.height,
               width: MediaQuery.of(context).size.width,
-              child: Image.asset("assets/images/loginbackground.png",
+              child: Image.asset("assets/images/bizacc_login.png",
                   scale: 1.5, fit: BoxFit.cover),
             ),
             Center(
               child: Padding(
                 padding: EdgeInsets.only(
-                    top: MediaQuery.of(context).size.height * 0.25),
+                    top: MediaQuery.of(context).size.height * 0.4),
                 child: Column(
                   children: [
-                    Container(
-                      height: 70,
-                      width: 200,
-                      decoration: BoxDecoration(
-                        image: DecorationImage(
-                          image: AssetImage('assets/images/login_logo.png'),
-                          fit: BoxFit.scaleDown,
-                        ),
-                      ),
-                    ),
-                    SizedBox(
-                      height: 30,
-                    ),
-                    Card(
-                      child: Container(
-                        width: MediaQuery.of(context).size.width * 0.7,
-                        height: 50,
-                       // padding: EdgeInsets.only(bottom: 7, left: 5),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(5.0),
-                          color: const Color(0xffffffff),
-                          boxShadow: [
-                            BoxShadow(
-                              color: const Color(0x29000000),
-                              offset: Offset(6, 3),
-                              blurRadius: 12,
-                            ),
-                          ],
-                        ),
-                        child: TextFormField(
-                            controller: database,
-                            maxLines: 1,
-                            decoration: InputDecoration(
-                              contentPadding:
-                              EdgeInsets.only(left: 20, top: 15),
-                              prefixIcon: Icon(
-                                Icons.data_usage,
-                                size: 25.0,
-                                color: Colors.grey,
-                              ),
-                              hintText: 'Enter Database Name',
-                              hintStyle: TextStyle(
-                                fontFamily: 'Arial',
-                                fontSize: 14,
-                                //color:  Colors.black,
-                              ),
-                              //filled: true,
-                              border: InputBorder.none,
-                              filled: false,
-                              isDense: false,
-                            )),
-                      ),
-                    ),
+                    // Container(
+                    //   height: 70,
+                    //   width: 200,
+                    //   decoration: BoxDecoration(
+                    //     image: DecorationImage(
+                    //       image: AssetImage('assets/images/login_logo.png'),
+                    //       fit: BoxFit.scaleDown,
+                    //     ),
+                    //   ),
+                    // ),
+                    // SizedBox(
+                    //   height: 30,
+                    // ),
+                    // Card(
+                    //   child: Container(
+                    //     width: MediaQuery.of(context).size.width * 0.7,
+                    //     height: 50,
+                    //    // padding: EdgeInsets.only(bottom: 7, left: 5),
+                    //     decoration: BoxDecoration(
+                    //       borderRadius: BorderRadius.circular(5.0),
+                    //       color: const Color(0xffffffff),
+                    //       boxShadow: [
+                    //         BoxShadow(
+                    //           color: const Color(0x29000000),
+                    //           offset: Offset(6, 3),
+                    //           blurRadius: 12,
+                    //         ),
+                    //       ],
+                    //     ),
+                    //     child: TextFormField(
+                    //         controller: database,
+                    //         maxLines: 1,
+                    //         decoration: InputDecoration(
+                    //           contentPadding:
+                    //           EdgeInsets.only(left: 20, top: 15),
+                    //           prefixIcon: Icon(
+                    //             Icons.data_usage,
+                    //             size: 25.0,
+                    //             color: Colors.grey,
+                    //           ),
+                    //           hintText: 'Enter Database Name',
+                    //           hintStyle: TextStyle(
+                    //             fontFamily: 'Arial',
+                    //             fontSize: 14,
+                    //             //color:  Colors.black,
+                    //           ),
+                    //           //filled: true,
+                    //           border: InputBorder.none,
+                    //           filled: false,
+                    //           isDense: false,
+                    //         )),
+                    //   ),
+                    // ),
                     SizedBox(
                       height: 20,
                     ),
@@ -267,52 +252,46 @@ class LoginState extends State<Login> {
                     ),
                     GestureDetector(
                       onTap: () {
-                        if (number.text.isNotEmpty &&
-                            database.text.isNotEmpty) {
-
-                          setState(() {
-                            User.database=database.text;
-                          });
+                        if (number.text.isNotEmpty) {
 
                           Navigator.push(context,
                               MaterialPageRoute(builder: (context) {
                             return Otp(
-                              phone: code + number.text,
+                            //  phone: code + number.text,
                             );
                           }));
                         }
                       },
                       child: Container(
-                        padding: EdgeInsets.only(
-                            left: 40, right: 40, top: 10, bottom: 10),
+                        width: 150,
+                        height: 50,
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(8.0),
                           gradient: LinearGradient(
-                            begin: Alignment(0.01, -0.72),
+                            begin: Alignment(0.0, -1.0),
                             end: Alignment(0.0, 1.0),
-                            colors: [
-                              const Color(0xff385194),
-                              const Color(0xff182d66)
-                            ],
+                            colors: [const Color(0xff00ecb2), const Color(0xff12b3e3)],
                             stops: [0.0, 1.0],
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0x80182d66),
+                              color: const Color(0xffcdcdcd),
                               offset: Offset(6, 3),
                               blurRadius: 6,
                             ),
                           ],
                         ),
-                        child: Text(
-                          ' Login ',
-                          style: TextStyle(
-                            fontFamily: 'Arial',
-                            fontSize: 20,
-                            color: const Color(0xfff7fdfd),
+                        child: Center(
+                          child: Text(
+                            ' Login ',
+                            style: TextStyle(
+                              fontFamily: 'Arial',
+                              fontSize: 20,
+                              color: const Color(0xfff7fdfd),
+                            ),
+                            textAlign: TextAlign.left,
                           ),
-                          textAlign: TextAlign.left,
-                        ),
+                        )
                       ),
                     ),
                   ],

@@ -1,4 +1,3 @@
-
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -14,7 +13,7 @@ class AllProductPage extends StatefulWidget {
 }
 
 class AllProductPageState extends State<AllProductPage> {
-  var name=TextEditingController();
+  var name = TextEditingController();
   DatabaseReference items;
   List<String> names = [];
   List<String> id = [];
@@ -37,20 +36,26 @@ class AllProductPageState extends State<AllProductPage> {
       List<dynamic> values = snapshot.value;
       for (int i = 0; i < values.length; i++) {
         if (values[i] != null) {
-          if(values[i]['ItemName'].toString().toLowerCase().contains(name.text.toLowerCase())) {
+          if (values[i]['ItemName']
+              .toString()
+              .toLowerCase()
+              .contains(name.text.toLowerCase())) {
             setState(() {
               names.add(values[i]['ItemName'].toString());
               id.add(values[i]['ItemID'].toString());
               unit.add(values[i]['SaleUnit'].toString());
-              salerate.add(values[i]['RateAndStock'][values[i]['SaleUnit']
-                  .toString()]['Rate'].toString());
-              purchaserate.add(values[i]['RateAndStock'][values[i]['SaleUnit']
-                  .toString()]['PurchaseRate'].toString());
-              stock.add(values[i]['RateAndStock'][values[i]['SaleUnit']
-                  .toString()]['Stock'][int.parse(User.vanNo)].toString());
+              salerate.add(values[i]['RateAndStock']
+                      [values[i]['SaleUnit'].toString()]['Rate']
+                  .toString());
+              purchaserate.add(values[i]['RateAndStock']
+                      [values[i]['SaleUnit'].toString()]['PurchaseRate']
+                  .toString());
+              stock.add(values[i]['RateAndStock']
+                          [values[i]['SaleUnit'].toString()]['Stock']
+                      [int.parse(User.vanNo)]
+                  .toString());
             });
           }
-
         }
       }
     });
@@ -83,7 +88,6 @@ class AllProductPageState extends State<AllProductPage> {
             SizedBox(
               height: 10,
             ),
-            searchRow(),
             SizedBox(
               height: 10,
             ),
@@ -97,16 +101,16 @@ class AllProductPageState extends State<AllProductPage> {
   searchRow() {
     return Container(
       width: MediaQuery.of(context).size.width,
-      height: 60,
+      height: 50,
       child: Row(
         children: [
           Padding(
-            padding: const EdgeInsets.only(left:15.0,right: 15),
+            padding: const EdgeInsets.only(left: 15.0, right: 15, top: 50),
             child: Container(
               width: MediaQuery.of(context).size.width * 0.90,
               height: 50,
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16.0),
+                borderRadius: BorderRadius.circular(5.0),
                 color: const Color(0xffffffff),
                 boxShadow: [
                   BoxShadow(
@@ -117,60 +121,24 @@ class AllProductPageState extends State<AllProductPage> {
                 ],
               ),
               child: TextFormField(
-                   controller: name,
+                  controller: name,
                   onChanged: getCustomerId,
                   decoration: InputDecoration(
-                hintText: 'Enter product name here',
-                //filled: true,
-                border: InputBorder.none,
-                contentPadding:
-                    EdgeInsets.only(left: 15, bottom: 5, top: 15, right: 15),
-                filled: false,
-                isDense: false,
-                prefixIcon: Icon(
-                  Icons.search,
-                  size: 25.0,
-                  color: Colors.grey,
-                ),
-              )),
+                    hintText: 'Enter product name here',
+                    //filled: true,
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.only(
+                        left: 15, bottom: 5, top: 15, right: 15),
+                    filled: false,
+                    isDense: false,
+                    prefixIcon: Icon(
+                      Icons.search,
+                      size: 25.0,
+                      color: Colors.grey,
+                    ),
+                  )),
             ),
           ),
-          // Padding(
-          //   padding: const EdgeInsets.only(left: 8.0, right: 8),
-          //   child: Column(
-          //     children: [
-          //       Spacer(),
-          //       Container(
-          //           height: 25,
-          //           width: 25,
-          //           child: Image.asset(
-          //             "assets/images/filter.png",
-          //             fit: BoxFit.scaleDown,
-          //             //    color: Colors.white
-          //           )),
-          //       Spacer(),
-          //       Text("Filter")
-          //     ],
-          //   ),
-          // ),
-          // Padding(
-          //   padding: const EdgeInsets.only(left: 8.0, right: 8),
-          //   child: Column(
-          //     children: [
-          //       Spacer(),
-          //       Container(
-          //           height: 30,
-          //           width: 30,
-          //           child: Image.asset(
-          //             "assets/images/scan.png",
-          //             fit: BoxFit.scaleDown,
-          //             //    color: Colors.white
-          //           )),
-          //       Spacer(),
-          //       Text("Scan")
-          //     ],
-          //   ),
-          // ),
         ],
       ),
     );
@@ -228,7 +196,7 @@ class AllProductPageState extends State<AllProductPage> {
                                 width: 10,
                               ),
                               Text(
-                                'Code: '+id[index],
+                                'Code: ' + id[index],
                                 style: TextStyle(
                                   fontFamily: 'Arial',
                                   fontSize: 8,
@@ -252,7 +220,10 @@ class AllProductPageState extends State<AllProductPage> {
                                   ),
                                   children: [
                                     TextSpan(
-                                      text: 'Unit: '+unit[index]+'\nIn Stock: '+stock[index],
+                                      text: 'Unit: ' +
+                                          unit[index] +
+                                          '\nIn Stock: ' +
+                                          stock[index],
                                     ),
                                   ],
                                 ),
@@ -337,12 +308,34 @@ class AllProductPageState extends State<AllProductPage> {
 
   AppBar buildAppBar(BuildContext context) {
     return AppBar(
-      backgroundColor: Colors.blue[900],
-      centerTitle: false,
-      title: Text("Products"),
+      backgroundColor: Color(0xff20474f),
       elevation: 1.0,
       titleSpacing: 0,
-      toolbarHeight: 70,
+      leadingWidth: 150,
+      leading: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(10.0),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.arrow_back,
+                  color: Colors.white,
+                  size: 30,
+                ),
+                Text(
+                  " Products",
+                  style: TextStyle(fontSize: 22),
+                )
+              ],
+            ),
+          )
+        ],
+      ),
+      actions: [
+        searchRow(),
+      ],
+      toolbarHeight: 150,
     );
   }
 }

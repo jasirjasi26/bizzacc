@@ -294,8 +294,7 @@ class SettlementPageState extends State<SettlementPage> {
       subTotal.text = widget.values['Amount'].toString();
       paidCash.text = "0";
       paidCard.text = "0";
-      finalBalance =
-          double.parse(Customer.balance) + double.parse(subTotal.text);
+    //  finalBalance = double.parse(Customer.balance) + double.parse(subTotal.text);
     });
 
     super.initState();
@@ -342,7 +341,7 @@ class SettlementPageState extends State<SettlementPage> {
                     width: MediaQuery.of(context).size.width * 0.8,
                     height: 50,
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16.0),
+                      borderRadius: BorderRadius.circular(5.0),
                       color: const Color(0xffffffff),
                       boxShadow: [
                         BoxShadow(
@@ -391,7 +390,7 @@ class SettlementPageState extends State<SettlementPage> {
                           width: MediaQuery.of(context).size.width * 0.35 - 10,
                           height: 50,
                           decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(16.0),
+                            borderRadius: BorderRadius.circular(5.0),
                             color: const Color(0xffffffff),
                             boxShadow: [
                               BoxShadow(
@@ -429,7 +428,7 @@ class SettlementPageState extends State<SettlementPage> {
                           width: MediaQuery.of(context).size.width * 0.35 - 10,
                           height: 50,
                           decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(16.0),
+                            borderRadius: BorderRadius.circular(5.0),
                             color: const Color(0xffffffff),
                             boxShadow: [
                               BoxShadow(
@@ -491,7 +490,7 @@ class SettlementPageState extends State<SettlementPage> {
                         width: MediaQuery.of(context).size.width * 0.45 - 10,
                         height: 50,
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(16.0),
+                          borderRadius: BorderRadius.circular(5.0),
                           color: const Color(0xffffffff),
                           boxShadow: [
                             BoxShadow(
@@ -550,7 +549,7 @@ class SettlementPageState extends State<SettlementPage> {
                         width: MediaQuery.of(context).size.width * 0.45 - 10,
                         height: 50,
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(16.0),
+                          borderRadius: BorderRadius.circular(5.0),
                           color: const Color(0xffffffff),
                           boxShadow: [
                             BoxShadow(
@@ -615,7 +614,7 @@ class SettlementPageState extends State<SettlementPage> {
                   style: TextStyle(
                     fontFamily: 'Arial',
                     fontSize: 18,
-                    color: const Color(0xff5b5b5b),
+                    color: Colors.grey,
                   ),
                   textAlign: TextAlign.left,
                 ),
@@ -626,7 +625,7 @@ class SettlementPageState extends State<SettlementPage> {
                   width: MediaQuery.of(context).size.width * 0.45,
                   height: 50,
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16.0),
+                    borderRadius: BorderRadius.circular(5.0),
                     color: const Color(0xffffffff),
                     boxShadow: [
                       BoxShadow(
@@ -660,7 +659,7 @@ class SettlementPageState extends State<SettlementPage> {
                             width: 35,
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(5.0),
-                              color: const Color(0xff8561f0),
+                              color:  Colors.blueGrey,
                             ),
                             child: Image.asset("assets/images/back.png",
                                 fit: BoxFit.scaleDown, color: Colors.white),
@@ -678,7 +677,7 @@ class SettlementPageState extends State<SettlementPage> {
                             width: 35,
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(5.0),
-                              color: const Color(0xff8561f0),
+                              color: Colors.blueGrey,
                             ),
                             child: Image.asset("assets/images/front.png",
                                 fit: BoxFit.scaleDown, color: Colors.white),
@@ -697,31 +696,6 @@ class SettlementPageState extends State<SettlementPage> {
                   ],
                 ),
               ],
-            ),
-            Padding(
-              padding: const EdgeInsets.only(
-                  left: 10.0, right: 50, bottom: 5, top: 25),
-              child: Row(
-                children: [
-                  SizedBox(
-                    width: 25,
-                  ),
-                  Container(
-                      height: 20,
-                      width: 20,
-                      child: Image.asset(
-                        "assets/images/percentage.png",
-                        fit: BoxFit.scaleDown,
-                      )),
-                  SizedBox(
-                    width: 20,
-                  ),
-                  Text(
-                    "Tax :   " + widget.values['TaxAmount'].toString(),
-                    style: TextStyle(color: Colors.black, fontSize: 18),
-                  ),
-                ],
-              ),
             ),
             SizedBox(
               height: 30,
@@ -744,19 +718,18 @@ class SettlementPageState extends State<SettlementPage> {
                     width: 150,
                     height: 40,
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(8.0),
                       gradient: LinearGradient(
-                        begin: Alignment(0.0, -4.12),
+                        begin: Alignment(0.0, -1.0),
                         end: Alignment(0.0, 1.0),
                         colors: [
-                          const Color(0xffffffff),
-                          const Color(0xfffaa731)
+                          const Color(0xff00ecb2),
+                          const Color(0xff22bef1)
                         ],
                         stops: [0.0, 1.0],
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xfffae7cb),
+                          color: const Color(0x80747474),
                           offset: Offset(6, 3),
                           blurRadius: 6,
                         ),
@@ -785,19 +758,18 @@ class SettlementPageState extends State<SettlementPage> {
                     width: 150,
                     height: 40,
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(8.0),
                       gradient: LinearGradient(
-                        begin: Alignment(0.0, -4.12),
+                        begin: Alignment(0.0, -1.0),
                         end: Alignment(0.0, 1.0),
                         colors: [
-                          const Color(0xffffffff),
-                          const Color(0xfffb4ce5)
+                          const Color(0xff00ecb2),
+                          const Color(0xff22bef1)
                         ],
                         stops: [0.0, 1.0],
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xfffae7cb),
+                          color: const Color(0x80747474),
                           offset: Offset(6, 3),
                           blurRadius: 6,
                         ),
@@ -818,21 +790,13 @@ class SettlementPageState extends State<SettlementPage> {
                 },
                 child: Container(
                   height: 50,
-                  width: 100,
+                  width: 120,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(8.0),
-                    gradient: LinearGradient(
-                      begin: Alignment(0.01, -0.72),
-                      end: Alignment(0.0, 1.0),
-                      colors: [
-                        const Color(0xff385194),
-                        const Color(0xff182d66)
-                      ],
-                      stops: [0.0, 1.0],
-                    ),
+                    color: const Color(0xff20474f),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0x80182d66),
+                        color: const Color(0x85747474),
                         offset: Offset(6, 3),
                         blurRadius: 6,
                       ),
@@ -860,19 +824,16 @@ class SettlementPageState extends State<SettlementPage> {
 
   AppBar buildAppBar(BuildContext context) {
     return AppBar(
-      backgroundColor: Colors.white,
-      centerTitle: true,
-      automaticallyImplyLeading: false,
+      backgroundColor: Color(0xff20474f),
+      centerTitle: false,
+      automaticallyImplyLeading: true,
       title: Text(
         "Settlements",
-        style: TextStyle(color: Colors.black),
-      ),
-      iconTheme: IconThemeData(
-        color: Colors.black, //change your color here
+        style: TextStyle(color: Colors.white),
       ),
       elevation: 0,
       titleSpacing: 0,
-      toolbarHeight: 80,
+      toolbarHeight: 120,
     );
   }
 }

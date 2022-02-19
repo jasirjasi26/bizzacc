@@ -1421,6 +1421,7 @@ class NewOrderPageState extends State<NewOrderPage> {
                     children: [
                       Spacer(),
                       GestureDetector(
+
                         onTap: () {
                           if (totalBill > 0) {
                             if (from != "Select a date") {

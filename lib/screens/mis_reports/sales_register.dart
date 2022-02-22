@@ -142,12 +142,9 @@ getCustomerId(from);
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: buildAppBar(context),
+     // appBar: buildAppBar(context),
       body: ListView(
         children: [
-          SizedBox(
-            height: 10,
-          ),
           searchRow(),
           salesOrder()
         ],
@@ -161,7 +158,7 @@ getCustomerId(from);
           .of(context)
           .size
           .width,
-      height: 105,
+      height: 100,
       child: Column(
         children: [
           Row(

@@ -6,8 +6,6 @@ import 'package:optimist_erp_app/data/user_data.dart';
 import 'package:optimist_erp_app/screens/returns/return_order.dart';
 import 'dart:ui';
 import 'package:textfield_search/textfield_search.dart';
-import 'package:optimist_erp_app/screens/returns/sales_returns.dart';
-import 'package:adobe_xd/page_link.dart';
 import 'package:adobe_xd/pinned.dart';
 
 
@@ -295,9 +293,6 @@ class ReturnsPageState extends State<ReturnsPage> {
       ),
       body: ListView(
         children: [
-          SizedBox(
-            height: 10,
-          ),
           searchRow(),
           salesOrder()
         ],
@@ -534,6 +529,7 @@ class ReturnsPageState extends State<ReturnsPage> {
     return Container(
       width: MediaQuery.of(context).size.width,
       height: 100,
+      color: Color(0xff20474f),
       child: Column(
         children: [
           Row(
@@ -547,7 +543,7 @@ class ReturnsPageState extends State<ReturnsPage> {
                   width: MediaQuery.of(context).size.width * 0.9,
                   height: 50,
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16.0),
+                    borderRadius: BorderRadius.circular(5.0),
                     color: const Color(0xffffffff),
                     boxShadow: [
                       BoxShadow(
@@ -614,7 +610,7 @@ class ReturnsPageState extends State<ReturnsPage> {
                     style: TextStyle(
                         fontFamily: 'Arial',
                         fontSize: 13,
-                        color: Colors.black,
+                        color: Colors.white,
                         decoration: TextDecoration.underline),
                     textAlign: TextAlign.left,
                   ),
@@ -643,7 +639,7 @@ class ReturnsPageState extends State<ReturnsPage> {
                     style: TextStyle(
                         fontFamily: 'Arial',
                         fontSize: 13,
-                        color: Colors.black,
+                        color: Colors.white,
                         decoration: TextDecoration.underline),
                     textAlign: TextAlign.left,
                   ),
@@ -848,15 +844,15 @@ class ReturnsPageState extends State<ReturnsPage> {
 
   AppBar buildAppBar(BuildContext context) {
     return AppBar(
-      backgroundColor: Colors.white,
+      backgroundColor: Color(0xff20474f),
       centerTitle: false,
       iconTheme: IconThemeData(
-        color: Colors.black, //change your color here
+        color: Colors.white, //change your color here
       ),
       automaticallyImplyLeading: true,
       title: Text(
         "Return List",
-        style: TextStyle(color: Colors.black),
+        style: TextStyle(color: Colors.white),
       ),
       elevation: 0,
       titleSpacing: 0,

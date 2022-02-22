@@ -59,10 +59,6 @@ class CustomersListState extends State<CustomersList> {
       appBar: buildAppBar(context),
       body: ListView(
         children: [
-          SizedBox(
-            height: 10,
-          ),
-          searchRow(),
           salesOrder()
         ],
       ),
@@ -75,14 +71,15 @@ class CustomersListState extends State<CustomersList> {
           .of(context)
           .size
           .width,
-      height: 80,
+      height: 50,
+      padding: const EdgeInsets.only(left: 10.0, right: 10, top: 70),
       child: Column(
         children: [
           Row(
             children: [
               SizedBox(width: 10,),
               Padding(
-                padding: const EdgeInsets.all(5.0),
+                padding: const EdgeInsets.all(0.0),
                 child: Container(
                   width: MediaQuery
                       .of(context)
@@ -317,25 +314,44 @@ class CustomersListState extends State<CustomersList> {
 
   AppBar buildAppBar(BuildContext context) {
     return AppBar(
-      backgroundColor: Colors.white,
+      leadingWidth: 150,
+      backgroundColor: Color(0xff20474f),
       centerTitle: false,
       iconTheme: IconThemeData(
-        color: Colors.black, //change your color here
+        color: Colors.white, //change your color here
       ),
       automaticallyImplyLeading: true,
-      title: Text(
-        'Customers',
-        style: TextStyle(
-          fontFamily: 'Arial',
-          fontSize: 20,
-          color: const Color(0xff1d336c),
-          fontWeight: FontWeight.w700,
-        ),
-        textAlign: TextAlign.left,
+      leading: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(10.0),
+            child: Row(
+              children: [
+                GestureDetector(
+                  onTap: () {
+                    Navigator.pop(context);
+                  },
+                  child: Icon(
+                    Icons.arrow_back,
+                    color: Colors.white,
+                    size: 28,
+                  ),
+                ),
+                Text(
+                  "  Customers",
+                  style: TextStyle(fontSize: 22),
+                )
+              ],
+            ),
+          )
+        ],
       ),
-      elevation: 0,
+      actions: [
+        searchRow(),
+      ],
+      elevation: 3,
       titleSpacing: 0,
-      toolbarHeight: 80,
+      toolbarHeight: 150,
     );
   }
 }

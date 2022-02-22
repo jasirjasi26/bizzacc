@@ -105,9 +105,9 @@ class AllProductPageState extends State<AllProductPage> {
       child: Row(
         children: [
           Padding(
-            padding: const EdgeInsets.only(left: 15.0, right: 15, top: 50),
+            padding: const EdgeInsets.only(left: 15.0, right: 0, top: 50),
             child: Container(
-              width: MediaQuery.of(context).size.width * 0.90,
+              width: MediaQuery.of(context).size.width * 0.93,
               height: 50,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(5.0),
@@ -318,13 +318,18 @@ class AllProductPageState extends State<AllProductPage> {
             padding: const EdgeInsets.all(10.0),
             child: Row(
               children: [
-                Icon(
-                  Icons.arrow_back,
-                  color: Colors.white,
-                  size: 30,
+                GestureDetector(
+                  onTap: () {
+                    Navigator.pop(context);
+                  },
+                  child: Icon(
+                    Icons.arrow_back,
+                    color: Colors.white,
+                    size: 28,
+                  ),
                 ),
                 Text(
-                  " Products",
+                  "  Products",
                   style: TextStyle(fontSize: 22),
                 )
               ],

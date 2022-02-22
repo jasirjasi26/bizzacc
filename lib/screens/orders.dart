@@ -200,27 +200,61 @@ class OrdersPageState extends State<OrdersPage> {
       appBar: buildAppBar(context),
       body: ListView(
         children: [
-          Center(
-            child: Container(
-              width: MediaQuery.of(context).size.width * 0.5,
-              child: Row(
-                children: [
-                  Container(
-                    child: Column(
+          Container(
+            height: 35,
+            color: Color(0xff20474f),
+            child: Center(
+              child: Container(
+                padding: EdgeInsets.all(5),
+                width: MediaQuery.of(context).size.width * 0.6,
+                child: Row(
+                  children: [
+                    Container(
+                      child: Column(
+                        children: [
+                          GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                select = true;
+                              });
+                              getCustomerId(from);
+                            },
+                            child: Text(
+                              'Sales Order',
+                              style: TextStyle(
+                                fontFamily: 'Arial',
+                                fontSize: 16,
+                                color: select ? Colors.white : Colors.grey,
+                              ),
+                              textAlign: TextAlign.left,
+                            ),
+                          ),
+                          Divider(
+                            color: Colors.blue,
+                            height: 10,
+                            thickness: 2,
+                          )
+                        ],
+                      ),
+                    ),
+                    SizedBox(
+                      width: 50,
+                    ),
+                    Column(
                       children: [
                         GestureDetector(
                           onTap: () {
                             setState(() {
-                              select = true;
+                              select = false;
                             });
                             getCustomerId(from);
                           },
                           child: Text(
-                            'Sales Order',
+                            'Sales Invoice',
                             style: TextStyle(
                               fontFamily: 'Arial',
                               fontSize: 16,
-                              color: select ? Colors.black : Color(0xffb0b0b0),
+                              color: select ? Colors.grey : Colors.white,
                             ),
                             textAlign: TextAlign.left,
                           ),
@@ -232,42 +266,10 @@ class OrdersPageState extends State<OrdersPage> {
                         )
                       ],
                     ),
-                  ),
-                  SizedBox(
-                    width: 50,
-                  ),
-                  Column(
-                    children: [
-                      GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            select = false;
-                          });
-                          getCustomerId(from);
-                        },
-                        child: Text(
-                          'Sales Invoice',
-                          style: TextStyle(
-                            fontFamily: 'Arial',
-                            fontSize: 16,
-                            color: select ? Color(0xffb0b0b0) : Colors.black,
-                          ),
-                          textAlign: TextAlign.left,
-                        ),
-                      ),
-                      Divider(
-                        color: Colors.blue,
-                        height: 10,
-                        thickness: 2,
-                      )
-                    ],
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
-          SizedBox(
-            height: 10,
           ),
           searchRow(),
           select ? salesOrder() : salesInvoice()
@@ -280,6 +282,7 @@ class OrdersPageState extends State<OrdersPage> {
     return Container(
       width: MediaQuery.of(context).size.width,
       height: 100,
+      color: Color(0xff20474f),
       child: Column(
         children: [
           Row(
@@ -290,10 +293,10 @@ class OrdersPageState extends State<OrdersPage> {
               Padding(
                 padding: const EdgeInsets.all(5.0),
                 child: Container(
-                  width: MediaQuery.of(context).size.width * 0.9,
+                  width: MediaQuery.of(context).size.width * 0.93,
                   height: 50,
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16.0),
+                    borderRadius: BorderRadius.circular(5.0),
                     color: const Color(0xffffffff),
                     boxShadow: [
                       BoxShadow(
@@ -360,7 +363,7 @@ class OrdersPageState extends State<OrdersPage> {
                     style: TextStyle(
                         fontFamily: 'Arial',
                         fontSize: 13,
-                        color: Colors.black,
+                        color: Colors.white,
                         decoration: TextDecoration.underline),
                     textAlign: TextAlign.left,
                   ),
@@ -389,7 +392,7 @@ class OrdersPageState extends State<OrdersPage> {
                     style: TextStyle(
                         fontFamily: 'Arial',
                         fontSize: 13,
-                        color: Colors.black,
+                        color: Colors.white,
                         decoration: TextDecoration.underline),
                     textAlign: TextAlign.left,
                   ),
@@ -970,15 +973,15 @@ class OrdersPageState extends State<OrdersPage> {
 
   AppBar buildAppBar(BuildContext context) {
     return AppBar(
-      backgroundColor: Colors.white,
+      backgroundColor: Color(0xff20474f),
       centerTitle: false,
       iconTheme: IconThemeData(
-        color: Colors.black, //change your color here
+        color: Colors.white, //change your color here
       ),
       automaticallyImplyLeading: true,
       title: Text(
         "Order List",
-        style: TextStyle(color: Colors.black),
+        style: TextStyle(color: Colors.white),
       ),
       elevation: 0,
       titleSpacing: 0,

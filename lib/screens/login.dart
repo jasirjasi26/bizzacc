@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:optimist_erp_app/data/user_data.dart';
+import 'package:optimist_erp_app/screens/pin_page.dart';
 
 import 'otp.dart';
 
@@ -252,15 +253,21 @@ class LoginState extends State<Login> {
                     ),
                     GestureDetector(
                       onTap: () {
-                        if (number.text.isNotEmpty) {
 
-                          Navigator.push(context,
-                              MaterialPageRoute(builder: (context) {
-                            return Otp(
-                            //  phone: code + number.text,
-                            );
-                          }));
-                        }
+                          // Navigator.push(context,
+                          //     MaterialPageRoute(builder: (context) {
+                          //   return Otp(
+                          //   //  phone: code + number.text,
+                          //   );
+                          // }));
+
+                        Navigator.push(context,
+                            MaterialPageRoute(builder: (context) {
+                              return PinPage(
+                                //  phone: code + number.text,
+                              );
+                            }));
+
                       },
                       child: Container(
                         width: 150,

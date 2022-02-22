@@ -1337,7 +1337,7 @@ class NewOrderPageState extends State<NewOrderPage> {
                     child: Row(
                       children: [
                         Radio(
-                          activeColor: Colors.green,
+                          activeColor: Colors.cyan,
                           value: 0,
                           groupValue: _radioValue1,
                           onChanged: _handleRadioValueChange,
@@ -1361,7 +1361,7 @@ class NewOrderPageState extends State<NewOrderPage> {
                           ),
                         ),
                         Radio(
-                          activeColor: Colors.green,
+                          activeColor: Colors.cyan,
                           value: 1,
                           groupValue: _radioValue1,
                           onChanged: _handleRadioValueChange,

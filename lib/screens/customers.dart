@@ -1,11 +1,17 @@
+// @dart=2.9
+import 'package:api_cache_manager/models/cache_db_model.dart';
+import 'package:api_cache_manager/utils/cache_manager.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
-import 'package:optimist_erp_app/data/user_data.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:optimist_erp_app/models/customers.dart';
+import 'package:http/http.dart' as http;
+import 'dart:async';
+import 'dart:convert';
+import '../app_config.dart';
 
 class CustomersList extends StatefulWidget {
-
   @override
   CustomersListState createState() => CustomersListState();
 }
@@ -16,41 +22,83 @@ class CustomersListState extends State<CustomersList> {
   List<String> balance = [];
   List<String> id = [];
   var name = TextEditingController();
+  Future<List<Customers>> fetchCustomers;
+  String as="";
 
-  Future<void> getCustomerId(String date) async {
-    setState(() {
-      names.clear();
-      balance.clear();
-    });
-    await reference.child("Customers").once().then((DataSnapshot snapshot) {
-      Map<dynamic, dynamic> values = snapshot.value;
-      values.forEach((key, values) {
-        if (values['Name']
-            .toString()
-            .toLowerCase()
-            .contains(name.text.toLowerCase())) {
-          setState(() {
-            names.add(values["Name"].toString());
-            balance.add(values["Balance"].toString());
-            id.add(values["CustomerCode"].toString());
-          });
-        }
+  Future<List<Customers>> fetchData() async {
+    var isCacheExist = await APICacheManager().isAPICacheKeyExist("cs");
 
-      });
-    });
+    if (!isCacheExist) {
+      print("Data not exists");
+
+      Map data = {'depotid': "8", 'search': ""};
+      //encode Map to JSON
+      var body = json.encode(data);
+      String url=AppConfig.DOMAIN_PATH+"customers";
+      final response = await http.post(url,
+        body: body,
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        // If the server did return a 200 OK response,
+        // then parse the JSON.
+        APICacheDBModel cacheDBModel =
+            new APICacheDBModel(key: "cs", syncData: response.body);
+        await APICacheManager().addCacheData(cacheDBModel);
+
+        return customersFromJson(response.body);
+      } else {
+        // If the server did not return a 200 OK response,
+        // then throw an exception.
+        throw Exception('Failed to load album');
+      }
+    } else {
+      print("Data exists");
+      var cacheData = await APICacheManager().getCacheData("cs");
+      return customersFromJson(cacheData.syncData);
+    }
   }
+
+
+  Future<bool> refreshData() async {
+    Map data = {'depotid': "8", 'search': ""};
+    //encode Map to JSON
+    var body = json.encode(data);
+    String url=AppConfig.DOMAIN_PATH+"customers";
+    final response = await http.post(url,
+      body: body,
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      // If the server did return a 200 OK response,
+      // then parse the JSON.
+      APICacheDBModel cacheDBModel =
+          new APICacheDBModel(key: "cs", syncData: response.body);
+      await APICacheManager().addCacheData(cacheDBModel);
+
+      EasyLoading.showSuccess('Refresh done...');
+      return true;
+    } else {
+      // If the server did not return a 200 OK response,
+      // then throw an exception.
+      throw Exception('Failed to load album');
+    }
+  }
+
+
 
   void initState() {
-    // TODO: implement initState
-    reference = FirebaseDatabase.instance
-        .reference()
-        .child("Companies")
-        .child(User.database);
-    getCustomerId("");
-
+    fetchCustomers = fetchData();
     super.initState();
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -58,33 +106,28 @@ class CustomersListState extends State<CustomersList> {
       backgroundColor: Colors.white,
       appBar: buildAppBar(context),
       body: ListView(
-        children: [
-          salesOrder()
-        ],
+        children: [searchRow(), salesOrder()],
       ),
     );
   }
 
   searchRow() {
     return Container(
-      width: MediaQuery
-          .of(context)
-          .size
-          .width,
-      height: 50,
-      padding: const EdgeInsets.only(left: 10.0, right: 10, top: 70),
+      width: MediaQuery.of(context).size.width,
+      height: 100,
+      color: Color(0xff20474f),
+      padding: const EdgeInsets.only(left: 10.0, right: 10, top: 30),
       child: Column(
         children: [
           Row(
             children: [
-              SizedBox(width: 10,),
+              SizedBox(
+                width: 10,
+              ),
               Padding(
                 padding: const EdgeInsets.all(0.0),
                 child: Container(
-                  width: MediaQuery
-                      .of(context)
-                      .size
-                      .width * 0.9,
+                  width: MediaQuery.of(context).size.width * 0.9,
                   height: 50,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(5.0),
@@ -99,7 +142,11 @@ class CustomersListState extends State<CustomersList> {
                   ),
                   child: TextFormField(
                       controller: name,
-                      onChanged: getCustomerId,
+                      onChanged: (date){
+                        setState(() {
+                          as=name.text;
+                        });
+                      },
                       decoration: InputDecoration(
                         hintText: 'Enter customer name here',
                         //filled: true,
@@ -118,68 +165,6 @@ class CustomersListState extends State<CustomersList> {
               ),
             ],
           ),
-          // Padding(
-          //   padding: const EdgeInsets.all(8.0),
-          //   child: Row(
-          //     children: [
-          //       Text(
-          //         '   From  :',
-          //         style: TextStyle(
-          //           fontFamily: 'Arial',
-          //           fontSize: 14,
-          //           color: Color(0xffb0b0b0),
-          //         ),
-          //         textAlign: TextAlign.left,
-          //       ),
-          //       SizedBox(
-          //         width: 10,
-          //       ),
-          //       GestureDetector(
-          //         onTap:(){
-          //           _selectDate(context);
-          //         },
-          //         child: Text(
-          //           from,
-          //           style: TextStyle(
-          //               fontFamily: 'Arial',
-          //               fontSize: 13,
-          //               color: Colors.black,
-          //               decoration: TextDecoration.underline),
-          //           textAlign: TextAlign.left,
-          //         ),
-          //       ),
-          //       SizedBox(
-          //         width: 10,
-          //       ),
-          //       Text(
-          //         'To',
-          //         style: TextStyle(
-          //           fontFamily: 'Arial',
-          //           fontSize: 13,
-          //           color: Color(0xffb0b0b0),
-          //         ),
-          //         textAlign: TextAlign.left,
-          //       ),
-          //       SizedBox(
-          //         width: 10,
-          //       ),
-          //       GestureDetector(
-          //         onTap:(){
-          //           _selectToDate(context);
-          //         },
-          //         child: Text(
-          //           to,
-          //           style: TextStyle(
-          //               fontFamily: 'Arial',
-          //               fontSize: 13,
-          //               color: Colors.black,
-          //               decoration: TextDecoration.underline),
-          //           textAlign: TextAlign.left,
-          //         ),
-          //       ),
-          //     ],
-          //   ),
-          // ),
         ],
       ),
     );
@@ -187,171 +172,155 @@ class CustomersListState extends State<CustomersList> {
 
   salesOrder() {
     return SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Container(
-          width: MediaQuery.of(context).size.width,
-          height: MediaQuery.of(context).size.height,
-          child: ListView(
-            children: [
-              Container(
-                height: 30,
-                decoration: BoxDecoration(
-                  color: const Color(0xff454d60),
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Text(
-                        'Customer ID',
-                        style: TextStyle(
-                          fontFamily: 'Arial',
-                          fontSize: 12,
-                          color: const Color(0xffffffff),
-                        ),
-                        textAlign: TextAlign.left,
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Text(
-                        'Customer Name',
-                        style: TextStyle(
-                          fontFamily: 'Arial',
-                          fontSize: 12,
-                          color: const Color(0xffffffff),
-                        ),
-                        textAlign: TextAlign.left,
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Text(
-                        'Balance',
-                        style: TextStyle(
-                          fontFamily: 'Arial',
-                          fontSize: 12,
-                          color: const Color(0xffffffff),
-                        ),
-                        textAlign: TextAlign.left,
-                      ),
-                    ),
-                  ],
-                ),
+      scrollDirection: Axis.horizontal,
+      child: Container(
+        width: MediaQuery.of(context).size.width,
+        height: MediaQuery.of(context).size.height,
+        child: ListView(
+          children: [
+            Container(
+              height: 30,
+              decoration: BoxDecoration(
+                color: const Color(0xff454d60),
               ),
-              Container(
-                height: MediaQuery
-                    .of(context)
-                    .size
-                    .height * 0.75,
-                width: MediaQuery
-                    .of(context)
-                    .size
-                    .width,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Text(
+                      'Customer ID',
+                      style: TextStyle(
+                        fontFamily: 'Arial',
+                        fontSize: 12,
+                        color: const Color(0xffffffff),
+                      ),
+                      textAlign: TextAlign.left,
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Text(
+                      'Customer Name',
+                      style: TextStyle(
+                        fontFamily: 'Arial',
+                        fontSize: 12,
+                        color: const Color(0xffffffff),
+                      ),
+                      textAlign: TextAlign.left,
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Text(
+                      'Balance',
+                      style: TextStyle(
+                        fontFamily: 'Arial',
+                        fontSize: 12,
+                        color: const Color(0xffffffff),
+                      ),
+                      textAlign: TextAlign.left,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            RefreshIndicator(
+              onRefresh: refreshData,
+              child: FutureBuilder<List<Customers>>(
+                  future: fetchCustomers,
+                  builder: (context, snapshot) {
+                    if (snapshot.hasData) {
+                      return Container(
+                        height: MediaQuery.of(context).size.height * 0.75,
+                        width: MediaQuery.of(context).size.width,
+                        child: ListView.builder(
+                            itemCount: snapshot.data.length,
+                            itemBuilder: (BuildContext context, int index) {
+                              if(snapshot.data[index].name.toLowerCase().contains(as.toLowerCase())){
+                                return Container(
+                                  height: 30,
+                                  width: MediaQuery.of(context).size.width,
+                                  decoration: BoxDecoration(
+                                    color: index.floor().isEven
+                                        ? Color(0x66d6d6d6)
+                                        : Color(0x66f3ceef),
+                                  ),
+                                  child: Row(
+                                    crossAxisAlignment: CrossAxisAlignment.center,
+                                    mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Padding(
+                                        padding: const EdgeInsets.all(8.0),
+                                        child: Text(
+                                          snapshot.data[index].id.toString(),
+                                          style: TextStyle(
+                                            fontFamily: 'Arial',
+                                            fontSize: 12,
+                                            color: Colors.black,
+                                          ),
+                                          textAlign: TextAlign.left,
+                                        ),
+                                      ),
+                                      Padding(
+                                        padding: const EdgeInsets.all(8.0),
+                                        child: Text(
+                                          snapshot.data[index].name,
+                                          style: TextStyle(
+                                            fontFamily: 'Arial',
+                                            fontSize: 12,
+                                            color: Colors.black,
+                                          ),
+                                          textAlign: TextAlign.left,
+                                        ),
+                                      ),
+                                      Padding(
+                                        padding: const EdgeInsets.all(8.0),
+                                        child: Text(
+                                          snapshot.data[index].code,
+                                          style: TextStyle(
+                                            fontFamily: 'Arial',
+                                            fontSize: 12,
+                                            color: Colors.black,
+                                          ),
+                                          textAlign: TextAlign.left,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              }
 
-                child: new ListView(
-                  children: new List.generate(names.length, (index) =>
-                      Container(
-                        height: 30,
-                        width: MediaQuery
-                            .of(context)
-                            .size
-                            .width,
-                        decoration: BoxDecoration(
-                          color: index.floor().isEven ? Color(0x66d6d6d6) : Color(0x66f3ceef),
-                        ),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Text(
-                                id[index],
-                                style: TextStyle(
-                                  fontFamily: 'Arial',
-                                  fontSize: 12,
-                                  color:  Colors.black,
-                                ),
-                                textAlign: TextAlign.left,
-                              ),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Text(
-                                names[index],
-                                style: TextStyle(
-                                  fontFamily: 'Arial',
-                                  fontSize: 12,
-                                  color:  Colors.black,
-                                ),
-                                textAlign: TextAlign.left,
-                              ),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Text(
-                                balance[index],
-                                style: TextStyle(
-                                  fontFamily: 'Arial',
-                                  fontSize: 12,
-                                  color: Colors.black,
-                                ),
-                                textAlign: TextAlign.left,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),),
-                ),
-              ),
-            ],
-          ),
-        ));
+                            }),
+                      );
+                    } else {
+                      return Center(child: CircularProgressIndicator());
+                    }
+                  }),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   AppBar buildAppBar(BuildContext context) {
     return AppBar(
-      leadingWidth: 150,
       backgroundColor: Color(0xff20474f),
       centerTitle: false,
       iconTheme: IconThemeData(
         color: Colors.white, //change your color here
       ),
-      automaticallyImplyLeading: true,
-      leading: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(10.0),
-            child: Row(
-              children: [
-                GestureDetector(
-                  onTap: () {
-                    Navigator.pop(context);
-                  },
-                  child: Icon(
-                    Icons.arrow_back,
-                    color: Colors.white,
-                    size: 28,
-                  ),
-                ),
-                Text(
-                  "  Customers",
-                  style: TextStyle(fontSize: 22),
-                )
-              ],
-            ),
-          )
-        ],
+      title: Text(
+        "Customers",
+        style: TextStyle(fontSize: 22, color: Colors.white),
       ),
-      actions: [
-        searchRow(),
-      ],
-      elevation: 3,
+      automaticallyImplyLeading: true,
+      elevation: 0,
       titleSpacing: 0,
-      toolbarHeight: 150,
+      //toolbarHeight: 100,
     );
   }
 }

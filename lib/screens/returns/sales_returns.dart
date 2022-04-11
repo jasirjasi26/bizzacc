@@ -1,13 +1,21 @@
+// @dart=2.9
+import 'dart:convert';
+import 'package:api_cache_manager/models/cache_db_model.dart';
+import 'package:api_cache_manager/utils/cache_manager.dart';
+import 'package:data_connection_checker/data_connection_checker.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:optimist_erp_app/data/user_data.dart';
+import 'package:optimist_erp_app/models/returns.dart';
 import 'package:optimist_erp_app/screens/returns/return_order.dart';
 import 'dart:ui';
 import 'package:textfield_search/textfield_search.dart';
-import 'package:adobe_xd/pinned.dart';
-
+import 'package:http/http.dart' as http;
+import '../../app_config.dart';
+import '../../models/customers.dart';
+import '../../models/sales_types.dart';
 
 class ReturnsPage extends StatefulWidget {
   @override
@@ -29,7 +37,9 @@ class ReturnsPageState extends State<ReturnsPage> {
   String label = "Enter Customer Name";
   List<String> _locations = []; // Option 2
   String _selectedLocation; //
-  DatabaseReference types; // Opt
+  DatabaseReference types; // O
+  String salesType = "";
+  Future<Returns> returns;
 
   DateTime selectedDate = DateTime.now();
   String from = DateTime.now().year.toString() +
@@ -44,15 +54,74 @@ class ReturnsPageState extends State<ReturnsPage> {
       "-" +
       DateTime.now().day.toString();
 
-  Future<void> getSalesTypes() async {
-    await types.once().then((DataSnapshot snapshot) {
-      Map<dynamic, dynamic> values = snapshot.value;
-      values.forEach((key, values) {
-        _locations.add(values["Name"].toString());
-      });
-    });
+  Future<Returns> getReturns() async {
+    Map data = {'from_Date': from, 'to_Date': to, "billed": "0"};
+    //encode Map to JSON
+    var body = json.encode(data);
+
+    if (await DataConnectionChecker().hasConnection) {
+      print("Mobile data detected & internet connection confirmed.");
+      String url = AppConfig.DOMAIN_PATH + "salesreturn/showall";
+      final response = await http.post(
+        url,
+        body: body,
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        print("Success");
+        print(response.body);
+        return returnsFromJson(response.body);
+      } else {
+        print("Failed");
+      }
+    }
   }
 
+  fetchData() async {
+    var isCacheExist = await APICacheManager().isAPICacheKeyExist("types");
+
+    if (!isCacheExist) {
+      print("Data not exists");
+
+      String url = AppConfig.DOMAIN_PATH + "salestypes";
+      final response = await http.get(
+        url,
+        // body: body,
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        // If the server did return a 200 OK response,
+        // then parse the JSON.
+        APICacheDBModel cacheDBModel =
+            new APICacheDBModel(key: "types", syncData: response.body);
+        await APICacheManager().addCacheData(cacheDBModel);
+
+        var json = jsonDecode(response.body);
+        for (int i = 0; i < salestypesFromJson(response.body).length; i++) {
+          _locations.add(json[i]['Name']);
+        }
+      } else {
+        // If the server did not return a 200 OK response,
+        // then throw an exception.
+        throw Exception('Failed to load album');
+      }
+    } else {
+      print("Data exists");
+      var cacheData = await APICacheManager().getCacheData("types");
+      var json = jsonDecode(cacheData.syncData);
+      for (int i = 0; i < salestypesFromJson(cacheData.syncData).length; i++) {
+        _locations.add(json[i]['Name']);
+      }
+    }
+  }
 
   Future<void> _selectDate(BuildContext context) async {
     final DateTime picked = await showDatePicker(
@@ -70,7 +139,9 @@ class ReturnsPageState extends State<ReturnsPage> {
             selectedDate.day.toString();
       });
 
-    getCustomerId(from);
+    setState(() {
+      returns=getReturns();
+    });
   }
 
   Future<void> _selectToDate(BuildContext context) async {
@@ -88,89 +159,15 @@ class ReturnsPageState extends State<ReturnsPage> {
             "-" +
             selectedDate.day.toString();
       });
-
-    getCustomerId(from);
-  }
-
-  Future<void> getCustomerId(String customer) async {
     setState(() {
-      dates.clear();
-      code.clear();
-      amount.clear();
-      vNo.clear();
-      names.clear();
-      balance.clear();
-      tax.clear();
-    });
-
-    await reference.child("Returns").once().then((DataSnapshot snapshot) {
-      Map<dynamic, dynamic> values = snapshot.value;
-      values.forEach((key, values) async {
-        DateFormat inputFormat = DateFormat('yyyy-mm-dd');
-        DateTime input = inputFormat.parse(from);
-        DateTime inputTo = inputFormat.parse(to);
-        DateTime inputKey = inputFormat.parse(key);
-        String datefrom = DateFormat('yyyy-mm-dd').format(input);
-        String dateTo = DateFormat('yyyy-mm-dd').format(inputTo);
-        String dateKeys = DateFormat('yyyy-mm-dd').format(inputKey);
-
-        if (DateTime.parse(dateKeys).isAfter(DateTime.parse(datefrom)) &&
-                DateTime.parse(dateKeys).isBefore(DateTime.parse(dateTo)) ||
-            DateTime.parse(dateKeys) == (DateTime.parse(dateTo)) ||
-            DateTime.parse(dateKeys) == (DateTime.parse(datefrom))) {
-          print(key);
-
-          await reference
-              .child("Returns")
-              .child(key)
-              .child(User.vanNo)
-              .once()
-              .then((DataSnapshot snapshot) {
-            Map<dynamic, dynamic> values = snapshot.value;
-            values.forEach((key, values) {
-              if (values['CustomerName']
-                  .toString()
-                  .toLowerCase()
-                  .contains(name.text.toLowerCase())) {
-                setState(() {
-                  names.add(values['CustomerName'].toString());
-                  amount.add(values['Amount'].toString());
-                  dates.add(values['VoucherDate'].toString());
-                  vNo.add(values['OrderID'].toString());
-                  code.add(values['CustomerID'].toString());
-                  balance.add(values['Balance'].toString());
-                  tax.add(values['TaxAmount'].toString());
-                });
-              }
-            });
-          });
-        } else {
-          print("Noo data");
-        }
-      });
+      returns=getReturns();
     });
   }
 
   void initState() {
     // TODO: implement initState
-    reference = FirebaseDatabase.instance
-        .reference()
-        .child("Companies")
-        .child(User.database);
-
-    types = FirebaseDatabase.instance
-        .reference()
-        .child("Companies")
-        .child(User.database)
-        .child("SalesTypes");
-
-    allnames = FirebaseDatabase.instance
-        .reference()
-        .child("Companies")
-        .child(User.database)
-        .child("Customers");
-    getSalesTypes();
-    getCustomerId(from);
+    returns = getReturns();
+    fetchData();
 
     super.initState();
   }
@@ -182,148 +179,69 @@ class ReturnsPageState extends State<ReturnsPage> {
       backgroundColor: Colors.white,
       appBar: buildAppBar(context),
       floatingActionButton: FloatingActionButton(
-        elevation: 5,
+        backgroundColor: Color(0xff20474f),
+        elevation: 15,
         isExtended: true,
         onPressed: showBookingDialog,
-        child: Container(
-          width: 200,
-          height: 200,
-          child: Stack(
-            children: <Widget>[
-              Pinned.fromPins(
-                Pin(start: 0.0, end: 0.0),
-                Pin(start: 0.0, end: 0.0),
-                child: Container(
-                  decoration: BoxDecoration(
-                    borderRadius:
-                    BorderRadius.all(Radius.elliptical(9999.0, 9999.0)),
-                    gradient: LinearGradient(
-                      begin: Alignment(-2.74, -2.92),
-                      end: Alignment(0.73, 0.78),
-                      colors: [
-                        const Color(0xffffffff),
-                        const Color(0xff1f3877)
-                      ],
-                      stops: [0.0, 1.0],
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0x29000000),
-                        offset: Offset(6, 3),
-                        blurRadius: 6,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              Pinned.fromPins(
-                Pin(size: 18.6, middle: 0.4153),
-                Pin(size: 24.2, middle: 0.3096),
-                child:
-                // Adobe XD layer: 'surface1' (group)
-                Stack(
-                  children: <Widget>[
-                    Pinned.fromPins(
-                      Pin(start: 0.0, end: 0.0),
-                      Pin(start: 0.0, end: 0.0),
-                      child: Image.asset(
-                        'assets/images/new.png',
-                        //color: Colors.blue,
-                        fit: BoxFit.scaleDown,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Pinned.fromPins(
-                Pin(size: 16.0, middle: 0.6667),
-                Pin(size: 16.0, middle: 0.5926),
-                child: Stack(
-                  children: <Widget>[
-                    Pinned.fromPins(
-                      Pin(start: 0.0, end: 0.0),
-                      Pin(start: 0.0, end: 0.0),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.all(
-                              Radius.elliptical(9999.0, 9999.0)),
-                          color: const Color(0xff1d336c),
-                        ),
-                      ),
-                    ),
-                    Pinned.fromPins(
-                      Pin(size: 31.0, middle: 0.4571),
-                      Pin(size: 118.0, middle: 0.8039),
-                      child: Stack(
-                        children: <Widget>[
-                          Pinned.fromPins(
-                            Pin(start: 0.0, end: 0.0),
-                            Pin(start: 0.0, end: 0.0),
-                            child: Image.asset(
-                              'assets/images/add.png',
-                              //color: Colors.transparent,
-                              fit: BoxFit.cover,
-                              height: 20,
-                              width: 20,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Pinned.fromPins(
-                Pin(size: 31.0, middle: 0.4571),
-                Pin(size: 8.0, middle: 0.8039),
-                child: Text(
-                  'Return Request',
-                  style: TextStyle(
-                    fontFamily: 'Segoe UI',
-                    fontSize: 8,
-                    color: const Color(0xffffffff),
-                    fontWeight: FontWeight.w700,
-                  ),
-                  textAlign: TextAlign.left,
-                ),
-              ),
-            ],
-          ),
+        child: Icon(
+          Icons.add_circle,
+          color: Colors.white,
+          size: 25,
         ),
       ),
       body: ListView(
-        children: [
-          searchRow(),
-          salesOrder()
-        ],
+        children: [searchRow(), salesOrder()],
       ),
     );
   }
 
-
   void showBookingDialog() {
     var textEditingController = TextEditingController();
     Future<List> getNames(String input) async {
-      List _list = new List();
-      await allnames.once().then((DataSnapshot snapshot) {
-        Map<dynamic, dynamic> values = snapshot.value;
-        values.forEach((key, values) {
-          if (values['Name']
-              .toString()
-              .toLowerCase()
-              .contains(input.toLowerCase())) {
-            _list.add(values['Name'].toString());
-          }
-          if (values['CustomerCode']
-              .toString()
-              .toLowerCase()
-              .contains(input.toLowerCase())) {
-            _list.add(values['CustomerCode'].toString());
-          }
-        });
-      });
+      List _list = [];
+      var isCacheExist = await APICacheManager().isAPICacheKeyExist("cs");
 
-      return _list;
+      if (!isCacheExist) {
+        print("Data not exists");
+
+        Map data = {'depotid': "8", 'search': ""};
+        //encode Map to JSON
+        var body = json.encode(data);
+        String url = AppConfig.DOMAIN_PATH + "customers";
+        final response = await http.post(
+          url,
+          body: body,
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+        );
+
+        if (response.statusCode == 200) {
+          // If the server did return a 200 OK response,
+          // then parse the JSON.
+          APICacheDBModel cacheDBModel =
+              new APICacheDBModel(key: "cs", syncData: response.body);
+          await APICacheManager().addCacheData(cacheDBModel);
+          var json = jsonDecode(response.body);
+          for (int i = 0; i < customersFromJson(response.body).length; i++) {
+            _list.add(json[i]['Name']);
+          }
+          return _list;
+        } else {
+          // If the server did not return a 200 OK response,
+          // then throw an exception.
+          throw Exception('Failed to load album');
+        }
+      } else {
+        print("Data exists");
+        var cacheData = await APICacheManager().getCacheData("cs");
+        var json = jsonDecode(cacheData.syncData);
+        for (int i = 0; i < customersFromJson(cacheData.syncData).length; i++) {
+          _list.add(json[i]['Name']);
+        }
+        return _list;
+      }
     }
 
     showGeneralDialog(
@@ -376,12 +294,10 @@ class ReturnsPageState extends State<ReturnsPage> {
                           ),
                           Padding(
                             padding:
-                            const EdgeInsets.only(left: 50.0, right: 50),
+                                const EdgeInsets.only(left: 50.0, right: 50),
                             child: Card(
                               elevation: 5,
                               child: TextFieldSearch(
-                                // future: getNames,
-                                // initialList: dummyList,
                                   label: label,
                                   minStringLength: 0,
                                   future: () {
@@ -410,7 +326,7 @@ class ReturnsPageState extends State<ReturnsPage> {
                             child: Text(
                               " Select Sales Type",
                               style:
-                              TextStyle(color: Colors.grey, fontSize: 18),
+                                  TextStyle(color: Colors.grey, fontSize: 18),
                             ),
                           ),
                           Center(
@@ -434,10 +350,27 @@ class ReturnsPageState extends State<ReturnsPage> {
                                     isExpanded: true,
                                     hint: Text('Choose sales type'),
                                     value: _selectedLocation,
-                                    onChanged: (newValue) {
+                                    onChanged: (newValue) async {
                                       setState(() {
                                         _selectedLocation = newValue;
                                       });
+                                      var cacheData = await APICacheManager()
+                                          .getCacheData("types");
+                                      var json = jsonDecode(cacheData.syncData);
+                                      for (int i = 0;
+                                          i <
+                                              salestypesFromJson(
+                                                      cacheData.syncData)
+                                                  .length;
+                                          i++) {
+                                        if (_selectedLocation ==
+                                            json[i]['Name'].toString()) {
+                                          setState(() {
+                                            salesType =
+                                                json[i]['id'].toString();
+                                          });
+                                        }
+                                      }
                                     },
                                     items: _locations.map((location) {
                                       return DropdownMenuItem(
@@ -461,19 +394,34 @@ class ReturnsPageState extends State<ReturnsPage> {
                                     _selectedLocation.isNotEmpty) {
                                   Navigator.push(context,
                                       MaterialPageRoute(builder: (context) {
-                                        return SalesReturn(
-                                          customerName: textEditingController.text,
-                                          refNo: "0",
-                                          salesType: _selectedLocation,
-                                        );
-                                      }));
+                                    return ReturnOrder(
+                                      customerName: textEditingController.text,
+                                      refNo: "0",
+                                      salesType: salesType,
+                                    );
+                                  }));
                                 }
                               },
                               child: Container(
                                 height: 45,
-                                width: 150,
+                                width: 120,
                                 decoration: BoxDecoration(
-                                  color: Color(0xfffb4ce5),
+                                  gradient: LinearGradient(
+                                    begin: Alignment(0.0, -1.0),
+                                    end: Alignment(0.0, 1.0),
+                                    colors: [
+                                      const Color(0xff00ecb2),
+                                      const Color(0xff12b3e3)
+                                    ],
+                                    stops: [0.0, 1.0],
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: const Color(0xffcdcdcd),
+                                      offset: Offset(6, 3),
+                                      blurRadius: 6,
+                                    ),
+                                  ],
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                                 child: Container(
@@ -524,7 +472,6 @@ class ReturnsPageState extends State<ReturnsPage> {
     );
   }
 
-
   searchRow() {
     return Container(
       width: MediaQuery.of(context).size.width,
@@ -555,7 +502,11 @@ class ReturnsPageState extends State<ReturnsPage> {
                   ),
                   child: TextFormField(
                       controller: name,
-                      onChanged: getCustomerId,
+                       onChanged: (value){
+                        setState(() {
+                          name.text=value;
+                        });
+                       },
                       decoration: InputDecoration(
                         hintText: 'Enter customer name here',
                         //filled: true,
@@ -572,17 +523,6 @@ class ReturnsPageState extends State<ReturnsPage> {
                       )),
                 ),
               ),
-              // Padding(
-              //   padding: const EdgeInsets.only(left: 8.0, right: 8),
-              //   child: Container(
-              //       height: 30,
-              //       width: 30,
-              //       child: Image.asset(
-              //         "assets/images/calender.png",
-              //         fit: BoxFit.scaleDown,
-              //         //    color: Colors.white
-              //       )),
-              // ),
             ],
           ),
           Padding(
@@ -732,7 +672,7 @@ class ReturnsPageState extends State<ReturnsPage> {
                           Padding(
                             padding: const EdgeInsets.all(8.0),
                             child: Text(
-                              ' Amt  ',
+                              ' Amount  ',
                               style: TextStyle(
                                 fontFamily: 'Arial',
                                 fontSize: 12,
@@ -748,92 +688,102 @@ class ReturnsPageState extends State<ReturnsPage> {
               Container(
                 width: 500,
                 height: MediaQuery.of(context).size.height,
-                child: ListView(
-                  children: new List.generate(
-                    names.length,
-                    (index) => Container(
-                      height: 30,
-                      width: MediaQuery.of(context).size.width,
-                      decoration: BoxDecoration(
-                        color: index.floor().isEven
-                            ? Color(0x66d6d6d6)
-                            : Color(0x66f3ceef),
-                      ),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Text(
-                              vNo[index],
-                              style: TextStyle(
-                                fontFamily: 'Arial',
-                                fontSize: 12,
-                                color: Colors.black,
+                child: FutureBuilder<Returns>(
+                    future: getReturns(),
+                    builder: (context, snapshot) {
+                      if (snapshot.hasData) {
+                        return ListView(
+                          children: new List.generate(
+                            snapshot.data.data.length,
+                                (index) => Container(
+                              height: 30,
+                              width: MediaQuery.of(context).size.width,
+                              decoration: BoxDecoration(
+                                color: index.floor().isEven
+                                    ? Color(0x66d6d6d6)
+                                    : Color(0x66f3ceef),
                               ),
-                              textAlign: TextAlign.left,
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: Text(
+                                      snapshot.data.data[index].voucherNo,
+                                      style: TextStyle(
+                                        fontFamily: 'Arial',
+                                        fontSize: 12,
+                                        color: Colors.black,
+                                      ),
+                                      textAlign: TextAlign.left,
+                                    ),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.all(0.0),
+                                    child: Text(
+                                      snapshot.data.data[index].returnDate.toString(),
+                                      style: TextStyle(
+                                        fontFamily: 'Arial',
+                                        fontSize: 12,
+                                        color: Colors.black,
+                                      ),
+                                      textAlign: TextAlign.left,
+                                    ),
+                                  ),
+                                  Container(
+                                    width: 180,
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(3.0),
+                                      child: Text(
+                                        snapshot.data.data[index].customerName,
+                                        style: TextStyle(
+                                          fontFamily: 'Arial',
+                                          fontSize: 12,
+                                          color: Colors.black,
+                                        ),
+                                        textAlign: TextAlign.left,
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(),
+                                  Padding(
+                                    padding: const EdgeInsets.all(3.0),
+                                    child: Center(
+                                      child: Text(
+                                        snapshot.data.data[index].returnId ?? "",
+                                        style: TextStyle(
+                                          fontFamily: 'Arial',
+                                          fontSize: 12,
+                                          color: Colors.black,
+                                        ),
+                                        textAlign: TextAlign.left,
+                                      ),
+                                    ),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.all(3.0),
+                                    child: Text(
+                                      snapshot.data.data[index].grandTotal.toString(),
+                                      style: TextStyle(
+                                        fontFamily: 'Arial',
+                                        fontSize: 12,
+                                        color: Colors.black,
+                                      ),
+                                      textAlign: TextAlign.left,
+                                    ),
+                                  ),
+                                  SizedBox(width: 5,)
+                                ],
+                              ),
                             ),
                           ),
-                          Padding(
-                            padding: const EdgeInsets.all(0.0),
-                            child: Text(
-                              dates[index],
-                              style: TextStyle(
-                                fontFamily: 'Arial',
-                                fontSize: 12,
-                                color: Colors.black,
-                              ),
-                              textAlign: TextAlign.left,
-                            ),
-                          ),
-                          Container(
-                            width: 180,
-                            child: Padding(
-                              padding: const EdgeInsets.all(3.0),
-                              child: Text(
-                                names[index],
-                                style: TextStyle(
-                                  fontFamily: 'Arial',
-                                  fontSize: 12,
-                                  color: Colors.black,
-                                ),
-                                textAlign: TextAlign.left,
-                              ),
-                            ),
-                          ),
-                          SizedBox(),
-                          Padding(
-                            padding: const EdgeInsets.all(3.0),
-                            child: Center(
-                              child: Text(
-                                code[index],
-                                style: TextStyle(
-                                  fontFamily: 'Arial',
-                                  fontSize: 12,
-                                  color: Colors.black,
-                                ),
-                                textAlign: TextAlign.left,
-                              ),
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.all(3.0),
-                            child: Text(
-                              amount[index],
-                              style: TextStyle(
-                                fontFamily: 'Arial',
-                                fontSize: 12,
-                                color: Colors.black,
-                              ),
-                              textAlign: TextAlign.left,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
+                        );
+                      }
+                      else{
+                        return Container(height:50,width: 50,child: Center(child: CircularProgressIndicator()));
+                      }
+                    }),
               ),
             ],
           ),

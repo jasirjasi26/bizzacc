@@ -1,7 +1,16 @@
-import 'package:firebase_database/firebase_database.dart';
+// @dart=2.9
+import 'dart:convert';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:optimist_erp_app/data/user_data.dart';
+import 'dart:ui';
+import 'package:http/http.dart' as http;
+import 'dart:async';
+import 'dart:convert';
+import 'package:optimist_erp_app/screens/setleAfterOrder.dart';
+import '../../app_config.dart';
+import 'package:optimist_erp_app/models/ledger.dart';
+
+import '../../app_config.dart';
 
 class SalesLedger extends StatefulWidget {
   @override
@@ -9,34 +18,95 @@ class SalesLedger extends StatefulWidget {
 }
 
 class SalesLedgerState extends State<SalesLedger> {
-  DatabaseReference reference;
-  List<String> names = [];
-  List<String> balance = [];
+  Future<Ledger> ledger;
+  var name = TextEditingController();
+  String from = DateTime.now().year.toString() +
+      "-" +
+      DateTime.now().month.toString() +
+      "-" +
+      DateTime.now().day.toString();
 
-  Future<void> getCustomerId() async {
-    setState(() {
-      names.clear();
-      balance.clear();
-    });
+  String to = DateTime.now().year.toString() +
+      "-" +
+      DateTime.now().month.toString() +
+      "-" +
+      DateTime.now().day.toString();
 
-    await reference.child("Accounts").once().then((DataSnapshot snapshot) {
-      Map<dynamic, dynamic> values = snapshot.value;
-      values.forEach((key, values) {
-        setState(() {
-          names.add(key);
-          balance.add(values["TotalBalance"].toString());
-        });
+  Future<void> _selectDate(BuildContext context) async {
+    final DateTime picked = await showDatePicker(
+        context: context,
+        initialDate: DateTime.now(),
+        firstDate: DateTime(2015, 8),
+        lastDate: DateTime(2101));
+    if (picked != null && picked != DateTime.now())
+      setState(() {
+        from = picked.year.toString() +
+            "-" +
+            picked.month.toString() +
+            "-" +
+            picked.day.toString();
       });
+
+    setState(() {
+      ledger=fetchInvoiceDatas();
     });
+  }
+
+  Future<void> _selectToDate(BuildContext context) async {
+    final DateTime picked = await showDatePicker(
+        context: context,
+        initialDate: DateTime.now(),
+        firstDate: DateTime(2015, 8),
+        lastDate: DateTime(2101));
+    if (picked != null && picked != DateTime.now())
+      setState(() {
+        to = picked.year.toString() +
+            "-" +
+            picked.month.toString() +
+            "-" +
+            picked.day.toString();
+      });
+
+    setState(() {
+      ledger=fetchInvoiceDatas();
+    });
+  }
+
+  Future<Ledger> fetchInvoiceDatas() async {
+    Map data = {
+      'from_Date': from,
+      'to_Date': to,
+      'Account_id':302632,
+      "product":''
+    };
+    //encode Map to JSON
+    var body = json.encode(data);
+    String url = AppConfig.DOMAIN_PATH + "ledgerreport";
+    final response = await http.post(
+      url,
+      body: body,
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+    );
+   // print(response.body);
+
+    if (response.statusCode == 200) {
+      // If the server did return a 200 OK response,
+      // then parse the JSON.
+print(response.body);
+      return ledgerFromJson(response.body);
+    } else {
+      // If the server did not return a 200 OK response,
+      // then throw an exception.
+      throw Exception('Failed to load album');
+    }
   }
 
   void initState() {
     // TODO: implement initState
-    reference = FirebaseDatabase.instance
-        .reference()
-        .child("Companies")
-        .child(User.database);
-    getCustomerId();
+    ledger=fetchInvoiceDatas();
 
     super.initState();
   }
@@ -45,8 +115,104 @@ class SalesLedgerState extends State<SalesLedger> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-     // appBar: buildAppBar(context),
-      body: salesOrder()
+      appBar: AppBar(
+        backgroundColor: Color(0xff20474f),
+        centerTitle: false,
+        iconTheme: IconThemeData(
+          color: Colors.white, //change your color here
+        ),
+        automaticallyImplyLeading: true,
+        title: Text(
+          'Ledger Reports',
+          style: TextStyle(
+            fontFamily: 'Arial',
+            fontSize: 20,
+            color: Colors.white,
+            fontWeight: FontWeight.w700,
+          ),
+          textAlign: TextAlign.left,
+        ),
+        elevation: 0,
+        titleSpacing: 0,
+        toolbarHeight: 80,
+      ),
+      body: Column(
+        children: [searchRow(), salesOrder()],
+      ),
+    );
+  }
+
+  searchRow() {
+    return Container(
+      width: MediaQuery.of(context).size.width,
+      height: 40,
+      color: Color(0xff20474f),
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(10.0),
+            child: Row(
+              children: [
+                Text(
+                  '  From : ',
+                  style: TextStyle(
+                    fontFamily: 'Arial',
+                    fontSize: 13,
+                    color: Color(0xffb0b0b0),
+                  ),
+                  textAlign: TextAlign.left,
+                ),
+                SizedBox(
+                  width: 10,
+                ),
+                GestureDetector(
+                  onTap: () {
+                    _selectDate(context);
+                  },
+                  child: Text(
+                    from,
+                    style: TextStyle(
+                        fontFamily: 'Arial',
+                        fontSize: 13,
+                        color: Colors.white,
+                        decoration: TextDecoration.underline),
+                    textAlign: TextAlign.left,
+                  ),
+                ),
+                SizedBox(
+                  width: 10,
+                ),
+                Text(
+                  'To',
+                  style: TextStyle(
+                    fontFamily: 'Arial',
+                    fontSize: 13,
+                    color: Color(0xffb0b0b0),
+                  ),
+                  textAlign: TextAlign.left,
+                ),
+                SizedBox(
+                  width: 10,
+                ),
+                GestureDetector(
+                  onTap: () {
+                    _selectToDate(context);
+                  },
+                  child: Text(
+                    to,
+                    style: TextStyle(
+                        fontFamily: 'Arial',
+                        fontSize: 13,
+                        color: Colors.white,
+                        decoration: TextDecoration.underline),
+                    textAlign: TextAlign.left,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -69,7 +235,7 @@ class SalesLedgerState extends State<SalesLedger> {
               Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: Text(
-                  'Name',
+                  'Particulars',
                   style: TextStyle(
                     fontFamily: 'Arial',
                     fontSize: 12,
@@ -82,7 +248,7 @@ class SalesLedgerState extends State<SalesLedger> {
               Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: Text(
-                  'Balance',
+                  'Debit',
                   style: TextStyle(
                     fontFamily: 'Arial',
                     fontSize: 12,
@@ -92,69 +258,290 @@ class SalesLedgerState extends State<SalesLedger> {
                 ),
               ),
               SizedBox(
-                width: 25,
+                width: 5,
               ),
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Text(
+                  'Credit',
+                  style: TextStyle(
+                    fontFamily: 'Arial',
+                    fontSize: 12,
+                    color: const Color(0xffffffff),
+                  ),
+                  textAlign: TextAlign.left,
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Text(
+                  'Balance',
+                  style: TextStyle(
+                    fontFamily: 'Arial',
+                    fontSize: 12,
+                    color: const Color(0xffffffff),
+                  ),
+                  textAlign: TextAlign.left,
+                ),
+              ),
+
             ],
           ),
         ),
         Container(
+          height: MediaQuery.of(context).size.height * 0.75,
           width: MediaQuery.of(context).size.width,
-          height: MediaQuery.of(context).size.height *0.8,
-          child:ListView.builder(
-            shrinkWrap: true,
-            itemCount: names.length,
-            itemBuilder: (context, index) {
-              return Container(
-                height: 30,
-                width: MediaQuery.of(context).size.width,
-                decoration: BoxDecoration(
-                  color: index.floor().isEven
-                      ? Color(0x66d6d6d6)
-                      : Color(0x66f3ceef),
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    SizedBox(
-                      width: 25,
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Text(
-                        names[index],
-                        style: TextStyle(
-                          fontFamily: 'Arial',
-                          fontSize: 12,
-                          color: Colors.black,
-                        ),
-                        textAlign: TextAlign.left,
-                      ),
-                    ),
-                    Spacer(),
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Text(
-                        balance[index].toString(),
-                        style: TextStyle(
-                          fontFamily: 'Arial',
-                          fontSize: 12,
-                          color: Colors.black,
-                        ),
-                        textAlign: TextAlign.left,
-                      ),
-                    ),
-                    SizedBox(
-                      width: 25,
-                    ),
-                  ],
-                ),
-              );
-            },
-          )
+          child: FutureBuilder<Ledger>(
+              future: ledger,
+              builder: (context, snapshot) {
+                if (snapshot.hasData) {
+                  return ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: snapshot.data.data.length+1,
+                      itemBuilder: (context, index) {
+                        if(index<snapshot.data.data.length){
+                          return Container(
+                            height: 30,
+                            width: MediaQuery.of(context).size.width,
+                            decoration: BoxDecoration(
+                              color: index.floor().isEven
+                                  ? Color(0x66d6d6d6)
+                                  : Color(0x66f3ceef),
+                            ),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                SizedBox(
+                                  width: 25,
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Text(
+                                    snapshot.data.data[index].particulars,
+                                    style: TextStyle(
+                                      fontFamily: 'Arial',
+                                      fontSize: 12,
+                                      color: Colors.black,
+                                    ),
+                                    textAlign: TextAlign.left,
+                                  ),
+                                ),
+                                Spacer(),
+                                Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Text(
+                                    snapshot.data.data[index].debit
+                                        .toString(),
+                                    style: TextStyle(
+                                      fontFamily: 'Arial',
+                                      fontSize: 12,
+                                      color: Colors.black,
+                                    ),
+                                    textAlign: TextAlign.left,
+                                  ),
+                                ),
+                                SizedBox(
+                                  width: 15,
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Text(
+                                    snapshot.data.data[index].credit
+                                        .toString(),
+                                    style: TextStyle(
+                                      fontFamily: 'Arial',
+                                      fontSize: 12,
+                                      color: Colors.black,
+                                    ),
+                                    textAlign: TextAlign.left,
+                                  ),
+                                ),
+                                SizedBox(
+                                  width: 15,
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Text(
+                                    snapshot.data.data[index].balance
+                                        .toString(),
+                                    style: TextStyle(
+                                      fontFamily: 'Arial',
+                                      fontSize: 12,
+                                      color: Colors.black,
+                                    ),
+                                    textAlign: TextAlign.left,
+                                  ),
+                                ),
+
+                              ],
+                            ),
+                          );
+                        }else{
+                          return Column(
+                            children: [
+                              SizedBox(
+                                height: 15,
+                              ),
+                        Container(
+                        height: 10,
+                        width: MediaQuery.of(context).size.width,
+                        decoration: BoxDecoration(
+                        color: Color(0x66f3ceef),
+                        ),),
+                              Container(
+                                height: 30,
+                                width: MediaQuery.of(context).size.width,
+                                decoration: BoxDecoration(
+                                  color: index.floor().isEven
+                                      ? Color(0x66d6d6d6)
+                                      : Color(0x66f3ceef),
+                                ),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    SizedBox(
+                                      width: 25,
+                                    ),
+                                    Padding(
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: Text("Total Debit "
+                                        ,
+                                        style: TextStyle(
+                                            fontFamily: 'Arial',
+                                            fontSize: 14,
+                                            color: Colors.black,
+                                            fontWeight: FontWeight.bold
+                                        ),
+                                        textAlign: TextAlign.left,
+                                      ),
+                                    ),
+                                    Spacer(),
+                                    Padding(
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: Text(
+                                        snapshot.data.totalDebit.toString(),
+                                        style: TextStyle(
+                                          fontFamily: 'Arial',
+                                          fontSize: 12,
+                                          color: Colors.black,
+                                        ),
+                                        textAlign: TextAlign.left,
+                                      ),
+                                    ),
+                                    SizedBox(
+                                      width: 25,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Container(
+                                height: 30,
+                                width: MediaQuery.of(context).size.width,
+                                decoration: BoxDecoration(
+                                  color: index.floor().isEven
+                                      ? Color(0x66d6d6d6)
+                                      : Color(0x66f3ceef),
+                                ),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    SizedBox(
+                                      width: 25,
+                                    ),
+                                    Padding(
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: Text("Total Credit "
+                                        ,
+                                        style: TextStyle(
+                                          fontFamily: 'Arial',
+                                          fontSize: 14,
+                                          color: Colors.black,
+                                          fontWeight: FontWeight.bold
+                                        ),
+                                        textAlign: TextAlign.left,
+                                      ),
+                                    ),
+                                    Spacer(),
+                                    Padding(
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: Text(
+                        snapshot.data.totalCredit.toString(),
+                                        style: TextStyle(
+                                          fontFamily: 'Arial',
+                                          fontSize: 12,
+                                          color: Colors.black,
+                                        ),
+                                        textAlign: TextAlign.left,
+                                      ),
+                                    ),
+                                    SizedBox(
+                                      width: 25,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Container(
+                                height: 30,
+                                width: MediaQuery.of(context).size.width,
+                                decoration: BoxDecoration(
+                                  color: index.floor().isEven
+                                      ? Color(0x66d6d6d6)
+                                      : Color(0x66f3ceef),
+                                ),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    SizedBox(
+                                      width: 25,
+                                    ),
+                                    Padding(
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: Text("Total Balance "
+                                        ,
+                                        style: TextStyle(
+                                            fontFamily: 'Arial',
+                                            fontSize: 14,
+                                            color: Colors.black,
+                                            fontWeight: FontWeight.bold
+                                        ),
+                                        textAlign: TextAlign.left,
+                                      ),
+                                    ),
+                                    Spacer(),
+                                    Padding(
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: Text(
+                                        snapshot.data.totalBalance.toString(),
+                                        style: TextStyle(
+                                          fontFamily: 'Arial',
+                                          fontSize: 12,
+                                          color: Colors.black,
+                                        ),
+                                        textAlign: TextAlign.left,
+                                      ),
+                                    ),
+                                    SizedBox(
+                                      width: 25,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          );
+                        }
+
+                      }
+                      );
+                }else{
+                  return Container(height:50,width:50,child: Center(child: CircularProgressIndicator()));
+                }
+              }),
         ),
       ],
     );
   }
-
 }

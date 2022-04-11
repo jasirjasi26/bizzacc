@@ -4,9 +4,12 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:flutter/services.dart';
+import 'package:optimist_erp_app/app_config.dart';
 import 'package:optimist_erp_app/data/user_data.dart';
 import 'package:optimist_erp_app/screens/login.dart';
+import 'package:optimist_erp_app/screens/pin_page.dart';
 import 'package:optimist_erp_app/ui_elements/bottomNavigation.dart';
+
 import 'package:shared_preferences/shared_preferences.dart';
 
 class Splash extends StatefulWidget {
@@ -15,29 +18,47 @@ class Splash extends StatefulWidget {
 }
 
 class _SplashState extends State<Splash> {
-  DatabaseReference db;
-  List<dynamic> databases = ["Select Database"];
-  String _selectedLocation;
 
   getUser() async {
     // Obtain shared preferences.
-    final prefs = await SharedPreferences.getInstance();
-    String name = prefs.getString("name");
-    String number = prefs.getString("number");
-    String vanNumber = prefs.getString("vanNo");
-    String dbs = prefs.getString("database");
-
-    if (name != null && number != null) {
-      User.number = number;
-      User.name = name;
-      User.vanNo = vanNumber;
-      User.database = dbs;
-      User.database = dbs;
-
-      Navigator.push(context, MaterialPageRoute(builder: (context) {
-        return BottomBar();
-      }));
-    }
+    // final prefs = await SharedPreferences.getInstance();
+    // String name = prefs.getString("name");
+    // String number = prefs.getString("number");
+    // String vanNumber = prefs.getString("vanNo");
+    // String dbs = prefs.getString("database");
+    //
+    // if (name != null && number != null) {
+    //   User.number = number;
+    //   User.name = name;
+    //   User.vanNo = vanNumber;
+    //   User.database = dbs;
+    //   User.database = dbs;
+    //
+    //   Navigator.push(context, MaterialPageRoute(builder: (context) {
+    //     return BottomBar();
+    //   }));
+    // }
+    AppConfig.getApi();
+    User().fetchUser().then((value) => {
+      if(value[0].id!=null&&value[0].accountId!=null){
+        User().fetchUser().then((value) => {
+      value.forEach((element) {
+        setState(() {
+          User.depotId=element.depotId.toString();
+          User.name=element.userName.toString();
+          User.userId=element.id.toString();
+          User.accId=element.accountId.toString();
+        });
+      })
+    }),
+    Navigator.push(context, MaterialPageRoute(builder: (context) {
+      return BottomBar();
+    }))
+           // Navigator.push(context, MaterialPageRoute(builder: (context) {
+           //    return PinPage();
+           //  })),
+      }
+    });
   }
 
   @override
@@ -46,7 +67,6 @@ class _SplashState extends State<Splash> {
     SystemChrome.setEnabledSystemUIOverlays(
         [SystemUiOverlay.bottom, SystemUiOverlay.top]);
 
-    db = FirebaseDatabase.instance.reference().child("Companies");
 
     getUser();
     super.initState();

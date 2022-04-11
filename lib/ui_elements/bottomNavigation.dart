@@ -1,15 +1,21 @@
-import 'package:adobe_xd/page_link.dart';
-import 'package:adobe_xd/pinned.dart';
-import 'package:firebase_database/firebase_database.dart';
+// @dart=2.9
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'package:flutter/services.dart';
-import 'package:optimist_erp_app/data/user_data.dart';
+import 'package:optimist_erp_app/models/sales_types.dart';
+import 'package:optimist_erp_app/screens/db_page.dart';
 import 'package:optimist_erp_app/screens/home.dart';
 import 'package:optimist_erp_app/screens/all_products.dart';
 import 'package:textfield_search/textfield_search.dart';
 import '../screens/newOrderPage.dart';
+import 'package:api_cache_manager/models/cache_db_model.dart';
+import 'package:api_cache_manager/utils/cache_manager.dart';
+import 'package:optimist_erp_app/models/customers.dart';
+import 'package:http/http.dart' as http;
+import 'dart:async';
+import 'dart:convert';
+import '../app_config.dart';
 
 class BottomBar extends StatefulWidget {
   @override
@@ -22,6 +28,50 @@ class BottomBarState extends State<BottomBar> {
   String _selectedLocation; // Opt
   var _children = [MyHomePage(), Container()];
   String label = "Enter Customer Name";
+  String salesType="";
+
+
+   fetchData() async {
+    var isCacheExist = await APICacheManager().isAPICacheKeyExist("types");
+
+    if (!isCacheExist) {
+      print("Data not exists");
+
+      String url=AppConfig.DOMAIN_PATH+"salestypes";
+      final response = await http.get(url,
+       // body: body,
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        // If the server did return a 200 OK response,
+        // then parse the JSON.
+        APICacheDBModel cacheDBModel =
+        new APICacheDBModel(key: "types", syncData: response.body);
+        await APICacheManager().addCacheData(cacheDBModel);
+
+        var json = jsonDecode(response.body);
+        for (int i = 0; i < salestypesFromJson(response.body).length; i++) {
+          _locations.add(json[i]['Name']);
+        }
+
+      } else {
+        // If the server did not return a 200 OK response,
+        // then throw an exception.
+        throw Exception('Failed to load album');
+      }
+    } else {
+      print("Data exists");
+      var cacheData = await APICacheManager().getCacheData("types");
+      var json = jsonDecode(cacheData.syncData);
+      for (int i = 0; i < salestypesFromJson(cacheData.syncData).length; i++) {
+        _locations.add(json[i]['Name']);
+      }
+    }
+  }
 
   void onTapped(int i) {
     setState(() {
@@ -30,10 +80,9 @@ class BottomBarState extends State<BottomBar> {
   }
 
   void initState() {
-    // TODO: implement initState
-    //re appear statusbar in case it was not there in the previous page
     SystemChrome.setEnabledSystemUIOverlays(
         [SystemUiOverlay.top, SystemUiOverlay.bottom]);
+    fetchData();
 
     super.initState();
   }
@@ -50,7 +99,7 @@ class BottomBarState extends State<BottomBar> {
           },
           child: Card(
             elevation: 10,
-            color: const Color(0xff20474f),
+            color:  Color(0xff20474f),
             child: Container(
                 width: 90,
                 height: 40,
@@ -79,49 +128,29 @@ class BottomBarState extends State<BottomBar> {
             onTap: onTapped,
             currentIndex: _currentIndex,
             backgroundColor: Colors.white.withOpacity(0.9),
-            fixedColor: Theme.of(context).accentColor,
             unselectedItemColor: Color.fromRGBO(153, 153, 153, 1),
+            selectedItemColor: Colors.blue,
             items: [
               BottomNavigationBarItem(
                   icon: Image.asset(
                     "assets/images/home.png",
                     color: _currentIndex == 0
-                        ? Colors.cyan[800]
+                        ? Colors.blue
                         : Color.fromRGBO(153, 153, 153, 1),
                     height: 20,
                   ),
-                  title: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Text(
-                      "Home",
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: _currentIndex == 0
-                            ? Colors.cyan[800]
-                            : Color.fromRGBO(153, 153, 153, 1),
-                      ),
-                    ),
-                  )),
+                  label: "Home"
+                  ),
               BottomNavigationBarItem(
                   icon: Image.asset(
                     "assets/images/inventory.png",
-                    color: _currentIndex == 2
-                        ? Colors.cyan[800]
+                    color: _currentIndex == 1
+                        ? Colors.blue
                         : Color.fromRGBO(153, 153, 153, 1),
                     height: 20,
                   ),
-                  title: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Text(
-                      "Inventory",
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: _currentIndex == 2
-                            ? Colors.cyan[800]
-                            : Color.fromRGBO(153, 153, 153, 1),
-                      ),
-                    ),
-                  )),
+                  label: "Inventory"
+                  ),
             ],
           ),
         ),
@@ -131,22 +160,50 @@ class BottomBarState extends State<BottomBar> {
 
   void showBookingDialog() {
     var textEditingController = TextEditingController();
-    Future<List> getNames(String input) async {
-      List _list = new List();
-      //
-      // await names.once().then((DataSnapshot snapshot) {
-      //   Map<dynamic, dynamic> values = snapshot.value;
-      //   values.forEach((key, values) {
-      //     if(values['Name'].toString().toLowerCase().contains(input.toLowerCase())){
-      //       _list.add(values['Name'].toString());
-      //     }
-      //     if(values['CustomerCode'].toString().toLowerCase().contains(input.toLowerCase())){
-      //       _list.add(values['CustomerCode'].toString());
-      //     }
-      //   });
-      // });
 
-      return _list;
+    Future<List> getNames(String input) async {
+      List _list = [];
+      var isCacheExist = await APICacheManager().isAPICacheKeyExist("cs");
+
+      if (!isCacheExist) {
+        print("Data not exists");
+
+        Map data = {'depotid': "8", 'search': ""};
+        //encode Map to JSON
+        var body = json.encode(data);
+        String url = AppConfig.DOMAIN_PATH + "customers";
+        final response = await http.post(
+          url,
+          body: body,
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+        );
+
+        if (response.statusCode == 200) {
+          APICacheDBModel cacheDBModel =
+              new APICacheDBModel(key: "cs", syncData: response.body);
+          await APICacheManager().addCacheData(cacheDBModel);
+          var json = jsonDecode(response.body);
+          for (int i = 0; i < customersFromJson(response.body).length; i++) {
+            _list.add(json[i]['Name']);
+          }
+          return _list;
+        } else {
+          // If the server did not return a 200 OK response,
+          // then throw an exception.
+          throw Exception('Failed to load album');
+        }
+      } else {
+        print("Data exists");
+        var cacheData = await APICacheManager().getCacheData("cs");
+        var json = jsonDecode(cacheData.syncData);
+        for (int i = 0; i < customersFromJson(cacheData.syncData).length; i++) {
+          _list.add(json[i]['Name']);
+        }
+        return _list;
+      }
     }
 
     showGeneralDialog(
@@ -173,29 +230,8 @@ class BottomBarState extends State<BottomBar> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisAlignment: MainAxisAlignment.start,
                         children: [
-                          Row(
-                            children: [
-                              Spacer(),
-                              Padding(
-                                padding: EdgeInsets.only(
-                                    right: 30.0, top: 25, bottom: 20),
-                                child: GestureDetector(
-                                  onTap: () {
-                                    Navigator.pop(context, true);
-                                  },
-                                  child: Container(
-                                    child: Image.asset(
-                                      "assets/images/closebutton.png",
-                                      color: Color.fromRGBO(153, 153, 153, 1),
-                                      height: 20,
-                                    ),
-                                  ),
-                                ),
-                              )
-                            ],
-                          ),
                           SizedBox(
-                            height: 20,
+                            height: 30,
                           ),
                           Center(
                             child: Container(
@@ -250,7 +286,7 @@ class BottomBarState extends State<BottomBar> {
                                     return getNames(textEditingController.text);
                                   },
                                   decoration: InputDecoration(
-                                    hintText: 'Enter Customer Name / Code',
+                                    hintText: 'Enter Customer Name',
                                     contentPadding: EdgeInsets.only(
                                         left: 15, top: 15, right: 15),
                                     filled: false,
@@ -296,10 +332,19 @@ class BottomBarState extends State<BottomBar> {
                                     isExpanded: true,
                                     hint: Text('Choose sales type'),
                                     value: _selectedLocation,
-                                    onChanged: (newValue) {
+                                    onChanged: (newValue) async {
                                       setState(() {
-                                        _selectedLocation = newValue;
+                                          _selectedLocation = newValue;
                                       });
+                                      var cacheData = await APICacheManager().getCacheData("types");
+                                      var json = jsonDecode(cacheData.syncData);
+                                      for (int i = 0; i < salestypesFromJson(cacheData.syncData).length; i++) {
+                                        if(_selectedLocation==json[i]['Name'].toString()){
+                                          setState(() {
+                                            salesType = json[i]['id'].toString();
+                                          });
+                                        }
+                                      }
                                     },
                                     items: _locations.map((location) {
                                       return DropdownMenuItem(
@@ -325,27 +370,17 @@ class BottomBarState extends State<BottomBar> {
                               Center(
                                 child: GestureDetector(
                                   onTap: () {
-                                    // if (textEditingController.text.isNotEmpty &&
-                                    //     _selectedLocation.isNotEmpty) {
-                                    //   Navigator.push(context,
-                                    //       MaterialPageRoute(builder: (context) {
-                                    //     return NewOrderPage(
-                                    //       customerName:
-                                    //           textEditingController.text,
-                                    //       refNo: "0",
-                                    //       salesType: _selectedLocation,
-                                    //     );
-                                    //   }));
-                                    // }
-                                    Navigator.push(context,
-                                        MaterialPageRoute(builder: (context) {
-                                          return NewOrderPage(
-                                            customerName:
-                                            textEditingController.text,
-                                            refNo: "0",
-                                            salesType: _selectedLocation,
-                                          );
-                                        }));
+                                    if (textEditingController.text.isNotEmpty &&
+                                        _selectedLocation.isNotEmpty) {
+                                      print(salesType);
+                                      Navigator.push(context,
+                                          MaterialPageRoute(builder: (context) {
+                                        return NewOrderPage(
+                                          customerName: textEditingController.text,
+                                          salesType: salesType,
+                                        );
+                                      }));
+                                    }
                                   },
                                   child: Container(
                                     height: 45,
@@ -404,7 +439,9 @@ class BottomBarState extends State<BottomBar> {
                               ),
                               Center(
                                 child: GestureDetector(
-                                  onTap: () {},
+                                  onTap: () {
+                                    Navigator.pop(context);
+                                  },
                                   child: Container(
                                     height: 45,
                                     width: 120,

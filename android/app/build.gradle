@@ -25,8 +25,9 @@ apply plugin: 'com.android.application'
 apply from: "$flutterRoot/packages/flutter_tools/gradle/flutter.gradle"
 apply plugin: 'com.google.gms.google-services'
 
+
 android {
-    compileSdkVersion 29
+    compileSdkVersion 31
 
     lintOptions {
         disable 'InvalidPackage'
@@ -36,9 +37,10 @@ android {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId "com.example.optimist_erp_app"
         minSdkVersion 21
-        targetSdkVersion 29
+        targetSdkVersion 31
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
+
     }
 
     buildTypes {
@@ -62,6 +64,7 @@ dependencies {
     implementation platform('com.google.firebase:firebase-bom:29.0.0')
     //implementation 'com.google.firebase:firebase-analytics'
     implementation 'com.google.firebase:firebase-auth'
+
 
 }
 

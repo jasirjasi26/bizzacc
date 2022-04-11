@@ -1,108 +1,79 @@
 {
   "project_info": {
-    "project_number": "782174638682",
-    "firebase_url": "https://cybrixproject1-default-rtdb.firebaseio.com",
-    "project_id": "cybrixproject1",
-    "storage_bucket": "cybrixproject1.appspot.com"
+    "project_number": "897731704718",
+    "firebase_url": "https://bizacc-demo-default-rtdb.firebaseio.com",
+    "project_id": "bizacc-demo",
+    "storage_bucket": "bizacc-demo.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:782174638682:android:a0c39f52aaf740f6b93e63",
-        "android_client_info": {
-          "package_name": "com.cybrixerp.mobileapp"
-        }
-      },
-      "oauth_client": [
-        {
-          "client_id": "782174638682-uamlncf7b55qlci7dg48klursffprpum.apps.googleusercontent.com",
-          "client_type": 3
-        }
-      ],
-      "api_key": [
-        {
-          "current_key": "AIzaSyDtbgwnFVX9NeHY-Vg-Vn-PUiVjhH46YsA"
-        }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": [
-            {
-              "client_id": "782174638682-uamlncf7b55qlci7dg48klursffprpum.apps.googleusercontent.com",
-              "client_type": 3
-            }
-          ]
-        }
-      }
-    },
-    {
-      "client_info": {
-        "mobilesdk_app_id": "1:782174638682:android:da2348f65b2e2c01b93e63",
-        "android_client_info": {
-          "package_name": "com.cybrixerp.mobileapp1"
-        }
-      },
-      "oauth_client": [
-        {
-          "client_id": "782174638682-pr1ngvrfviumq4l2r8i46qmh1fjjt62l.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.cybrixerp.mobileapp1",
-            "certificate_hash": "960e6fa5deb9f706589471cbd2010ed3700eca64"
-          }
-        },
-        {
-          "client_id": "782174638682-uamlncf7b55qlci7dg48klursffprpum.apps.googleusercontent.com",
-          "client_type": 3
-        }
-      ],
-      "api_key": [
-        {
-          "current_key": "AIzaSyDtbgwnFVX9NeHY-Vg-Vn-PUiVjhH46YsA"
-        }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": [
-            {
-              "client_id": "782174638682-uamlncf7b55qlci7dg48klursffprpum.apps.googleusercontent.com",
-              "client_type": 3
-            }
-          ]
-        }
-      }
-    },
-    {
-      "client_info": {
-        "mobilesdk_app_id": "1:782174638682:android:0749ebc6233cab03b93e63",
+        "mobilesdk_app_id": "1:897731704718:android:ec42b65d90b6676a5a56df",
         "android_client_info": {
           "package_name": "com.example.optimist_erp_app"
         }
       },
       "oauth_client": [
         {
-          "client_id": "782174638682-sle0h05i8i8n8cc5ipm2vqruple9jfr5.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.example.optimist_erp_app",
-            "certificate_hash": "83b06fb128808eeba36841c444255b9ecc9b15a8"
-          }
-        },
-        {
-          "client_id": "782174638682-uamlncf7b55qlci7dg48klursffprpum.apps.googleusercontent.com",
+          "client_id": "897731704718-9j3ec527roqbskkof0k4po8hk782k6ml.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyDtbgwnFVX9NeHY-Vg-Vn-PUiVjhH46YsA"
+          "current_key": "AIzaSyBwFmWgJhJc3P-6kKxxDgFb5dsZDQVyZBo"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "782174638682-uamlncf7b55qlci7dg48klursffprpum.apps.googleusercontent.com",
+              "client_id": "897731704718-9j3ec527roqbskkof0k4po8hk782k6ml.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:897731704718:android:d22e0f4f50c786bf5a56df",
+        "android_client_info": {
+          "package_name": "com.spine.atlantaapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "897731704718-55au4gv2ru13rplrhb7q7rpjspfhh90s.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.spine.atlantaapp",
+            "certificate_hash": "7bddcfd3e57c4092aa535def19d6d3aa056560cf"
+          }
+        },
+        {
+          "client_id": "897731704718-kmi6eve9c736ga3ghbr84pgjaon3i1nh.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.spine.atlantaapp",
+            "certificate_hash": "960e6fa5deb9f706589471cbd2010ed3700eca64"
+          }
+        },
+        {
+          "client_id": "897731704718-9j3ec527roqbskkof0k4po8hk782k6ml.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBwFmWgJhJc3P-6kKxxDgFb5dsZDQVyZBo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "897731704718-9j3ec527roqbskkof0k4po8hk782k6ml.apps.googleusercontent.com",
               "client_type": 3
             }
           ]

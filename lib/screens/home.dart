@@ -1,17 +1,27 @@
-import 'package:firebase_database/firebase_database.dart';
+import 'dart:convert';
+import 'package:api_cache_manager/api_cache_manager.dart';
+import 'package:api_cache_manager/models/cache_db_model.dart';
+import 'package:data_connection_checker/data_connection_checker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:optimist_erp_app/data/user_data.dart';
-import 'package:optimist_erp_app/screens/mis_reports_page.dart';
+import 'package:optimist_erp_app/screens/mis_reports/mis_home.dart';
+import 'package:optimist_erp_app/screens/reports/invoice.dart';
+import 'package:optimist_erp_app/screens/reports/orders.dart';
 import 'package:optimist_erp_app/screens/returns/sales_returns.dart';
+import '../app_config.dart';
+import 'dart:async';
+import 'dart:typed_data';
+import 'package:http/http.dart' as http;
+import '../models/story.dart';
 import '../ui_elements/main_drawer.dart';
 import 'dart:ui';
 import 'package:adobe_xd/pinned.dart';
 import 'all_products.dart';
 import 'customers.dart';
-import 'mis_reports/stock_reports.dart';
-import 'orders.dart';
+import 'package:optimist_erp_app/screens/reports/stock_report.dart';
 
 class MyHomePage extends StatefulWidget {
   @override
@@ -20,7 +30,6 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
-  DatabaseReference reference;
   String today = DateTime.now().year.toString() +
       "-" +
       DateTime.now().month.toString() +
@@ -30,136 +39,143 @@ class _MyHomePageState extends State<MyHomePage> {
   int todaysOrders = 0;
   double totalSales = 0;
   double totalStocks = 0;
-  DatabaseReference names;
   String label = "Enter Customer Name";
-  List<String> _locations = []; // Option 2
-  String _selectedLocation; //
-  DatabaseReference types; // Opt
+  late Future<Storydata> loadData;
+  var image;
 
-  Future<void> getSalesTypes() async {
-    await types.once().then((DataSnapshot snapshot) {
-      Map<dynamic, dynamic> values = snapshot.value;
-      values.forEach((key, values) {
-        _locations.add(values["Name"].toString());
-      });
-    });
-  }
 
-  Future<void> getOrders() async {
-    setState(() {
-      totalSales = 0;
-      todaysPending = 0;
-      totalStocks = 0;
-      todaysOrders = 0;
-    });
+  Future<void> companyData() async {
 
-    await reference
-        .child("Vouchers")
-        .child(User.vanNo)
-        .once()
-        .then((DataSnapshot snapshot) {
-      Map<dynamic, dynamic> values = snapshot.value;
-      values.forEach((key, values) {
+    if (await DataConnectionChecker().hasConnection) {
+      String url = AppConfig.DOMAIN_PATH + "company";
+      final response = await http.get(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        APICacheDBModel cacheDBModel =
+        new APICacheDBModel(key: "company", syncData: response.body);
+        await APICacheManager().addCacheData(cacheDBModel);
+
+        var result=jsonDecode(response.body);
+        //print(result[0]['CompanyLogo']);
         setState(() {
-          if (key.toString() == "VoucherNumber") {
-            User.voucherNumber = User.voucherStarting +
-                (int.parse(values.toString()) + 1).toString();
-          }
-          if (key.toString() == "OrderNumber") {
-            User.orderNumber = User.orderStarting +
-                (int.parse(values.toString()) + 1).toString();
-          }
+          User.companylogo=result[0]['CompanyLogo'];
         });
-      });
-    });
+        Uint8List bytes = base64Decode(User.companylogo);
+        setState(() {
+          image=bytes;
+        });
 
-    await reference.child("Stocks").once().then((DataSnapshot snapshot) {
-      List<dynamic> values = snapshot.value;
-      if (snapshot.value != null) {
-        for (int i = 0; i < values.length; i++) {
-          if (values[i] != null) {
-            setState(() {
-              totalStocks =
-                  totalStocks + double.parse(values[i]['Stock']['All']);
-            });
-          }
-        }
-      }
-    });
-
-    await reference
-        .child("OrderList")
-        .child(today)
-        .child(User.vanNo)
-        .once()
-        .then((DataSnapshot snapshot) {
-      Map<dynamic, dynamic> values = snapshot.value;
-      if (values != null) {
-        if (values.length > 0) {
-          setState(() {
-            todaysPending = values.length;
-          });
-        }
-      }
-    });
-
-    await reference
-        .child("Bills")
-        .child(today)
-        .child(User.vanNo)
-        .once()
-        .then((DataSnapshot snapshot) {
-      Map<dynamic, dynamic> values = snapshot.value;
-      if (values != null) {
-        if (values.length > 0) {
-          setState(() {
-            todaysOrders = values.length + todaysPending;
-          });
-        }
       } else {
-        setState(() {
-          todaysOrders = todaysPending;
-        });
+        throw Exception('Failed to load album');
       }
-    });
-
-    await reference
-        .child("SalesReport")
-        .child(today)
-        .once()
-        .then((DataSnapshot snapshot) {
-      Map<dynamic, dynamic> values = snapshot.value;
-      values.forEach((key, values) {
-        setState(() {
-          totalSales = totalSales + double.parse(values["GrandAmount"]);
-        });
+    } else {
+      print("Data exists");
+      var cacheData = await APICacheManager().getCacheData("company");
+      var result=jsonDecode(cacheData.syncData);
+      setState(() {
+        User.companylogo=result[0]['CompanyLogo'];
       });
-    });
+    }
 
-    print(User.orderNumber);
-    print(User.voucherNumber);
   }
+
+
+
+  Future<void> daydata() async {
+
+    if (await DataConnectionChecker().hasConnection) {
+      String url = AppConfig.DOMAIN_PATH + "daytotal";
+      Map data = {'day_date': today, 'depot_id': User.depotId,};
+      var body = json.encode(data);
+
+      final response = await http.post(
+       url,
+        body: body,
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        APICacheDBModel cacheDBModel =
+        new APICacheDBModel(key: "daydata", syncData: response.body);
+        await APICacheManager().addCacheData(cacheDBModel);
+
+        var result=jsonDecode(response.body);
+
+        setState(() {
+          totalStocks=result[0]['Stock'];
+          totalSales=result[0]['SalesInvoiceAmount'];
+          todaysOrders=result[0]['SalesOrderCount'];
+          todaysPending=result[0]['PendingSalesOrderCount'];
+        });
+
+        refreshData();
+
+      } else {
+        // If the server did not return a 200 OK response,
+        // then throw an exception.
+        throw Exception('Failed to load album');
+      }
+    } else {
+      print("Data exists");
+      var cacheData = await APICacheManager().getCacheData("daydata");
+      var result=jsonDecode(cacheData.syncData);
+
+      setState(() {
+        totalStocks=result[0]['Stock'];
+        totalSales=result[0]['SalesInvoiceAmount'];
+        todaysOrders=result[0]['SalesOrderCount'];
+        todaysPending=result[0]['PendingSalesOrderCount'];
+      });
+    }
+
+  }
+
+  Future<bool> refreshData() async {
+    Map data = {'depotid': User.depotId, 'search': ""};
+    //encode Map to JSON
+    var body = json.encode(data);
+    String url = AppConfig.DOMAIN_PATH + "products";
+    final response = await http.post(
+      url,
+      body: body,
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      // If the server did return a 200 OK response,
+      // then parse the JSON.
+      APICacheDBModel cacheDBModel =
+      new APICacheDBModel(key: "ps", syncData: response.body);
+      await APICacheManager().addCacheData(cacheDBModel);
+
+      EasyLoading.showSuccess('Refresh done...');
+      return true;
+    } else {
+      // If the server did not return a 200 OK response,
+      // then throw an exception.
+      throw Exception('Failed to load album');
+    }
+  }
+
+
 
   void initState() {
     // TODO: implement initState
-    reference = FirebaseDatabase.instance
-        .reference()
-        .child("Companies")
-        .child(User.database);
 
-    types = FirebaseDatabase.instance
-        .reference()
-        .child("Companies")
-        .child(User.database)
-        .child("SalesTypes");
-
-    names = FirebaseDatabase.instance
-        .reference()
-        .child("Companies")
-        .child(User.database)
-        .child("Customers");
-    getOrders();
-    getSalesTypes();
+    daydata();
+    companyData();
     super.initState();
   }
 
@@ -171,12 +187,10 @@ class _MyHomePageState extends State<MyHomePage> {
       appBar: buildAppBar(context),
       body: WillPopScope(
         onWillPop: () async {
-          // You can do some work here.
-          // Returning true allows the pop to happen, returning false prevents it.
           return false;
         },
         child: RefreshIndicator(
-          onRefresh: getOrders,
+          onRefresh: daydata,
           child: Stack(
             children: [
               ListView(
@@ -296,7 +310,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   Pin(size: 42.0, end: 10.0),
                   Pin(size: 17.0, middle: 0.4951),
                   child: Text(
-                    '24500',
+                    totalSales.toString(),
                     style: TextStyle(
                       fontFamily: 'Arial',
                       fontSize: 15,
@@ -399,7 +413,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   Pin(size: 32.0, end: 0.0),
                   Pin(size: 17.0, middle: 0.4951),
                   child: Text(
-                    '24',
+                    todaysPending.toString(),
                     style: TextStyle(
                       fontFamily: 'Arial',
                       fontSize: 15,
@@ -498,10 +512,10 @@ class _MyHomePageState extends State<MyHomePage> {
                   ),
                 ),
                 Pinned.fromPins(
-                  Pin(size: 32.0, end: 0.0),
+                  Pin(size: 80.0, end: 0.0),
                   Pin(size: 17.0, middle: 0.4951),
                   child: Text(
-                    '24',
+                    totalStocks.toString(),
                     style: TextStyle(
                       fontFamily: 'Arial',
                       fontSize: 15,
@@ -606,7 +620,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   Pin(size: 42.0, end: 10.0),
                   Pin(size: 17.0, middle: 0.4951),
                   child: Text(
-                    '2',
+                    todaysOrders.toString(),
                     style: TextStyle(
                       fontFamily: 'Arial',
                       fontSize: 15,
@@ -644,7 +658,7 @@ class _MyHomePageState extends State<MyHomePage> {
         Row(
           children: [
             GestureDetector(
-              onTap: (){
+              onTap: () {
                 Navigator.push(context, MaterialPageRoute(builder: (context) {
                   return CustomersList();
                 }));
@@ -737,11 +751,10 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
             ),
             GestureDetector(
-              onTap: (){
-                Navigator.push(context,
-                    MaterialPageRoute(builder: (context) {
-                      return StockReports();
-                    }));
+              onTap: () {
+                Navigator.push(context, MaterialPageRoute(builder: (context) {
+                  return StockReports1(true);
+                }));
               },
               child: Card(
                 child: Padding(
@@ -792,7 +805,7 @@ class _MyHomePageState extends State<MyHomePage> {
         Row(
           children: [
             GestureDetector(
-              onTap: (){
+              onTap: () {
                 Navigator.push(context, MaterialPageRoute(builder: (context) {
                   return OrdersPage();
                 }));
@@ -842,9 +855,59 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
             ),
             GestureDetector(
-              onTap: (){
+              onTap: () {
                 Navigator.push(context, MaterialPageRoute(builder: (context) {
-                  return MisPage();
+                  return InvoicePage();
+                }));
+              },
+              child: Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(1.0),
+                  child: Container(
+                    width: MediaQuery.of(context).size.width / 3 - 10,
+                    height: MediaQuery.of(context).size.width / 3 - 10,
+                    child: Column(
+                      children: [
+                        Container(
+                          height: 70,
+                          width: 60,
+                          child: Padding(
+                              padding: const EdgeInsets.all(15.0),
+                              child: // Adobe XD layer: 'surface1' (group)
+                              Stack(
+                                children: <Widget>[
+                                  Pinned.fromPins(
+                                    Pin(start: 0.0, end: 0.0),
+                                    Pin(start: 0.0, end: 0.0),
+                                    child: SvgPicture.string(
+                                      '<svg viewBox="4.9 2.0 22.0 28.6" ><path  d="M 26.61136817932129 9.443850517272949 L 19.46242713928223 2.294841766357422 C 19.25344276428223 2.09021520614624 18.97479629516602 1.972659945487976 18.68299865722656 1.972659945487976 L 7.132285118103027 1.972659945487976 C 5.917566776275635 1.972659945487976 4.933589935302734 2.956625938415527 4.933589935302734 4.175702095031738 L 4.933589935302734 28.37006378173828 C 4.933589935302734 29.58908462524414 5.917566776275635 30.57303810119629 7.132285118103027 30.57303810119629 L 24.73485374450684 30.57303810119629 C 25.94964027404785 30.57303810119629 26.93359375 29.58908462524414 26.93359375 28.37006378173828 L 26.93359375 10.22318935394287 C 26.93359375 9.93148136138916 26.81600761413574 9.652834892272949 26.61136817932129 9.443850517272949 Z M 19.23159599304199 22.87115287780762 L 10.43250179290771 22.87115287780762 C 9.827315330505371 22.87115287780762 9.3353271484375 22.37917518615723 9.3353271484375 21.77395629882812 C 9.3353271484375 21.16439056396484 9.827315330505371 20.67241287231445 10.43250179290771 20.67241287231445 L 19.23159599304199 20.67241287231445 C 19.84116172790527 20.67241287231445 20.33313941955566 21.16439056396484 20.33313941955566 21.77395629882812 C 20.33313941955566 22.37917518615723 19.84116172790527 22.87115287780762 19.23159599304199 22.87115287780762 Z M 21.43468284606934 18.47367286682129 L 10.43250179290771 18.47367286682129 C 9.827315330505371 18.47367286682129 9.3353271484375 17.97735023498535 9.3353271484375 17.37224197387695 C 9.3353271484375 16.76702308654785 9.827315330505371 16.27069854736328 10.43250179290771 16.27069854736328 L 21.43468284606934 16.27069854736328 C 22.03990173339844 16.27069854736328 22.53187942504883 16.76702308654785 22.53187942504883 17.37224197387695 C 22.53187942504883 17.97735023498535 22.03990173339844 18.47367286682129 21.43468284606934 18.47367286682129 Z M 19.23159599304199 10.77177715301514 C 18.62648773193359 10.77177715301514 18.1343994140625 10.27978897094727 18.1343994140625 9.674602508544922 L 18.1343994140625 4.06685209274292 L 24.83940124511719 10.77177715301514 L 19.23159599304199 10.77177715301514 Z" fill="#f9a936" stroke="none" stroke-width="1" stroke-miterlimit="4" stroke-linecap="butt" /></svg>',
+                                      allowDrawingOutsideViewBox: true,
+                                      fit: BoxFit.fill,
+                                    ),
+                                  ),
+                                ],
+                              )),
+                        ),
+                        Text(
+                          'Invoice',
+                          style: TextStyle(
+                            fontFamily: 'Arial',
+                            fontSize: 14,
+                            color: const Color(0xff000000),
+                            fontWeight: FontWeight.w700,
+                          ),
+                          textAlign: TextAlign.left,
+                        )
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            GestureDetector(
+              onTap: () {
+                Navigator.push(context, MaterialPageRoute(builder: (context) {
+                  return MisHome();
                 }));
               },
               child: Card(
@@ -891,101 +954,101 @@ class _MyHomePageState extends State<MyHomePage> {
                 ),
               ),
             ),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(1.0),
-                child: Container(
-                  width: MediaQuery.of(context).size.width / 3 - 10,
-                  height: MediaQuery.of(context).size.width / 3 - 10,
-                  child: Column(
-                    children: [
-                      Container(
-                        height: 70,
-                        width: 70,
-                        child: Padding(
-                            padding: const EdgeInsets.all(15.0),
-                            child: // Adobe XD layer: 'surface1' (group)
-                                // Adobe XD layer: 'surface1' (group)
-                                Stack(
-                              children: <Widget>[
-                                Pinned.fromPins(
-                                  Pin(start: 0.0, end: 0.0),
-                                  Pin(start: 0.0, end: 0.0),
-                                  child: SvgPicture.string(
-                                    '<svg viewBox="6.9 2.0 23.0 29.3" ><path transform="translate(0.0, 0.0)" d="M 6.945309638977051 1.984379887580872 L 6.945309638977051 30.03549003601074 L 18.304931640625 30.03549003601074 L 18.19552230834961 30.47728538513184 C 18.0882682800293 30.7822437286377 18.24812698364258 31.149658203125 18.5699462890625 31.21211242675781 C 18.67510223388672 31.27210807800293 18.78235816955566 31.27210807800293 18.83706092834473 31.21211242675781 L 22.04028701782227 30.23477935791016 C 22.14754295349121 30.23477935791016 22.20224761962891 30.17478370666504 22.30740356445312 30.05227279663086 L 29.14502906799316 22.24350357055664 L 29.30488777160645 22.12585067749023 C 30.15878677368164 21.14857482910156 30.15878677368164 19.56132698059082 29.30488777160645 18.58645248413086 C 28.87791442871094 18.03659057617188 28.29323387145996 17.85648155212402 27.75900650024414 17.85648155212402 C 27.22477531433105 17.85648155212402 26.74099540710449 18.09898376464844 26.31407356262207 18.52639389038086 L 26.20891761779785 18.58645248413086 L 26.17526626586914 18.62247276306152 L 26.17526626586914 9.665912628173828 L 19.44489669799805 1.984379887580872 L 6.945309638977051 1.984379887580872 Z M 19.23033142089844 3.446722030639648 L 24.89224433898926 9.913212776184082 L 19.23033142089844 9.913212776184082 L 19.23033142089844 3.446722030639648 Z M 22.43565940856934 14.79010391235352 C 23.02669334411621 14.79010391235352 23.50411796569824 15.33516979217529 23.50411796569824 16.00994110107422 C 23.50411796569824 16.68465232849121 23.02669334411621 17.22978019714355 22.43565940856934 17.22978019714355 C 22.38100624084473 17.22978019714355 22.32840156555176 17.22012901306152 22.27585029602051 17.21053886413574 L 19.15462684631348 21.66721153259277 C 19.20297813415527 21.80410766601562 19.23033142089844 21.95053291320801 19.23033142089844 22.10906600952148 C 19.23033142089844 22.78377723693848 18.75290679931641 23.32884407043457 18.1618709564209 23.32884407043457 C 17.57089233398438 23.32884407043457 17.09346580505371 22.78377723693848 17.09346580505371 22.10906600952148 C 17.09346580505371 21.97456741333008 17.11656379699707 21.8497200012207 17.15231513977051 21.72966575622559 L 14.10684967041016 17.8156623840332 C 14.03534603118896 17.83244514465332 13.96174240112305 17.83963775634766 13.88808536529541 17.83963775634766 C 13.79348373413086 17.83963775634766 13.70302677154541 17.82045555114746 13.61467170715332 17.79402542114258 L 11.71336841583252 19.96715927124023 C 11.73652076721191 20.06797218322754 11.75121974945068 20.16884613037109 11.75121974945068 20.27931022644043 C 11.75121974945068 20.95408248901367 11.27379417419434 21.49914932250977 10.68486022949219 21.49914932250977 C 10.09387969970703 21.49914932250977 9.616454124450684 20.95408248901367 9.616454124450684 20.27931022644043 C 9.616454124450684 19.60453987121582 10.09387969970703 19.05947303771973 10.68486022949219 19.05947303771973 C 10.77951526641846 19.05947303771973 10.86997127532959 19.07871437072754 10.95827484130859 19.1050853729248 L 12.85963153839111 16.9320125579834 C 12.8364782333374 16.83113861083984 12.81967926025391 16.73032569885254 12.81967926025391 16.61985969543457 C 12.81967926025391 15.94508838653564 13.29920482635498 15.40002155303955 13.88808536529541 15.40002155303955 C 14.4791202545166 15.40002155303955 14.95654582977295 15.94508838653564 14.95654582977295 16.61985969543457 C 14.95654582977295 16.75429916381836 14.93344688415527 16.87914657592773 14.89979457855225 16.9992618560791 L 17.94526290893555 20.91320419311523 C 18.01676559448242 20.89642333984375 18.0882682800293 20.88923072814941 18.1618709564209 20.88923072814941 C 18.21657562255859 20.88923072814941 18.26918029785156 20.89881896972656 18.32173156738281 20.90840911865234 L 21.44295501708984 16.45173645019531 C 21.39670372009277 16.31490135192871 21.36725044250488 16.16841506958008 21.36725044250488 16.00994110107422 C 21.36725044250488 15.33516979217529 21.84467506408691 14.79010391235352 22.43565940856934 14.79010391235352 Z M 27.75900650024414 19.07631683349609 C 28.0261173248291 19.07631683349609 28.34368515014648 19.19876670837402 28.5602970123291 19.44127082824707 C 28.98516845703125 19.92873954772949 28.98516845703125 20.66110992431641 28.61079978942871 21.14857482910156 L 27.06071472167969 19.38127708435059 C 27.27522468566895 19.19876670837402 27.49188995361328 19.07631683349609 27.75900650024414 19.07631683349609 Z M 26.25936889648438 20.23369979858398 L 27.862060546875 22.06339454650879 L 22.04028701782227 28.70998382568359 L 20.43759918212891 26.94268226623535 L 26.25936889648438 20.23369979858398 Z M 19.90336799621582 28.10012626647949 L 21.02443313598633 29.38235664367676 L 19.47854804992676 29.86742782592773 L 19.90336799621582 28.10012626647949 Z" fill="#2a7980" stroke="none" stroke-width="1" stroke-miterlimit="4" stroke-linecap="butt" /></svg>',
-                                    allowDrawingOutsideViewBox: true,
-                                    fit: BoxFit.fill,
-                                  ),
-                                ),
-                              ],
-                            )),
-                      ),
-                      Text(
-                        'Reports',
-                        style: TextStyle(
-                          fontFamily: 'Arial',
-                          fontSize: 14,
-                          color: const Color(0xff000000),
-                          fontWeight: FontWeight.w700,
-                        ),
-                        textAlign: TextAlign.left,
-                      )
-                    ],
-                  ),
-                ),
-              ),
-            ),
+            // Card(
+            //   child: Padding(
+            //     padding: const EdgeInsets.all(1.0),
+            //     child: Container(
+            //       width: MediaQuery.of(context).size.width / 3 - 10,
+            //       height: MediaQuery.of(context).size.width / 3 - 10,
+            //       child: Column(
+            //         children: [
+            //           Container(
+            //             height: 70,
+            //             width: 70,
+            //             child: Padding(
+            //                 padding: const EdgeInsets.all(15.0),
+            //                 child: // Adobe XD layer: 'surface1' (group)
+            //                     // Adobe XD layer: 'surface1' (group)
+            //                     Stack(
+            //                   children: <Widget>[
+            //                     Pinned.fromPins(
+            //                       Pin(start: 0.0, end: 0.0),
+            //                       Pin(start: 0.0, end: 0.0),
+            //                       child: SvgPicture.string(
+            //                         '<svg viewBox="6.9 2.0 23.0 29.3" ><path transform="translate(0.0, 0.0)" d="M 6.945309638977051 1.984379887580872 L 6.945309638977051 30.03549003601074 L 18.304931640625 30.03549003601074 L 18.19552230834961 30.47728538513184 C 18.0882682800293 30.7822437286377 18.24812698364258 31.149658203125 18.5699462890625 31.21211242675781 C 18.67510223388672 31.27210807800293 18.78235816955566 31.27210807800293 18.83706092834473 31.21211242675781 L 22.04028701782227 30.23477935791016 C 22.14754295349121 30.23477935791016 22.20224761962891 30.17478370666504 22.30740356445312 30.05227279663086 L 29.14502906799316 22.24350357055664 L 29.30488777160645 22.12585067749023 C 30.15878677368164 21.14857482910156 30.15878677368164 19.56132698059082 29.30488777160645 18.58645248413086 C 28.87791442871094 18.03659057617188 28.29323387145996 17.85648155212402 27.75900650024414 17.85648155212402 C 27.22477531433105 17.85648155212402 26.74099540710449 18.09898376464844 26.31407356262207 18.52639389038086 L 26.20891761779785 18.58645248413086 L 26.17526626586914 18.62247276306152 L 26.17526626586914 9.665912628173828 L 19.44489669799805 1.984379887580872 L 6.945309638977051 1.984379887580872 Z M 19.23033142089844 3.446722030639648 L 24.89224433898926 9.913212776184082 L 19.23033142089844 9.913212776184082 L 19.23033142089844 3.446722030639648 Z M 22.43565940856934 14.79010391235352 C 23.02669334411621 14.79010391235352 23.50411796569824 15.33516979217529 23.50411796569824 16.00994110107422 C 23.50411796569824 16.68465232849121 23.02669334411621 17.22978019714355 22.43565940856934 17.22978019714355 C 22.38100624084473 17.22978019714355 22.32840156555176 17.22012901306152 22.27585029602051 17.21053886413574 L 19.15462684631348 21.66721153259277 C 19.20297813415527 21.80410766601562 19.23033142089844 21.95053291320801 19.23033142089844 22.10906600952148 C 19.23033142089844 22.78377723693848 18.75290679931641 23.32884407043457 18.1618709564209 23.32884407043457 C 17.57089233398438 23.32884407043457 17.09346580505371 22.78377723693848 17.09346580505371 22.10906600952148 C 17.09346580505371 21.97456741333008 17.11656379699707 21.8497200012207 17.15231513977051 21.72966575622559 L 14.10684967041016 17.8156623840332 C 14.03534603118896 17.83244514465332 13.96174240112305 17.83963775634766 13.88808536529541 17.83963775634766 C 13.79348373413086 17.83963775634766 13.70302677154541 17.82045555114746 13.61467170715332 17.79402542114258 L 11.71336841583252 19.96715927124023 C 11.73652076721191 20.06797218322754 11.75121974945068 20.16884613037109 11.75121974945068 20.27931022644043 C 11.75121974945068 20.95408248901367 11.27379417419434 21.49914932250977 10.68486022949219 21.49914932250977 C 10.09387969970703 21.49914932250977 9.616454124450684 20.95408248901367 9.616454124450684 20.27931022644043 C 9.616454124450684 19.60453987121582 10.09387969970703 19.05947303771973 10.68486022949219 19.05947303771973 C 10.77951526641846 19.05947303771973 10.86997127532959 19.07871437072754 10.95827484130859 19.1050853729248 L 12.85963153839111 16.9320125579834 C 12.8364782333374 16.83113861083984 12.81967926025391 16.73032569885254 12.81967926025391 16.61985969543457 C 12.81967926025391 15.94508838653564 13.29920482635498 15.40002155303955 13.88808536529541 15.40002155303955 C 14.4791202545166 15.40002155303955 14.95654582977295 15.94508838653564 14.95654582977295 16.61985969543457 C 14.95654582977295 16.75429916381836 14.93344688415527 16.87914657592773 14.89979457855225 16.9992618560791 L 17.94526290893555 20.91320419311523 C 18.01676559448242 20.89642333984375 18.0882682800293 20.88923072814941 18.1618709564209 20.88923072814941 C 18.21657562255859 20.88923072814941 18.26918029785156 20.89881896972656 18.32173156738281 20.90840911865234 L 21.44295501708984 16.45173645019531 C 21.39670372009277 16.31490135192871 21.36725044250488 16.16841506958008 21.36725044250488 16.00994110107422 C 21.36725044250488 15.33516979217529 21.84467506408691 14.79010391235352 22.43565940856934 14.79010391235352 Z M 27.75900650024414 19.07631683349609 C 28.0261173248291 19.07631683349609 28.34368515014648 19.19876670837402 28.5602970123291 19.44127082824707 C 28.98516845703125 19.92873954772949 28.98516845703125 20.66110992431641 28.61079978942871 21.14857482910156 L 27.06071472167969 19.38127708435059 C 27.27522468566895 19.19876670837402 27.49188995361328 19.07631683349609 27.75900650024414 19.07631683349609 Z M 26.25936889648438 20.23369979858398 L 27.862060546875 22.06339454650879 L 22.04028701782227 28.70998382568359 L 20.43759918212891 26.94268226623535 L 26.25936889648438 20.23369979858398 Z M 19.90336799621582 28.10012626647949 L 21.02443313598633 29.38235664367676 L 19.47854804992676 29.86742782592773 L 19.90336799621582 28.10012626647949 Z" fill="#2a7980" stroke="none" stroke-width="1" stroke-miterlimit="4" stroke-linecap="butt" /></svg>',
+            //                         allowDrawingOutsideViewBox: true,
+            //                         fit: BoxFit.fill,
+            //                       ),
+            //                     ),
+            //                   ],
+            //                 )),
+            //           ),
+            //           Text(
+            //             'Reports',
+            //             style: TextStyle(
+            //               fontFamily: 'Arial',
+            //               fontSize: 14,
+            //               color: const Color(0xff000000),
+            //               fontWeight: FontWeight.w700,
+            //             ),
+            //             textAlign: TextAlign.left,
+            //           )
+            //         ],
+            //       ),
+            //     ),
+            //   ),
+            // ),
           ],
         ),
         Row(
           children: [
-        //     Card(
-        //       child: Padding(
-        //         padding: const EdgeInsets.all(1.0),
-        //         child: Container(
-        //           width: MediaQuery.of(context).size.width / 3 - 10,
-        //           height: MediaQuery.of(context).size.width / 3 - 10,
-        //           child: Column(
-        //             children: [
-        //               // Adobe XD layer: 'surface1' (group
-        //               Container(
-        //                 height: 70,
-        //                 width: 70,
-        //                 child: Padding(
-        //                     padding: const EdgeInsets.all(15.0),
-        //                     child: // Adobe XD layer: 'surface1' (group)
-        //                         // Adobe XD layer: 'surface1' (group)
-        //                         Stack(
-        //                       children: <Widget>[
-        //                         Pinned.fromPins(
-        //                           Pin(start: 0.0, end: 0.0),
-        //                           Pin(start: 0.0, end: 0.0),
-        //                           child: SvgPicture.string(
-        //                             '<svg viewBox="3.0 3.0 28.8 28.8" ><path transform="translate(0.0, 0.0)" d="M 18.55934715270996 2.960939645767212 L 18.55934715270996 16.16064071655273 L 31.75897216796875 16.16064071655273 C 31.75897216796875 8.869691848754883 25.85030555725098 2.960939645767212 18.55934715270996 2.960939645767212 Z M 16.16064071655273 5.359583854675293 C 8.869691848754883 5.359583854675293 2.960939645767212 11.27310276031494 2.960939645767212 18.55934715270996 C 2.960939645767212 25.85030555725098 8.869691848754883 31.75897216796875 16.16064071655273 31.75897216796875 C 23.44685745239258 31.75897216796875 29.36038970947266 25.85030555725098 29.36038970947266 18.55934715270996 L 16.16064071655273 18.55934715270996 L 16.16064071655273 5.359583854675293 Z" fill="#12b3e3" stroke="none" stroke-width="1" stroke-miterlimit="4" stroke-linecap="butt" /></svg>',
-        //                             allowDrawingOutsideViewBox: true,
-        //                             fit: BoxFit.fill,
-        //                           ),
-        //                         ),
-        //                       ],
-        //                     )),
-        //               ),
-        //               Text(
-        //                 'Order List',
-        //                 style: TextStyle(
-        //                   fontFamily: 'Arial',
-        //                   fontSize: 14,
-        //                   color: const Color(0xff000000),
-        //                   fontWeight: FontWeight.w700,
-        //                 ),
-        //                 textAlign: TextAlign.left,
-        //               )
-        //             ],
-        //           ),
-        //         ),
-        //       ),
-        //     ),
+            //     Card(
+            //       child: Padding(
+            //         padding: const EdgeInsets.all(1.0),
+            //         child: Container(
+            //           width: MediaQuery.of(context).size.width / 3 - 10,
+            //           height: MediaQuery.of(context).size.width / 3 - 10,
+            //           child: Column(
+            //             children: [
+            //               // Adobe XD layer: 'surface1' (group
+            //               Container(
+            //                 height: 70,
+            //                 width: 70,
+            //                 child: Padding(
+            //                     padding: const EdgeInsets.all(15.0),
+            //                     child: // Adobe XD layer: 'surface1' (group)
+            //                         // Adobe XD layer: 'surface1' (group)
+            //                         Stack(
+            //                       children: <Widget>[
+            //                         Pinned.fromPins(
+            //                           Pin(start: 0.0, end: 0.0),
+            //                           Pin(start: 0.0, end: 0.0),
+            //                           child: SvgPicture.string(
+            //                             '<svg viewBox="3.0 3.0 28.8 28.8" ><path transform="translate(0.0, 0.0)" d="M 18.55934715270996 2.960939645767212 L 18.55934715270996 16.16064071655273 L 31.75897216796875 16.16064071655273 C 31.75897216796875 8.869691848754883 25.85030555725098 2.960939645767212 18.55934715270996 2.960939645767212 Z M 16.16064071655273 5.359583854675293 C 8.869691848754883 5.359583854675293 2.960939645767212 11.27310276031494 2.960939645767212 18.55934715270996 C 2.960939645767212 25.85030555725098 8.869691848754883 31.75897216796875 16.16064071655273 31.75897216796875 C 23.44685745239258 31.75897216796875 29.36038970947266 25.85030555725098 29.36038970947266 18.55934715270996 L 16.16064071655273 18.55934715270996 L 16.16064071655273 5.359583854675293 Z" fill="#12b3e3" stroke="none" stroke-width="1" stroke-miterlimit="4" stroke-linecap="butt" /></svg>',
+            //                             allowDrawingOutsideViewBox: true,
+            //                             fit: BoxFit.fill,
+            //                           ),
+            //                         ),
+            //                       ],
+            //                     )),
+            //               ),
+            //               Text(
+            //                 'Order List',
+            //                 style: TextStyle(
+            //                   fontFamily: 'Arial',
+            //                   fontSize: 14,
+            //                   color: const Color(0xff000000),
+            //                   fontWeight: FontWeight.w700,
+            //                 ),
+            //                 textAlign: TextAlign.left,
+            //               )
+            //             ],
+            //           ),
+            //         ),
+            //       ),
+            //     ),
             GestureDetector(
-              onTap: (){
+              onTap: () {
                 Navigator.push(context, MaterialPageRoute(builder: (context) {
                   return ReturnsPage();
                 }));
@@ -1004,9 +1067,7 @@ class _MyHomePageState extends State<MyHomePage> {
                           width: 60,
                           child: Padding(
                               padding: const EdgeInsets.all(15.0),
-                              child: // Adobe XD layer: 'surface1' (group)
-                                  // Adobe XD layer: 'surface1' (group)
-                                  Stack(
+                              child: Stack(
                                 children: <Widget>[
                                   Pinned.fromPins(
                                     Pin(start: 0.0, end: 0.0),
@@ -1036,43 +1097,50 @@ class _MyHomePageState extends State<MyHomePage> {
                 ),
               ),
             ),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(1.0),
-                child: Container(
-                  width: MediaQuery.of(context).size.width / 3 - 10,
-                  height: MediaQuery.of(context).size.width / 3 - 10,
-                  child: Column(
-                    children: [
-                      // Adobe XD layer: 'surface1' (group
-                      Container(
-                        height: 70,
-                        width: 70,
-                        child: Padding(
-                            padding: const EdgeInsets.all(15.0),
-                            child: // Adobe XD layer: 'surface1' (group)
-                                // Adobe XD layer: 'surface1' (group)
-                                SvgPicture.string(
-                              '<svg viewBox="2.0 3.0 29.3 26.4" ><path transform="translate(0.0, 0.0)" d="M 6.398577690124512 2.999999761581421 L 6.398577690124512 17.66192436218262 L 4.932384967803955 17.66192436218262 C 3.317285776138306 17.66192436218262 2 18.97915267944336 2 20.59431076049805 L 2 29.39146614074707 L 31.3238525390625 29.39146614074707 L 31.3238525390625 20.59431076049805 C 31.3238525390625 18.97915267944336 30.00662612915039 17.66192436218262 28.3914680480957 17.66192436218262 L 26.9252758026123 17.66192436218262 L 26.9252758026123 2.999999761581421 L 23.99288940429688 2.999999761581421 C 23.99288940429688 3.807549715042114 23.33427619934082 4.466192245483398 22.52669715881348 4.466192245483398 C 21.71911811828613 4.466192245483398 21.06050491333008 3.807549715042114 21.06050491333008 2.999999761581421 L 18.12811851501465 2.999999761581421 C 18.12811851501465 3.807549715042114 17.46950531005859 4.466192245483398 16.66192626953125 4.466192245483398 C 15.85434627532959 4.466192245483398 15.19573307037354 3.807549715042114 15.19573307037354 2.999999761581421 L 12.26334762573242 2.999999761581421 C 12.26334762573242 3.807549715042114 11.60470581054688 4.466192245483398 10.79715538024902 4.466192245483398 C 9.989605903625488 4.466192245483398 9.330963134765625 3.807549715042114 9.330963134765625 2.999999761581421 L 6.398577690124512 2.999999761581421 Z M 9.330963134765625 7.398577690124512 L 23.99288940429688 7.398577690124512 L 23.99288940429688 20.59431076049805 L 9.330963134765625 20.59431076049805 L 9.330963134765625 7.398577690124512 Z M 12.26334762573242 10.33096313476562 L 12.26334762573242 13.26334857940674 L 21.06050491333008 13.26334857940674 L 21.06050491333008 10.33096313476562 L 12.26334762573242 10.33096313476562 Z M 12.26334762573242 14.72954082489014 L 12.26334762573242 17.66192436218262 L 18.12811851501465 17.66192436218262 L 18.12811851501465 14.72954082489014 L 12.26334762573242 14.72954082489014 Z M 6.398577690124512 23.52669525146484 L 9.330963134765625 23.52669525146484 L 9.330963134765625 26.45908164978027 L 6.398577690124512 26.45908164978027 L 6.398577690124512 23.52669525146484 Z M 12.26334762573242 23.52669525146484 L 15.19573307037354 23.52669525146484 L 15.19573307037354 26.45908164978027 L 12.26334762573242 26.45908164978027 L 12.26334762573242 23.52669525146484 Z M 18.12811851501465 23.52669525146484 L 21.06050491333008 23.52669525146484 L 21.06050491333008 26.45908164978027 L 18.12811851501465 26.45908164978027 L 18.12811851501465 23.52669525146484 Z M 23.99288940429688 23.52669525146484 L 26.9252758026123 23.52669525146484 L 26.9252758026123 26.45908164978027 L 23.99288940429688 26.45908164978027 L 23.99288940429688 23.52669525146484 Z" fill="#f9a936" stroke="none" stroke-width="1" stroke-miterlimit="4" stroke-linecap="butt" /></svg>',
-                              allowDrawingOutsideViewBox: true,
-                              fit: BoxFit.fill,
-                            )),
-                      ),
-                      Text(
-                        'Receipts',
-                        style: TextStyle(
-                          fontFamily: 'Arial',
-                          fontSize: 14,
-                          color: const Color(0xff000000),
-                          fontWeight: FontWeight.w700,
-                        ),
-                        textAlign: TextAlign.left,
-                      )
-                    ],
-                  ),
-                ),
-              ),
-            ),
+            // GestureDetector(
+            //   onTap: () {
+            //     Navigator.push(context, MaterialPageRoute(builder: (context) {
+            //       return RecieptPortal();
+            //     }));
+            //   },
+            //   child: Card(
+            //     child: Padding(
+            //       padding: const EdgeInsets.all(1.0),
+            //       child: Container(
+            //         width: MediaQuery.of(context).size.width / 3 - 10,
+            //         height: MediaQuery.of(context).size.width / 3 - 10,
+            //         child: Column(
+            //           children: [
+            //             // Adobe XD layer: 'surface1' (group
+            //             Container(
+            //               height: 70,
+            //               width: 70,
+            //               child: Padding(
+            //                   padding: const EdgeInsets.all(15.0),
+            //                   child: // Adobe XD layer: 'surface1' (group)
+            //                       // Adobe XD layer: 'surface1' (group)
+            //                       SvgPicture.string(
+            //                     '<svg viewBox="2.0 3.0 29.3 26.4" ><path transform="translate(0.0, 0.0)" d="M 6.398577690124512 2.999999761581421 L 6.398577690124512 17.66192436218262 L 4.932384967803955 17.66192436218262 C 3.317285776138306 17.66192436218262 2 18.97915267944336 2 20.59431076049805 L 2 29.39146614074707 L 31.3238525390625 29.39146614074707 L 31.3238525390625 20.59431076049805 C 31.3238525390625 18.97915267944336 30.00662612915039 17.66192436218262 28.3914680480957 17.66192436218262 L 26.9252758026123 17.66192436218262 L 26.9252758026123 2.999999761581421 L 23.99288940429688 2.999999761581421 C 23.99288940429688 3.807549715042114 23.33427619934082 4.466192245483398 22.52669715881348 4.466192245483398 C 21.71911811828613 4.466192245483398 21.06050491333008 3.807549715042114 21.06050491333008 2.999999761581421 L 18.12811851501465 2.999999761581421 C 18.12811851501465 3.807549715042114 17.46950531005859 4.466192245483398 16.66192626953125 4.466192245483398 C 15.85434627532959 4.466192245483398 15.19573307037354 3.807549715042114 15.19573307037354 2.999999761581421 L 12.26334762573242 2.999999761581421 C 12.26334762573242 3.807549715042114 11.60470581054688 4.466192245483398 10.79715538024902 4.466192245483398 C 9.989605903625488 4.466192245483398 9.330963134765625 3.807549715042114 9.330963134765625 2.999999761581421 L 6.398577690124512 2.999999761581421 Z M 9.330963134765625 7.398577690124512 L 23.99288940429688 7.398577690124512 L 23.99288940429688 20.59431076049805 L 9.330963134765625 20.59431076049805 L 9.330963134765625 7.398577690124512 Z M 12.26334762573242 10.33096313476562 L 12.26334762573242 13.26334857940674 L 21.06050491333008 13.26334857940674 L 21.06050491333008 10.33096313476562 L 12.26334762573242 10.33096313476562 Z M 12.26334762573242 14.72954082489014 L 12.26334762573242 17.66192436218262 L 18.12811851501465 17.66192436218262 L 18.12811851501465 14.72954082489014 L 12.26334762573242 14.72954082489014 Z M 6.398577690124512 23.52669525146484 L 9.330963134765625 23.52669525146484 L 9.330963134765625 26.45908164978027 L 6.398577690124512 26.45908164978027 L 6.398577690124512 23.52669525146484 Z M 12.26334762573242 23.52669525146484 L 15.19573307037354 23.52669525146484 L 15.19573307037354 26.45908164978027 L 12.26334762573242 26.45908164978027 L 12.26334762573242 23.52669525146484 Z M 18.12811851501465 23.52669525146484 L 21.06050491333008 23.52669525146484 L 21.06050491333008 26.45908164978027 L 18.12811851501465 26.45908164978027 L 18.12811851501465 23.52669525146484 Z M 23.99288940429688 23.52669525146484 L 26.9252758026123 23.52669525146484 L 26.9252758026123 26.45908164978027 L 23.99288940429688 26.45908164978027 L 23.99288940429688 23.52669525146484 Z" fill="#f9a936" stroke="none" stroke-width="1" stroke-miterlimit="4" stroke-linecap="butt" /></svg>',
+            //                     allowDrawingOutsideViewBox: true,
+            //                     fit: BoxFit.fill,
+            //                   )),
+            //             ),
+            //             Text(
+            //               'Receipts',
+            //               style: TextStyle(
+            //                 fontFamily: 'Arial',
+            //                 fontSize: 14,
+            //                 color: const Color(0xff000000),
+            //                 fontWeight: FontWeight.w700,
+            //               ),
+            //               textAlign: TextAlign.left,
+            //             )
+            //           ],
+            //         ),
+            //       ),
+            //     ),
+            //   ),
+            // ),
           ],
         ),
       ],
@@ -1121,9 +1189,9 @@ class _MyHomePageState extends State<MyHomePage> {
                       ),
                       Center(
                           child: Text(
-                        "Sameer",
+                        User.name.toUpperCase(),
                         style: TextStyle(
-                            color: Colors.white, fontWeight: FontWeight.w900),
+                            color: Colors.white, fontWeight: FontWeight.w700),
                       )),
                     ],
                   ),
@@ -1138,7 +1206,7 @@ class _MyHomePageState extends State<MyHomePage> {
       ],
       leading: GestureDetector(
         onTap: () {
-          _scaffoldKey.currentState.openDrawer();
+          _scaffoldKey.currentState?.openDrawer();
         },
         child: Container(
             height: 25,

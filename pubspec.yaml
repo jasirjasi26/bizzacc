@@ -18,7 +18,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 version: 1.0.0+1
 
 environment:
-  sdk: ">=2.7.0 <3.0.0"
+  sdk: ">=2.12.0 <3.0.0"
 
 dependencies:
   adobe_xd:
@@ -27,7 +27,7 @@ dependencies:
   qr_code_scanner: ^0.3.5
   syncfusion_flutter_signaturepad: ^18.4.49-beta
   firebase_database: ^6.0.0
-  textfield_search: ^0.8.0
+  textfield_search: ^0.9.2
   flutter_flexible_toast: ^0.1.4
   path_provider:
   pdf: ^2.1.0
@@ -40,8 +40,16 @@ dependencies:
   firebase_core: ^0.7.0
   printing: ^4.1.0
   flutter_svg:
-  change_app_package_name:
-  pinput:
+  pinput: ^1.2.2
+  sqflite:
+  http:
+  api_cache_manager:
+  connectivity:
+  data_connection_checker:
+  flutter_easyloading:
+  uuid:
+  blue_thermal_printer:
+
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.

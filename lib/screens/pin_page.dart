@@ -1,7 +1,9 @@
 
 import 'package:flutter/material.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:optimist_erp_app/ui_elements/bottomNavigation.dart';
 import 'package:pinput/pin_put/pin_put.dart';
-
+import '../data/user_data.dart';
 import 'otp.dart';
 
 class PinPage extends StatefulWidget {
@@ -19,16 +21,26 @@ class PinPageState extends State<PinPage> {
   );
   final _pinPutController = TextEditingController();
   final _pinPutFocusNode = FocusNode();
+  String id="";
 
   void _showSnackBar(String pin) {
     if (_pinPutController.text == "1111") {
+
+      User().fetchUser().then((value) => {
+        value.forEach((element) {
+          setState(() {
+            User.depotId=element.depotId.toString();
+            User.name=element.userName.toString();
+            User.userId=element.id.toString();
+          });
+        })
+      });
       Navigator.push(context, MaterialPageRoute(builder: (context) {
-        return Otp(
-            //  phone: code + number.text,
-            );
+        return BottomBar();
       }));
     } else {
-      print("22222");
+      EasyLoading.showError('Incorrect Pin');
+      _pinPutController.clear();
     }
   }
 

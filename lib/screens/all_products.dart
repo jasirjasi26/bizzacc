@@ -1,7 +1,15 @@
-import 'package:firebase_database/firebase_database.dart';
+// @dart=2.9
+import 'package:api_cache_manager/models/cache_db_model.dart';
+import 'package:api_cache_manager/utils/cache_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:optimist_erp_app/data/user_data.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:optimist_erp_app/models/products.dart';
+import 'dart:ui';
+import 'package:http/http.dart' as http;
+import 'dart:async';
+import 'dart:convert';
+import '../app_config.dart';
 
 class AllProductPage extends StatefulWidget {
   AllProductPage({Key key, this.back}) : super(key: key);
@@ -14,63 +22,82 @@ class AllProductPage extends StatefulWidget {
 
 class AllProductPageState extends State<AllProductPage> {
   var name = TextEditingController();
-  DatabaseReference items;
-  List<String> names = [];
-  List<String> id = [];
-  List<String> unit = [];
-  List<String> salerate = [];
-  List<String> purchaserate = [];
-  List<String> stock = [];
+  Future<List<Products>> fetchProducts;
+  String as = "";
 
-  Future<void> getCustomerId(String a) async {
-    setState(() {
-      names.clear();
-      id.clear();
-      unit.clear();
-      salerate.clear();
-      purchaserate.clear();
-      stock.clear();
-    });
+  Future<List<Products>> fetchData() async {
+    var isCacheExist = await APICacheManager().isAPICacheKeyExist("ps");
 
-    await items.once().then((DataSnapshot snapshot) {
-      List<dynamic> values = snapshot.value;
-      for (int i = 0; i < values.length; i++) {
-        if (values[i] != null) {
-          if (values[i]['ItemName']
-              .toString()
-              .toLowerCase()
-              .contains(name.text.toLowerCase())) {
-            setState(() {
-              names.add(values[i]['ItemName'].toString());
-              id.add(values[i]['ItemID'].toString());
-              unit.add(values[i]['SaleUnit'].toString());
-              salerate.add(values[i]['RateAndStock']
-                      [values[i]['SaleUnit'].toString()]['Rate']
-                  .toString());
-              purchaserate.add(values[i]['RateAndStock']
-                      [values[i]['SaleUnit'].toString()]['PurchaseRate']
-                  .toString());
-              stock.add(values[i]['RateAndStock']
-                          [values[i]['SaleUnit'].toString()]['Stock']
-                      [int.parse(User.vanNo)]
-                  .toString());
-            });
-          }
-        }
+    if (!isCacheExist) {
+      print("Data not exists");
+
+      Map data = {'depotid': "8", 'search': ""};
+      //encode Map to JSON
+      var body = json.encode(data);
+      String url = AppConfig.DOMAIN_PATH + "products";
+      final response = await http.post(
+        url,
+        body: body,
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        // If the server did return a 200 OK response,
+        // then parse the JSON.
+        APICacheDBModel cacheDBModel =
+            new APICacheDBModel(key: "ps", syncData: response.body);
+        await APICacheManager().addCacheData(cacheDBModel);
+
+        return productsFromJson(response.body);
+      } else {
+        // If the server did not return a 200 OK response,
+        // then throw an exception.
+        throw Exception('Failed to load album');
       }
-    });
+    } else {
+      print("Data exists");
+      var cacheData = await APICacheManager().getCacheData("ps");
+      return productsFromJson(cacheData.syncData);
+    }
+  }
+
+  Future<bool> refreshData() async {
+    Map data = {'depotid': "8", 'search': ""};
+    //encode Map to JSON
+    var body = json.encode(data);
+    String url = AppConfig.DOMAIN_PATH + "products";
+    final response = await http.post(
+      url,
+      body: body,
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      // If the server did return a 200 OK response,
+      // then parse the JSON.
+      APICacheDBModel cacheDBModel =
+          new APICacheDBModel(key: "ps", syncData: response.body);
+      await APICacheManager().addCacheData(cacheDBModel);
+
+      EasyLoading.showSuccess('Refresh done...');
+      return true;
+    } else {
+      // If the server did not return a 200 OK response,
+      // then throw an exception.
+      throw Exception('Failed to load album');
+    }
   }
 
   void initState() {
     // TODO: implement initState
 
-    items = FirebaseDatabase.instance
-        .reference()
-        .child("Companies")
-        .child(User.database)
-        .child("Items");
-
-    getCustomerId("1");
+    fetchProducts = fetchData();
     super.initState();
   }
 
@@ -83,17 +110,7 @@ class AllProductPageState extends State<AllProductPage> {
         onWillPop: () async {
           return widget.back;
         },
-        child: ListView(
-          children: [
-            SizedBox(
-              height: 10,
-            ),
-            SizedBox(
-              height: 10,
-            ),
-            homeData()
-          ],
-        ),
+        child: homeData()
       ),
     );
   }
@@ -122,7 +139,13 @@ class AllProductPageState extends State<AllProductPage> {
               ),
               child: TextFormField(
                   controller: name,
-                  onChanged: getCustomerId,
+                  onChanged: (data) {
+                    setState(() {
+                      as = name.text;
+                      fetchProducts=fetchData();
+
+                    });
+                  },
                   decoration: InputDecoration(
                     hintText: 'Enter product name here',
                     //filled: true,
@@ -145,164 +168,89 @@ class AllProductPageState extends State<AllProductPage> {
   }
 
   homeData() {
-    return Column(
-      children: [
-        Container(
-          height: MediaQuery.of(context).size.height,
-          width: MediaQuery.of(context).size.width,
-          child: GridView.builder(
-            itemCount: names.length,
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 3,
-              childAspectRatio: 0.65,
-            ),
-            itemBuilder: (_, index) => Padding(
-              padding: const EdgeInsets.all(0.0),
-              child: Container(
-                height: 180,
-                width: MediaQuery.of(context).size.width / 3,
-                child: Column(
-                  children: [
-                    Card(
-                      child: Container(
-                          height: MediaQuery.of(context).size.width / 3 - 30,
-                          width: MediaQuery.of(context).size.width / 3 - 30,
-                          child: Image.asset(
-                            "assets/images/cybrix logo.png",
-                            fit: BoxFit.scaleDown,
-                            //    color: Colors.white
-                          )),
-                    ),
-                    Container(
-                      height: 80,
-                      child: Column(
-                        children: [
-                          Text(
-                            names[index],
-                            style: TextStyle(
-                              fontFamily: 'Arial',
-                              fontSize: 10,
-                              color: const Color(0xff182d66),
-                              fontWeight: FontWeight.w700,
-                            ),
-                            textAlign: TextAlign.left,
-                          ),
-                          SizedBox(
-                            height: 5,
-                          ),
-                          Row(
-                            children: [
-                              SizedBox(
-                                width: 10,
-                              ),
-                              Text(
-                                'Code: ' + id[index],
-                                style: TextStyle(
-                                  fontFamily: 'Arial',
-                                  fontSize: 8,
-                                  color: const Color(0xff182d66),
-                                ),
-                                textAlign: TextAlign.left,
-                              ),
-                            ],
-                          ),
-                          Row(
-                            children: [
-                              SizedBox(
-                                width: 10,
-                              ),
-                              Text.rich(
-                                TextSpan(
-                                  style: TextStyle(
-                                    fontFamily: 'Arial',
-                                    fontSize: 8,
-                                    color: const Color(0xff182d66),
-                                  ),
-                                  children: [
-                                    TextSpan(
-                                      text: 'Unit: ' +
-                                          unit[index] +
-                                          '\nIn Stock: ' +
-                                          stock[index],
-                                    ),
-                                  ],
-                                ),
-                                textHeightBehavior: TextHeightBehavior(
-                                    applyHeightToFirstAscent: false),
-                                textAlign: TextAlign.left,
-                              ),
-                            ],
-                          ),
-                          Row(
-                            children: [
-                              SizedBox(
-                                width: 10,
-                              ),
-                              Text.rich(
-                                TextSpan(
-                                  style: TextStyle(
-                                    fontFamily: 'Arial',
-                                    fontSize: 8,
-                                    color: const Color(0xff182d66),
-                                  ),
-                                  children: [
-                                    TextSpan(
-                                      text: 'Sale Rate: ',
-                                    ),
-                                    TextSpan(
-                                      text: salerate[index],
+    return RefreshIndicator(
+      onRefresh: refreshData,
+      child: FutureBuilder<List<Products>>(
+          future: fetchProducts,
+          builder: (context, snapshot) {
+            if (snapshot.hasData) {
+              return FutureBuilder<List<Products>>(
+                  future: fetchProducts,
+                  builder: (context, snapshot) {
+                    if (snapshot.hasData) {
+                      return ListView.builder(
+                          shrinkWrap: true,
+                          itemCount: snapshot.data.length,
+                          itemBuilder: (context, index) {
+                            if (snapshot.data[index].name
+                                .toLowerCase()
+                                .contains(as.toLowerCase())) {
+                              return Padding(
+                                padding: const EdgeInsets.all(2.0),
+                                child: Card(
+                                  color: Colors.blueGrey[300],
+                                  child: ListTile(
+                                   // tileColor: Colors.cyan[200],
+                                    onTap: (){
+                                    },
+                                    trailing: Text(
+                                      snapshot.data[index].stock.toString(),
                                       style: TextStyle(
-                                        color: const Color(0xff388e3c),
+                                        fontFamily: 'Arial',
+                                        fontSize: 12,
+                                        color:
+                                        const Color(0xff182d66),
+                                        fontWeight: FontWeight.w700,
                                       ),
+                                      textAlign: TextAlign.left,
                                     ),
-                                  ],
-                                ),
-                                textHeightBehavior: TextHeightBehavior(
-                                    applyHeightToFirstAscent: false),
-                                textAlign: TextAlign.left,
-                              ),
-                            ],
-                          ),
-                          Row(
-                            children: [
-                              SizedBox(
-                                width: 10,
-                              ),
-                              Text.rich(
-                                TextSpan(
-                                  style: TextStyle(
-                                    fontFamily: 'Arial',
-                                    fontSize: 8,
-                                    color: const Color(0xff182d66),
-                                  ),
-                                  children: [
-                                    TextSpan(
-                                      text: 'Purchase Rate:',
-                                    ),
-                                    TextSpan(
-                                      text: purchaserate[index],
+                                    title: Text(
+                                      snapshot.data[index].name,
                                       style: TextStyle(
-                                        color: const Color(0xff388e3c),
+                                        fontFamily: 'Arial',
+                                        fontSize: 12,
+                                        color:
+                                        const Color(0xff182d66),
+                                        fontWeight: FontWeight.w700,
                                       ),
+                                      textAlign: TextAlign.left,
                                     ),
-                                  ],
+                                    subtitle: Text(
+                                      "Sale Rate : " + snapshot.data[index].salesRate
+                                          .toString()+"    Purchase Rate : " + snapshot.data[index].purchaseRate
+                                          .toString(),
+                                      style: TextStyle(
+                                        fontFamily: 'Arial',
+                                        fontSize: 10,
+                                        color:
+                                        const Color(0xff182d66),
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                      textAlign: TextAlign.left,
+                                    ),
+                                    leading: Image.asset(
+                                      "assets/images/products.jpg",
+                                      fit: BoxFit.scaleDown,
+                                      //    color: Colors.white
+                                    ),
+                                  ),
                                 ),
-                                textHeightBehavior: TextHeightBehavior(
-                                    applyHeightToFirstAscent: false),
-                                textAlign: TextAlign.left,
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-      ],
+                              );
+                            }
+                            else{
+                              return Container();
+                            }
+                          }
+                      );
+                    } else {
+                      return Center(
+                          child: CircularProgressIndicator());
+                    }
+                  });
+            } else {
+              return Center(child: CircularProgressIndicator());
+            }
+          }),
     );
   }
 
@@ -330,7 +278,7 @@ class AllProductPageState extends State<AllProductPage> {
                 ),
                 Text(
                   "  Products",
-                  style: TextStyle(fontSize: 22),
+                  style: TextStyle(fontSize: 22, color: Colors.white),
                 )
               ],
             ),

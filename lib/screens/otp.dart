@@ -1,3 +1,4 @@
+// @dart=2.9
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -143,21 +144,21 @@ class _OtpState extends State<Otp> {
               Map<dynamic, dynamic> values = snapshot.value;
               values.forEach((key, values) async {
                 if (widget.phone == values["ID"].toString()) {
-                  user.User.number = values["ID"].toString();
-                  user.User.name = values["Name"].toString();
-                  user.User.vanNo = values["VanNO"].toString();
-
-                  user.User().addUser();
-                  FlutterFlexibleToast.showToast(
-                      message: "Verification Success",
-                      toastGravity: ToastGravity.BOTTOM,
-                      icon: ICON.SUCCESS,
-                      radius: 50,
-                      elevation: 10,
-                      imageSize: 15,
-                      textColor: Colors.white,
-                      backgroundColor: Colors.black,
-                      timeInSeconds: 2);
+                  // user.User.number = values["ID"].toString();
+                  // user.User.name = values["Name"].toString();
+                  // user.User.vanNo = values["VanNO"].toString();
+                  //
+                  // user.User().addUser();
+                  // FlutterFlexibleToast.showToast(
+                  //     message: "Verification Success",
+                  //     toastGravity: ToastGravity.BOTTOM,
+                  //     icon: ICON.SUCCESS,
+                  //     radius: 50,
+                  //     elevation: 10,
+                  //     imageSize: 15,
+                  //     textColor: Colors.white,
+                  //     backgroundColor: Colors.black,
+                  //     timeInSeconds: 2);
 
                   Navigator.push(context, MaterialPageRoute(builder: (context) {
                     return BottomBar();

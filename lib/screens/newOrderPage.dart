@@ -369,8 +369,8 @@ class NewOrderPageState extends State<NewOrderPage> {
       unitlist.add(AunitId);
       units.add(Aunit);
       totalamount.add(Atotal);
-      allDiscounts.add(discount.toStringAsFixed(2));
-      discountAmount.add(double.parse(discount.toStringAsFixed(2)));
+      allDiscounts.add(discount.toStringAsFixed(User.decimals));
+      discountAmount.add(double.parse(discount.toStringAsFixed(User.decimals)));
       discountedFinalRate.add(AdiscountedAmount);
       quantity.add(Aqty);
       totalBill = totalBill + double.parse(Atotal);
@@ -427,7 +427,7 @@ class NewOrderPageState extends State<NewOrderPage> {
       discountedBill = totalBill - double.parse(byPrice.text);
       double a = (totalBill - discountedBill) / (totalBill) * 100;
       double b = (a);
-      byPercentage.text = b.toStringAsFixed(2);
+      byPercentage.text = b.toStringAsFixed(User.decimals);
     });
   }
 
@@ -439,7 +439,7 @@ class NewOrderPageState extends State<NewOrderPage> {
       discountedBill =
           totalBill - totalBill / 100 * double.parse(byPercentage.text);
       double d = totalBill - discountedBill;
-      byPrice.text = d.toStringAsFixed(2);
+      byPrice.text = d.toStringAsFixed(User.decimals);
     });
   }
 
@@ -467,10 +467,12 @@ class NewOrderPageState extends State<NewOrderPage> {
       };
       amm.add(itemValues);
     }
+    double bamount=discountedBill-disc;
 
     Map<String, dynamic> da = {
       "Id": 0,
-      "BillAmount": discountedBill,
+      "TotalTax":taxTotal.reduce((a, b) => a + b),
+      "BillAmount": bamount.toStringAsFixed(User.decimals),
       "Discount": disc,
       "CustomerID": customerId,
       "DeliveryDate": from,
@@ -548,10 +550,12 @@ class NewOrderPageState extends State<NewOrderPage> {
       };
       amm.add(itemValues);
     }
+    double bamount=discountedBill-disc;
 
     Map<String, dynamic> data = {
       "Id": 0,
-      "BillAmount": discountedBill - disc,
+      "TotalTax":taxTotal.reduce((a, b) => a + b),
+      "BillAmount": bamount.toStringAsFixed(User.decimals),
       "CustomerID": customerId,
       "DeliveryDate": from,
       "Items": amm.toList(),
@@ -584,6 +588,10 @@ class NewOrderPageState extends State<NewOrderPage> {
         EasyLoading.showSuccess('Successfully Saved');
         Navigator.pop(context);
       } else {
+        setState(() {
+          isLoading=false;
+        });
+        EasyLoading.showError('Failed');
         print("Failed");
       }
     } else {
@@ -912,7 +920,7 @@ class NewOrderPageState extends State<NewOrderPage> {
                   width: MediaQuery
                       .of(context)
                       .size
-                      .width * 0.13,
+                      .width * 0.1,
                   child: Text(
                     'Qty',
                     style: TextStyle(
@@ -927,7 +935,7 @@ class NewOrderPageState extends State<NewOrderPage> {
                   width: MediaQuery
                       .of(context)
                       .size
-                      .width * 0.13,
+                      .width * 0.1,
                   child: Text(
                     'Rate',
                     style: TextStyle(
@@ -942,7 +950,7 @@ class NewOrderPageState extends State<NewOrderPage> {
                   width: MediaQuery
                       .of(context)
                       .size
-                      .width * 0.13,
+                      .width * 0.1,
                   child: Text(
                     'Disc',
                     style: TextStyle(
@@ -957,7 +965,22 @@ class NewOrderPageState extends State<NewOrderPage> {
                   width: MediaQuery
                       .of(context)
                       .size
-                      .width * 0.13,
+                      .width * 0.1,
+                  child: Text(
+                    'Tax',
+                    style: TextStyle(
+                      fontFamily: 'Arial',
+                      fontSize: 14,
+                      color: const Color(0xffffffff),
+                    ),
+                    textAlign: TextAlign.left,
+                  ),
+                ),
+                Container(
+                  width: MediaQuery
+                      .of(context)
+                      .size
+                      .width * 0.1,
                   child: Text(
                     'Total',
                     style: TextStyle(
@@ -1037,7 +1060,7 @@ class NewOrderPageState extends State<NewOrderPage> {
                           width: MediaQuery
                               .of(context)
                               .size
-                              .width * 0.13,
+                              .width * 0.1,
                           child: Text(
                             rateList[i].toString(),
                             style: TextStyle(
@@ -1052,7 +1075,7 @@ class NewOrderPageState extends State<NewOrderPage> {
                           width: MediaQuery
                               .of(context)
                               .size
-                              .width * 0.13,
+                              .width * 0.1,
                           child: Text(
                             allDiscounts[i].toString(),
                             style: TextStyle(
@@ -1067,7 +1090,22 @@ class NewOrderPageState extends State<NewOrderPage> {
                           width: MediaQuery
                               .of(context)
                               .size
-                              .width * 0.13,
+                              .width * 0.1,
+                          child: Text(
+                            vatTotal[i].toString(),
+                            style: TextStyle(
+                              fontFamily: 'Arial',
+                              fontSize: 12,
+                              color: Colors.white,
+                            ),
+                            textAlign: TextAlign.left,
+                          ),
+                        ),
+                        Container(
+                          width: MediaQuery
+                              .of(context)
+                              .size
+                              .width * 0.1,
                           child: Text(
                             discountedFinalRate[i].toString(),
                             style: TextStyle(
@@ -1258,7 +1296,7 @@ class NewOrderPageState extends State<NewOrderPage> {
                       ],
                     ),
                     child:
-                    Center(child: Text((discountedBill - disc).toString())),
+                    Center(child: Text((discountedBill - disc).toStringAsFixed(User.decimals))),
                   ),
                 ],
               ),
@@ -1746,10 +1784,9 @@ class NewOrderPageState extends State<NewOrderPage> {
                                                             textAlign:
                                                             TextAlign.left,
                                                           ),
-                                                          leading: Image.asset(
+                                                          leading: snapshot.data[index].productImage!=null? Container(width: 60, height:80, child: Image.memory(base64Decode(snapshot.data[index].productImage),fit: BoxFit.fill,)) :Image.asset(
                                                             "assets/images/products.jpg",
-                                                            fit: BoxFit
-                                                                .scaleDown,
+                                                            fit: BoxFit.scaleDown,
                                                             //    color: Colors.white
                                                           ),
                                                         ),
@@ -1799,7 +1836,7 @@ class NewOrderPageState extends State<NewOrderPage> {
         setState(() {
           totalAmount = double.parse(saleQty.text) * double.parse(saleRate.text);
           double t = totalAmount * (vat / 100);
-          tax = double.parse(t.toStringAsFixed(2));
+          tax = double.parse(t.toStringAsFixed(User.decimals));
           totalAmount = totalAmount + tax;
           lastSaleRate = totalAmount;
         });
@@ -1808,7 +1845,7 @@ class NewOrderPageState extends State<NewOrderPage> {
           print(saleRate.text);
           totalAmount = double.parse(saleQty.text) *
               double.parse(saleRate.text.toString());
-          lastSaleRate = double.parse(totalAmount.toStringAsFixed(2));
+          lastSaleRate = double.parse(totalAmount.toStringAsFixed(User.decimals));
         });
       }
     }
@@ -1820,7 +1857,7 @@ class NewOrderPageState extends State<NewOrderPage> {
       setState(() {
         lastSaleRate = totalAmount - double.parse(byPri.text);
         double a = (totalAmount - lastSaleRate) / (totalAmount) * 100;
-        byPer.text = a.toStringAsFixed(2);
+        byPer.text = a.toStringAsFixed(User.decimals);
       });
     }
 
@@ -1832,7 +1869,7 @@ class NewOrderPageState extends State<NewOrderPage> {
         lastSaleRate =
             totalAmount - totalAmount / 100 * double.parse(byPer.text);
         double val = totalAmount - lastSaleRate;
-        byPri.text = val.toStringAsFixed(2);
+        byPri.text = val.toStringAsFixed(User.decimals);
       });
     }
 
@@ -2398,7 +2435,6 @@ class NewOrderPageState extends State<NewOrderPage> {
                                     if (Name != "" &&
                                         saleQty.text != "0" &&
                                         lastSaleRate > 0) {
-                                      //   print("xxx3xxxxxx");
                                       if (byPri.text.isEmpty &&
                                           byPer.text.isEmpty) {
                                         addItem(
@@ -2578,31 +2614,6 @@ class NewOrderPageState extends State<NewOrderPage> {
             Spacer(),
             Row(
               children: [
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Column(
-                    children: [
-                      // Container(
-                      //   height: 50,
-                      //   width: 50,
-                      //   decoration: BoxDecoration(
-                      //     borderRadius: BorderRadius.circular(8.0),
-                      //   ),
-                      //   child: Image.asset(
-                      //     'assets/images/scanimage.png',
-                      //     fit: BoxFit.fill,
-                      //   ),
-                      // ),
-                      // Padding(
-                      //   padding: const EdgeInsets.all(2.0),
-                      //   child: Text(
-                      //     "Scan",
-                      //     style: TextStyle(fontSize: 10, color: Colors.white),
-                      //   ),
-                      // )
-                    ],
-                  ),
-                ),
                 GestureDetector(
                   onTap: () {
                     showBookingDialog2();
@@ -2807,6 +2818,14 @@ class NewOrderPageState extends State<NewOrderPage> {
                                                                       .data[
                                                                   index]
                                                                       .name;
+                                                              vat=snapshot
+                                                                  .data[
+                                                              index]
+                                                                  .vatPerc;
+                                                              tax=snapshot
+                                                                  .data[
+                                                              index]
+                                                                  .vatPerc;
                                                               Name = snapshot
                                                                   .data[index]
                                                                   .name;
@@ -2871,10 +2890,9 @@ class NewOrderPageState extends State<NewOrderPage> {
                                                             textAlign:
                                                             TextAlign.left,
                                                           ),
-                                                          leading: Image.asset(
+                                                          leading: snapshot.data[index].productImage!=null? Container(width: 60, height:80, child: Image.memory(base64Decode(snapshot.data[index].productImage),fit: BoxFit.fill,)) :Image.asset(
                                                             "assets/images/products.jpg",
-                                                            fit: BoxFit
-                                                                .scaleDown,
+                                                            fit: BoxFit.scaleDown,
                                                             //    color: Colors.white
                                                           ),
                                                         ),
@@ -2915,12 +2933,16 @@ class NewOrderPageState extends State<NewOrderPage> {
       saleQty.text = "0";
     });
 
+    if (textEditingController.text != "") {
+      saleQty.text = quantity.toString();
+    }
     void calculteAmount(String a) {
       if (vat > 0) {
+        print(rate);
         setState(() {
-          totalAmount = double.parse(saleQty.text) * double.parse(rate);
+          totalAmount = double.parse(saleQty.text) * double.parse(saleRate.text);
           double t = totalAmount * (vat / 100);
-          tax = double.parse(t.toStringAsFixed(2));
+          tax = double.parse(t.toStringAsFixed(User.decimals));
           totalAmount = totalAmount + tax;
           lastSaleRate = totalAmount;
         });
@@ -2929,7 +2951,7 @@ class NewOrderPageState extends State<NewOrderPage> {
           print(saleRate.text);
           totalAmount = double.parse(saleQty.text) *
               double.parse(saleRate.text.toString());
-          lastSaleRate = double.parse(totalAmount.toStringAsFixed(2));
+          lastSaleRate = double.parse(totalAmount.toStringAsFixed(User.decimals));
         });
       }
     }

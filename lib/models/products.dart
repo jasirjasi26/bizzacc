@@ -2,6 +2,10 @@
 //
 //     final products = productsFromJson(jsonString);
 // @dart=2.9
+// To parse this JSON data, do
+//
+//     final products = productsFromJson(jsonString);
+
 import 'dart:convert';
 
 List<Products> productsFromJson(String str) => List<Products>.from(json.decode(str).map((x) => Products.fromJson(x)));
@@ -22,6 +26,7 @@ class Products {
     this.interBarcode,
     this.wacCost,
     this.vatPerc,
+    this.productImage,
   });
 
   int id;
@@ -31,11 +36,12 @@ class Products {
   double stock;
   double purchaseRate;
   double salesRate;
-  String description;
+  Description description;
   String priceCode;
   String interBarcode;
   double wacCost;
   double vatPerc;
+  String productImage;
 
   factory Products.fromJson(Map<String, dynamic> json) => Products(
     id: json["id"],
@@ -45,11 +51,12 @@ class Products {
     stock: json["Stock"],
     purchaseRate: json["PurchaseRate"].toDouble(),
     salesRate: json["SalesRate"].toDouble(),
-    description: json["Description"],
+    description: descriptionValues.map[json["Description"]],
     priceCode: json["PriceCode"],
     interBarcode: json["InterBarcode"],
     wacCost: json["WacCost"],
     vatPerc: json["VATPerc"],
+    productImage: json["ProductImage"] == null ? null : json["ProductImage"],
   );
 
   Map<String, dynamic> toJson() => {
@@ -60,34 +67,27 @@ class Products {
     "Stock": stock,
     "PurchaseRate": purchaseRate,
     "SalesRate": salesRate,
-    "Description": description,
+    "Description": descriptionValues.reverse[description],
     "PriceCode": priceCode,
     "InterBarcode": interBarcode,
     "WacCost": wacCost,
     "VATPerc": vatPerc,
+    "ProductImage": productImage == null ? null : productImage,
   };
 }
 
-enum BaseUnit { NOS, THE_1_X15_KG, EMPTY, THE_1_X20, THE_1_X100, THE_1_X50_KG, THE_1_X1_KG, THE_1_X22_680, THE_1134_KG, BASE_UNIT_1134_KG, THE_1_X10_KG, THE_1_X25_KG, THE_4_X5, KG, THE_1_X12, THE_2750_GM, THE_1_X25 }
+enum BaseUnit { PKT }
 
 final baseUnitValues = EnumValues({
-  "11.34kg": BaseUnit.BASE_UNIT_1134_KG,
-  "": BaseUnit.EMPTY,
-  "Kg": BaseUnit.KG,
-  "Nos": BaseUnit.NOS,
-  "11.34 Kg": BaseUnit.THE_1134_KG,
-  "1x100": BaseUnit.THE_1_X100,
-  "1x10 Kg": BaseUnit.THE_1_X10_KG,
-  "1x12": BaseUnit.THE_1_X12,
-  "1x15 Kg": BaseUnit.THE_1_X15_KG,
-  "1x1 Kg": BaseUnit.THE_1_X1_KG,
-  "1x20": BaseUnit.THE_1_X20,
-  "1x22.680": BaseUnit.THE_1_X22_680,
-  "1x25": BaseUnit.THE_1_X25,
-  "1x25 Kg": BaseUnit.THE_1_X25_KG,
-  "1x50kg": BaseUnit.THE_1_X50_KG,
-  "2750 Gm": BaseUnit.THE_2750_GM,
-  "4x5": BaseUnit.THE_4_X5
+  "PKT": BaseUnit.PKT
+});
+
+enum Description { EMPTY, THE_1, THE_162 }
+
+final descriptionValues = EnumValues({
+  "": Description.EMPTY,
+  "اولي اولي جيلي 1 كجم": Description.THE_1,
+  "تذوق البندق 162 جرام": Description.THE_162
 });
 
 class EnumValues<T> {

@@ -11,11 +11,12 @@ class User{
   static String userId="";
   static String accId="";
   static String companylogo="";
+  static int decimals=0;
+  static String companyName="";
+  static String companyNumber="";
+  static String companyAdd1="";
+  static String companyEmail="";
 
-  // static String voucherStarting="V"+vanNo+"S";
-  // static String orderStarting="S"+vanNo+"O";
-  // static String voucherNumber="";
-  // static String orderNumber="";
 
   Future<bool> addUser(var response) async {
     // Obtain shared preferences.

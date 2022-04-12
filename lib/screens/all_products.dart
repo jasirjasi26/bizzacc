@@ -1,4 +1,6 @@
 // @dart=2.9
+import 'dart:typed_data';
+
 import 'package:api_cache_manager/models/cache_db_model.dart';
 import 'package:api_cache_manager/utils/cache_manager.dart';
 import 'package:flutter/cupertino.dart';
@@ -10,6 +12,7 @@ import 'package:http/http.dart' as http;
 import 'dart:async';
 import 'dart:convert';
 import '../app_config.dart';
+import '../data/user_data.dart';
 
 class AllProductPage extends StatefulWidget {
   AllProductPage({Key key, this.back}) : super(key: key);
@@ -31,7 +34,7 @@ class AllProductPageState extends State<AllProductPage> {
     if (!isCacheExist) {
       print("Data not exists");
 
-      Map data = {'depotid': "8", 'search': ""};
+      Map data = {'depotid': User.depotId, 'search': ""};
       //encode Map to JSON
       var body = json.encode(data);
       String url = AppConfig.DOMAIN_PATH + "products";
@@ -96,7 +99,6 @@ class AllProductPageState extends State<AllProductPage> {
 
   void initState() {
     // TODO: implement initState
-
     fetchProducts = fetchData();
     super.initState();
   }
@@ -186,15 +188,12 @@ class AllProductPageState extends State<AllProductPage> {
                                 .toLowerCase()
                                 .contains(as.toLowerCase())) {
                               return Padding(
-                                padding: const EdgeInsets.all(2.0),
+                                padding: const EdgeInsets.all(1.0),
                                 child: Card(
                                   color: Colors.blueGrey[300],
                                   child: ListTile(
-                                   // tileColor: Colors.cyan[200],
-                                    onTap: (){
-                                    },
                                     trailing: Text(
-                                      snapshot.data[index].stock.toString(),
+                                     "Stock : "+ snapshot.data[index].stock.toString(),
                                       style: TextStyle(
                                         fontFamily: 'Arial',
                                         fontSize: 12,
@@ -222,13 +221,12 @@ class AllProductPageState extends State<AllProductPage> {
                                       style: TextStyle(
                                         fontFamily: 'Arial',
                                         fontSize: 10,
-                                        color:
-                                        const Color(0xff182d66),
+                                        color: const Color(0xff182d66),
                                         fontWeight: FontWeight.w700,
                                       ),
                                       textAlign: TextAlign.left,
                                     ),
-                                    leading: Image.asset(
+                                    leading: snapshot.data[index].productImage!=null? Container(width: 60, height:80, child: Image.memory(base64Decode(snapshot.data[index].productImage),fit: BoxFit.fill,)) :Image.asset(
                                       "assets/images/products.jpg",
                                       fit: BoxFit.scaleDown,
                                       //    color: Colors.white

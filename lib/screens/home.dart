@@ -7,7 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:optimist_erp_app/data/user_data.dart';
-import 'package:optimist_erp_app/screens/mis_reports/mis_home.dart';
+import 'package:optimist_erp_app/screens/mis_home.dart';
 import 'package:optimist_erp_app/screens/reports/invoice.dart';
 import 'package:optimist_erp_app/screens/reports/orders.dart';
 import 'package:optimist_erp_app/screens/returns/sales_returns.dart';
@@ -62,14 +62,16 @@ class _MyHomePageState extends State<MyHomePage> {
         await APICacheManager().addCacheData(cacheDBModel);
 
         var result=jsonDecode(response.body);
-        //print(result[0]['CompanyLogo']);
         setState(() {
           User.companylogo=result[0]['CompanyLogo'];
+          User.decimals=result[0]['NoofDecimals'];
+          User.companyAdd1=result[0]['Address1'];
+          User.companyName=result[0]['CompanyName'];
+          User.companyEmail=result[0]['Email'];
+          User.companyNumber=result[0]['Telephone'];
         });
-        Uint8List bytes = base64Decode(User.companylogo);
-        setState(() {
-          image=bytes;
-        });
+        print(User.depotId);
+
 
       } else {
         throw Exception('Failed to load album');
@@ -80,7 +82,14 @@ class _MyHomePageState extends State<MyHomePage> {
       var result=jsonDecode(cacheData.syncData);
       setState(() {
         User.companylogo=result[0]['CompanyLogo'];
+        User.decimals=result[0]['NoofDecimals'];
+        User.companyAdd1=result[0]['Address1'];
+        User.companyName=result[0]['CompanyName'];
+        User.companyEmail=result[0]['Email'];
+        User.companyNumber=result[0]['Telephone'];
       });
+      print(User.depotId);
+
     }
 
   }
@@ -144,6 +153,7 @@ class _MyHomePageState extends State<MyHomePage> {
     //encode Map to JSON
     var body = json.encode(data);
     String url = AppConfig.DOMAIN_PATH + "products";
+
     final response = await http.post(
       url,
       body: body,
@@ -320,20 +330,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     textAlign: TextAlign.left,
                   ),
                 ),
-                Pinned.fromPins(
-                  Pin(size: 63.0, end: 0.0),
-                  Pin(size: 9.0, end: 5.0),
-                  child: Text(
-                    'Tap to view',
-                    style: TextStyle(
-                      fontFamily: 'Arial',
-                      fontSize: 12,
-                      color: const Color(0xff747474),
-                      fontWeight: FontWeight.w700,
-                    ),
-                    textAlign: TextAlign.left,
-                  ),
-                ),
+
               ],
             ),
           ),
@@ -418,20 +415,6 @@ class _MyHomePageState extends State<MyHomePage> {
                       fontFamily: 'Arial',
                       fontSize: 15,
                       color: const Color(0xff5421ee),
-                      fontWeight: FontWeight.w700,
-                    ),
-                    textAlign: TextAlign.left,
-                  ),
-                ),
-                Pinned.fromPins(
-                  Pin(size: 63.0, end: 0.0),
-                  Pin(size: 9.0, end: 5.0),
-                  child: Text(
-                    'Tap to view',
-                    style: TextStyle(
-                      fontFamily: 'Arial',
-                      fontSize: 12,
-                      color: const Color(0xff747474),
                       fontWeight: FontWeight.w700,
                     ),
                     textAlign: TextAlign.left,
@@ -525,20 +508,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     textAlign: TextAlign.left,
                   ),
                 ),
-                Pinned.fromPins(
-                  Pin(size: 63.0, end: 0.0),
-                  Pin(size: 9.0, end: 5.0),
-                  child: Text(
-                    'Tap to view',
-                    style: TextStyle(
-                      fontFamily: 'Arial',
-                      fontSize: 12,
-                      color: const Color(0xff747474),
-                      fontWeight: FontWeight.w700,
-                    ),
-                    textAlign: TextAlign.left,
-                  ),
-                ),
+
               ],
             ),
           ),
@@ -625,20 +595,6 @@ class _MyHomePageState extends State<MyHomePage> {
                       fontFamily: 'Arial',
                       fontSize: 15,
                       color: const Color(0xff5421ee),
-                      fontWeight: FontWeight.w700,
-                    ),
-                    textAlign: TextAlign.left,
-                  ),
-                ),
-                Pinned.fromPins(
-                  Pin(size: 63.0, end: 0.0),
-                  Pin(size: 9.0, end: 5.0),
-                  child: Text(
-                    'Tap to view',
-                    style: TextStyle(
-                      fontFamily: 'Arial',
-                      fontSize: 12,
-                      color: const Color(0xff747474),
                       fontWeight: FontWeight.w700,
                     ),
                     textAlign: TextAlign.left,

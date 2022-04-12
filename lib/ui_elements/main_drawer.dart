@@ -34,10 +34,6 @@ class MainDrawerState extends State<MainDrawer> {
 
   @override
   void initState() {
-    Uint8List bytes = base64Decode(User.companylogo);
-    setState(() {
-      image = bytes;
-    });
     // TODO: implement initState
     super.initState();
   }
@@ -51,7 +47,7 @@ class MainDrawerState extends State<MainDrawer> {
         child: ListView(
           children: <Widget>[
             image != null
-                ? Container(width: 100, height: 140, child: Image.memory(image,fit: BoxFit.fill,))
+                ? Container(width: 100, height: 140, child: Image.memory(base64Decode(User.companylogo??""),fit: BoxFit.fill,))
                 : Container(),
             ListTile(
                 visualDensity: VisualDensity(horizontal: -4, vertical: -4),
@@ -94,10 +90,7 @@ class MainDrawerState extends State<MainDrawer> {
                 title: Text(User.number.toString(),
                     style: TextStyle(color: Colors.black, fontSize: 18)),
                 onTap: () {
-                  // Navigator.push(context,
-                  //     MaterialPageRoute(builder: (context) {
-                  //      // return DoctorAppoinments();
-                  //     }));
+
                 }),
             SizedBox(
               height: 5,

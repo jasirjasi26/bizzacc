@@ -31,6 +31,7 @@ class SalesLedgerState extends State<SalesLedger> {
       DateTime.now().month.toString() +
       "-" +
       DateTime.now().day.toString();
+  bool isloading=false;
 
   Future<void> _selectDate(BuildContext context) async {
     final DateTime picked = await showDatePicker(
@@ -73,11 +74,13 @@ class SalesLedgerState extends State<SalesLedger> {
   }
 
   Future<Ledger> fetchInvoiceDatas() async {
+    setState(() {
+      isloading=true;
+    });
     Map data = {
       'from_Date': from,
       'to_Date': to,
-      'Account_id':302632,
-      "product":''
+      'Account_id':name.text,
     };
     //encode Map to JSON
     var body = json.encode(data);
@@ -93,11 +96,14 @@ class SalesLedgerState extends State<SalesLedger> {
    // print(response.body);
 
     if (response.statusCode == 200) {
-      // If the server did return a 200 OK response,
-      // then parse the JSON.
-print(response.body);
+      setState(() {
+        isloading=false;
+      });
       return ledgerFromJson(response.body);
     } else {
+      setState(() {
+        isloading=false;
+      });
       // If the server did not return a 200 OK response,
       // then throw an exception.
       throw Exception('Failed to load album');
@@ -136,8 +142,13 @@ print(response.body);
         titleSpacing: 0,
         toolbarHeight: 80,
       ),
-      body: Column(
-        children: [searchRow(), salesOrder()],
+      body: Stack(
+        children: [
+          Column(
+            children: [searchRow(), salesOrder()],
+          ),
+          isloading ? Center(child: Container(width: 50,height:50,child: CircularProgressIndicator())):Container()
+        ],
       ),
     );
   }
@@ -145,10 +156,64 @@ print(response.body);
   searchRow() {
     return Container(
       width: MediaQuery.of(context).size.width,
-      height: 40,
+      height: 100,
       color: Color(0xff20474f),
       child: Column(
         children: [
+          Row(
+            children: [
+              SizedBox(
+                width: 10,
+              ),
+              Padding(
+                padding: const EdgeInsets.all(3.0),
+                child: Container(
+                  width: MediaQuery.of(context).size.width * 0.8,
+                  height: 50,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(5.0),
+                    color: const Color(0xffffffff),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0x29000000),
+                        offset: Offset(6, 3),
+                        blurRadius: 12,
+                      ),
+                    ],
+                  ),
+                  child: TextFormField(
+                      controller: name,
+                      decoration: InputDecoration(
+                        hintText: 'Enter Customer Id',
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.only(
+                            left: 15, bottom: 5, top: 15, right: 15),
+                        filled: false,
+                        isDense: false,
+                        prefixIcon: Icon(
+                          Icons.person,
+                          size: 25.0,
+                          color: Colors.grey,
+                        ),
+                      )),
+                ),
+              ),
+              GestureDetector(
+                onTap: (){
+                  setState(() {
+                    ledger=fetchInvoiceDatas();
+                  });
+                },
+                child: Card(
+                  child: Container(
+                    height: 50,
+                    width: 50,
+                    child: Icon(Icons.search,color: Colors.blueGrey,),
+                  ),
+                ),
+              )
+            ],
+          ),
           Padding(
             padding: const EdgeInsets.all(10.0),
             child: Row(
@@ -289,7 +354,7 @@ print(response.body);
           ),
         ),
         Container(
-          height: MediaQuery.of(context).size.height * 0.75,
+          height: MediaQuery.of(context).size.height * 0.7,
           width: MediaQuery.of(context).size.width,
           child: FutureBuilder<Ledger>(
               future: ledger,

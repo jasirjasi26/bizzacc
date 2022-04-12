@@ -6,13 +6,10 @@ import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_flexible_toast/flutter_flexible_toast.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:optimist_erp_app/data/user_data.dart';
-import 'package:optimist_erp_app/screens/returns/bill.dart';
-import 'package:optimist_erp_app/screens/settlement_page.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:screenshot/screenshot.dart';
 import 'package:share/share.dart';
 import 'package:optimist_erp_app/screens/qr_scan.dart';
-import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/rendering.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -274,7 +271,6 @@ class NewOrderPageState extends State<ReturnOrder> {
     } else {
       print("Product Data exists");
       var cacheData = await APICacheManager().getCacheData("ps");
-      print(cacheData.syncData);
       return productsFromJson(cacheData.syncData);
     }
   }
@@ -307,6 +303,7 @@ class NewOrderPageState extends State<ReturnOrder> {
         await APICacheManager().addCacheData(cacheDBModel);
         List<Units> filtered = [];
         unitsFromJson(response.body).forEach((element) {
+          print(element);
           if (element.productId.toString() == id) {
             filtered.add(element);
           }
@@ -373,8 +370,8 @@ class NewOrderPageState extends State<ReturnOrder> {
       unitlist.add(AunitId);
       units.add(Aunit);
       totalamount.add(Atotal);
-      allDiscounts.add(discount.toStringAsFixed(2));
-      discountAmount.add(double.parse(discount.toStringAsFixed(2)));
+      allDiscounts.add(discount.toStringAsFixed(User.decimals));
+      discountAmount.add(double.parse(discount.toStringAsFixed(User.decimals)));
       discountedFinalRate.add(AdiscountedAmount);
       quantity.add(Aqty);
       totalBill = totalBill + double.parse(Atotal);
@@ -455,7 +452,7 @@ class NewOrderPageState extends State<ReturnOrder> {
 
     Map<String, dynamic> da = {
       "Id": 0,
-      "BillAmount": discountedBill,
+      "BillAmount": discountedBill.toStringAsFixed(User.decimals),
       "Discount": disc,
       "CardReceived": 0.00,
       "CashReceived": 0.00,
@@ -464,7 +461,7 @@ class NewOrderPageState extends State<ReturnOrder> {
       "Items": amm.toList(),
       "ReturnID": voucherid,
       "ReturnDate":  time,
-      "RoundOff": "0.00",
+      //"RoundOff": "0.00",
       "UpdatedTime":  time,
       "SalesTypeID": widget.salesType,
       "Remarks": "",
@@ -484,6 +481,7 @@ class NewOrderPageState extends State<ReturnOrder> {
           'Accept': 'application/json',
         },
       );
+      print(response.body);
 
       if (response.statusCode == 200) {
         setState(() {
@@ -504,6 +502,9 @@ class NewOrderPageState extends State<ReturnOrder> {
 
         //Navigator.pop(context);
       } else {
+        setState(() {
+          isLoading=false;
+        });
         EasyLoading.showError('Failed to sent data');
         print("Failed");
       }
@@ -582,12 +583,12 @@ class NewOrderPageState extends State<ReturnOrder> {
         Row(
           children: [
             Padding(
-              padding: const EdgeInsets.all(8.0),
+              padding: const EdgeInsets.all(5.0),
               child: Text(
-                'Customer Name : ' + widget.customerName,
+                '  Customer Name : ' + widget.customerName,
                 style: TextStyle(
                     fontFamily: 'Arial',
-                    fontSize: 13,
+                    fontSize: 15,
                     color: Colors.greenAccent,
                     fontWeight: FontWeight.bold),
                 textAlign: TextAlign.left,
@@ -839,7 +840,7 @@ class NewOrderPageState extends State<ReturnOrder> {
                   width: MediaQuery
                       .of(context)
                       .size
-                      .width * 0.13,
+                      .width * 0.1,
                   child: Text(
                     'Qty',
                     style: TextStyle(
@@ -854,7 +855,7 @@ class NewOrderPageState extends State<ReturnOrder> {
                   width: MediaQuery
                       .of(context)
                       .size
-                      .width * 0.13,
+                      .width * 0.1,
                   child: Text(
                     'Rate',
                     style: TextStyle(
@@ -869,7 +870,7 @@ class NewOrderPageState extends State<ReturnOrder> {
                   width: MediaQuery
                       .of(context)
                       .size
-                      .width * 0.13,
+                      .width * 0.1,
                   child: Text(
                     'Disc',
                     style: TextStyle(
@@ -884,7 +885,22 @@ class NewOrderPageState extends State<ReturnOrder> {
                   width: MediaQuery
                       .of(context)
                       .size
-                      .width * 0.13,
+                      .width * 0.1,
+                  child: Text(
+                    'Tax',
+                    style: TextStyle(
+                      fontFamily: 'Arial',
+                      fontSize: 14,
+                      color: const Color(0xffffffff),
+                    ),
+                    textAlign: TextAlign.left,
+                  ),
+                ),
+                Container(
+                  width: MediaQuery
+                      .of(context)
+                      .size
+                      .width * 0.1,
                   child: Text(
                     'Total',
                     style: TextStyle(
@@ -964,7 +980,7 @@ class NewOrderPageState extends State<ReturnOrder> {
                           width: MediaQuery
                               .of(context)
                               .size
-                              .width * 0.13,
+                              .width * 0.1,
                           child: Text(
                             rateList[i].toString(),
                             style: TextStyle(
@@ -979,7 +995,7 @@ class NewOrderPageState extends State<ReturnOrder> {
                           width: MediaQuery
                               .of(context)
                               .size
-                              .width * 0.13,
+                              .width * 0.1,
                           child: Text(
                             allDiscounts[i].toString(),
                             style: TextStyle(
@@ -994,7 +1010,22 @@ class NewOrderPageState extends State<ReturnOrder> {
                           width: MediaQuery
                               .of(context)
                               .size
-                              .width * 0.13,
+                              .width * 0.1,
+                          child: Text(
+                            vatTotal[i].toString(),
+                            style: TextStyle(
+                              fontFamily: 'Arial',
+                              fontSize: 12,
+                              color: Colors.white,
+                            ),
+                            textAlign: TextAlign.left,
+                          ),
+                        ),
+                        Container(
+                          width: MediaQuery
+                              .of(context)
+                              .size
+                              .width * 0.1,
                           child: Text(
                             discountedFinalRate[i].toString(),
                             style: TextStyle(
@@ -1419,10 +1450,9 @@ class NewOrderPageState extends State<ReturnOrder> {
                                                             textAlign:
                                                             TextAlign.left,
                                                           ),
-                                                          leading: Image.asset(
+                                                          leading: snapshot.data[index].productImage!=null? Container(width: 60, height:80, child: Image.memory(base64Decode(snapshot.data[index].productImage),fit: BoxFit.fill,)) :Image.asset(
                                                             "assets/images/products.jpg",
-                                                            fit: BoxFit
-                                                                .scaleDown,
+                                                            fit: BoxFit.scaleDown,
                                                             //    color: Colors.white
                                                           ),
                                                         ),
@@ -1472,7 +1502,7 @@ class NewOrderPageState extends State<ReturnOrder> {
         setState(() {
           totalAmount = double.parse(saleQty.text) * double.parse(saleRate.text);
           double t = totalAmount * (vat / 100);
-          tax = double.parse(t.toStringAsFixed(2));
+          tax = double.parse(t.toStringAsFixed(User.decimals));
           totalAmount = totalAmount + tax;
           lastSaleRate = totalAmount;
         });
@@ -1481,7 +1511,7 @@ class NewOrderPageState extends State<ReturnOrder> {
           print(saleRate.text);
           totalAmount = double.parse(saleQty.text) *
               double.parse(saleRate.text.toString());
-          lastSaleRate = double.parse(totalAmount.toStringAsFixed(2));
+          lastSaleRate = double.parse(totalAmount.toStringAsFixed(User.decimals));
         });
       }
     }

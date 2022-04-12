@@ -14,6 +14,7 @@ import 'package:optimist_erp_app/screens/van_page.dart';
 import '../app_config.dart';
 import '../controller.dart';
 import '../contactinfomodel.dart';
+import '../data/user_data.dart';
 
 class SettlementPage extends StatefulWidget {
   SettlementPage(
@@ -86,8 +87,7 @@ setState(() {
       //'Amount': double.parse(subTotal.text),
       'CardReceived': paidCard.text,
       'CashReceived': paidCash.text,
-      'RoundOff': rounoff.toStringAsFixed(2),
-     // 'TotalReceived': totalReceived,
+      'RoundOff': rounoff.toStringAsFixed(User.decimals),
       'UpdatedTime': DateTime.now().toString(),
     };
 
@@ -121,7 +121,10 @@ setState(() {
           );
         }));
       }else{
-
+        setState(() {
+          isLoading=false;
+        });
+        EasyLoading.showError('Failed');
         print("Failed");
       }
     }else{
@@ -160,7 +163,6 @@ setState(() {
       paidCash.text = "0";
       paidCard.text = "0";
       voucherNo.text=widget.values['InvoiceID'].toString();
-    //  finalBalance = double.parse(Customer.balance) + double.parse(subTotal.text);
     });
 
     super.initState();
@@ -173,14 +175,6 @@ setState(() {
       appBar: buildAppBar(context),
       body: WillPopScope(
         onWillPop: () async {
-          // You can do some work here.
-          // Returning true allows the pop to happen, returning false prevents it.
-          // reference
-          //     .child("Bills")
-          //     .child(widget.date)
-          //     .child(User.vanNo)
-          //     .child(User.voucherNumber)
-          //     .remove();
           return true;
         },
         child: Stack(

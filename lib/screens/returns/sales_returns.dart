@@ -24,20 +24,10 @@ class ReturnsPage extends StatefulWidget {
 
 class ReturnsPageState extends State<ReturnsPage> {
   bool select = true;
-  DatabaseReference reference;
-  List<String> names = [];
-  List<String> amount = [];
-  List<String> dates = [];
-  List<String> code = [];
-  List<String> vNo = [];
-  List<String> balance = [];
-  List<String> tax = [];
   var name = TextEditingController();
-  DatabaseReference allnames;
   String label = "Enter Customer Name";
   List<String> _locations = []; // Option 2
-  String _selectedLocation; //
-  DatabaseReference types; // O
+  String _selectedLocation="[None]";
   String salesType = "";
   Future<Returns> returns;
 
@@ -258,7 +248,7 @@ class ReturnsPageState extends State<ReturnsPage> {
                 child: Align(
                   alignment: Alignment.bottomCenter,
                   child: Container(
-                      height: MediaQuery.of(context).size.height * 0.5,
+                      height: MediaQuery.of(context).size.height * 0.7,
                       width: MediaQuery.of(context).size.width,
                       decoration: BoxDecoration(
                         color: Colors.white,

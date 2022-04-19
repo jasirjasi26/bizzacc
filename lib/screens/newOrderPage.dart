@@ -49,7 +49,7 @@ class NewOrderPageState extends State<NewOrderPage> {
   final pdf = pw.Document();
   int _radioValue1 = 0;
   List<String> itemList = [];
-  List<String> unitlist = [""];
+  List<String> unitlist = [];
   String _selectedUnit = "";
   String label = "Enter Customer Name";
   var saleRate = TextEditingController();
@@ -121,7 +121,20 @@ class NewOrderPageState extends State<NewOrderPage> {
           .toString();
 
   DateTime selectedDate = DateTime.now();
-  String from = "Select a date";
+  String from = DateTime
+      .now()
+      .year
+      .toString() +
+      "-" +
+      DateTime
+          .now()
+          .month
+          .toString() +
+      "-" +
+      DateTime
+          .now()
+          .day
+          .toString();
   String today = DateTime
       .now()
       .year
@@ -144,9 +157,8 @@ class NewOrderPageState extends State<NewOrderPage> {
   String customer_balance = "";
 
   getNames() async {
-    var isCacheExist = await APICacheManager().isAPICacheKeyExist("cs");
 
-    if (!isCacheExist) {
+    if (await DataConnectionChecker().hasConnection) {
       print("Data not exists");
 
       Map data = {'depotid':User.depotId, 'search': ""};
@@ -258,8 +270,6 @@ class NewOrderPageState extends State<NewOrderPage> {
 
         return productsFromJson(response.body);
       } else {
-        // If the server did not return a 200 OK response,
-        // then throw an exception.
         throw Exception('Failed to load album');
       }
     } else {
@@ -468,9 +478,11 @@ class NewOrderPageState extends State<NewOrderPage> {
       amm.add(itemValues);
     }
     double bamount=discountedBill-disc;
+   // double finalbalance=double.parse(customer_balance)-discountedBill;
 
     Map<String, dynamic> da = {
       "Id": 0,
+      //"Balance":finalbalance.toStringAsFixed(User.decimals),
       "TotalTax":taxTotal.reduce((a, b) => a + b),
       "BillAmount": bamount.toStringAsFixed(User.decimals),
       "Discount": disc,
@@ -491,7 +503,7 @@ class NewOrderPageState extends State<NewOrderPage> {
         customerName: widget.customerName,
         date: today,
         values: da,
-        itemCount: itemIds.length,
+        balance: customer_balance,
         radioValue: _radioValue1,
       );
     }));
@@ -663,13 +675,13 @@ class NewOrderPageState extends State<NewOrderPage> {
         Row(
           children: [
             Padding(
-              padding: const EdgeInsets.all(8.0),
+              padding: const EdgeInsets.all(5.0),
               child: Text(
                 'Customer Name : ' + widget.customerName,
                 style: TextStyle(
                     fontFamily: 'Arial',
-                    fontSize: 13,
-                    color: Colors.greenAccent,
+                    fontSize: 14,
+                    color: Colors.blueGrey,
                     fontWeight: FontWeight.bold),
                 textAlign: TextAlign.left,
               ),
@@ -689,7 +701,7 @@ class NewOrderPageState extends State<NewOrderPage> {
                     height: 5,
                   ),
                   Text(
-                    'Order Date : ' + today,
+                    'Order Date : ' + today+"    ",
                     style: TextStyle(
                       fontFamily: 'Arial',
                       fontSize: 12,
@@ -1592,249 +1604,16 @@ class NewOrderPageState extends State<NewOrderPage> {
     var byPer = TextEditingController();
     var byPri = TextEditingController();
 
-    searchItemDialog() {
-      showGeneralDialog(
-        barrierLabel: "Barrier",
-        barrierDismissible: true,
-        barrierColor: Colors.black.withOpacity(0.5),
-        transitionDuration: Duration(milliseconds: 500),
-        context: context,
-        pageBuilder: (_, __, ___) {
-          return StatefulBuilder(builder: (context, setState) {
-            return Material(
-                type: MaterialType.transparency,
-                child: Align(
-                  alignment: Alignment.center,
-                  child: Padding(
-                    padding: const EdgeInsets.all(15.0),
-                    child: Container(
-                        height: MediaQuery
-                            .of(context)
-                            .size
-                            .height * 0.5,
-                        width: MediaQuery
-                            .of(context)
-                            .size
-                            .width,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(5),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(10.0),
-                          child: ListView(
-                            children: [
-                              Container(
-                                width: MediaQuery
-                                    .of(context)
-                                    .size
-                                    .width * 0.9,
-                                height: 50,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(5.0),
-                                  color: const Color(0xffffffff),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: const Color(0x29000000),
-                                      offset: Offset(6, 3),
-                                      blurRadius: 5,
-                                    ),
-                                  ],
-                                ),
-                                child: TextFormField(
-                                    controller: name,
-                                    onChanged: (data) {
-                                      setState(() {
-                                        as = name.text;
-                                        fetchProducts = fetchDatas();
-                                      });
-                                    },
-                                    decoration: InputDecoration(
-                                      hintText: 'Enter product name here',
-                                      //filled: true,
-                                      border: InputBorder.none,
-                                      contentPadding: EdgeInsets.only(
-                                          left: 15,
-                                          bottom: 5,
-                                          top: 15,
-                                          right: 15),
-                                      filled: false,
-                                      isDense: false,
-                                      prefixIcon: Icon(
-                                        Icons.search,
-                                        size: 25.0,
-                                        color: Colors.grey,
-                                      ),
-                                    )),
-                              ),
-                              SizedBox(
-                                height: 10,
-                              ),
-                              FutureBuilder<List<Products>>(
-                                  future: fetchProducts,
-                                  builder: (context, snapshot) {
-                                    if (snapshot.hasData) {
-                                      return Container(
-                                        height:
-                                        MediaQuery
-                                            .of(context)
-                                            .size
-                                            .height,
-                                        width:
-                                        MediaQuery
-                                            .of(context)
-                                            .size
-                                            .width,
-                                        child: ListView.builder(
-                                            shrinkWrap: true,
-                                            itemCount: snapshot.data.length,
-                                            itemBuilder: (context, index) {
-                                              if (snapshot.data[index].name
-                                                  .toLowerCase()
-                                                  .contains(as.toLowerCase())) {
-                                                return Card(
-                                                  color: Colors.blueGrey[300],
-                                                  child: Row(
-                                                    children: [
-                                                      Container(
-                                                        width: MediaQuery
-                                                            .of(
-                                                            context)
-                                                            .size
-                                                            .width -
-                                                            180,
-                                                        child: ListTile(
-                                                          onTap: () {
-                                                            setState(() {
-                                                              textEditingController
-                                                                  .text =
-                                                                  snapshot
-                                                                      .data[
-                                                                  index]
-                                                                      .name;
-                                                              vat=snapshot
-                                                                  .data[
-                                                              index]
-                                                                  .vatPerc;
-                                                              tax=snapshot
-                                                                  .data[
-                                                              index]
-                                                                  .vatPerc;
-                                                              Name = snapshot
-                                                                  .data[index]
-                                                                  .name;
-                                                              saleRate.text =
-                                                                  snapshot
-                                                                      .data[
-                                                                  index]
-                                                                      .salesRate
-                                                                      .toString();
-                                                              unitController
-                                                                  .text =
-                                                                  snapshot
-                                                                      .data[
-                                                                  index]
-                                                                      .baseUnit
-                                                                      .toString();
-                                                              stock = snapshot
-                                                                  .data[index]
-                                                                  .stock
-                                                                  .toString();
-                                                              ID = snapshot
-                                                                  .data[index]
-                                                                  .id
-                                                                  .toString();
-                                                            });
-                                                            Navigator.pop(
-                                                                context);
-                                                            showBookingDialog();
-                                                          },
-                                                          title: Text(
-                                                            snapshot.data[index]
-                                                                .name,
-                                                            style: TextStyle(
-                                                              fontFamily:
-                                                              'Arial',
-                                                              fontSize: 10,
-                                                              color:
-                                                              Colors.white,
-                                                              fontWeight:
-                                                              FontWeight
-                                                                  .w700,
-                                                            ),
-                                                            textAlign:
-                                                            TextAlign.left,
-                                                          ),
-                                                          subtitle: Text(
-                                                            "Price : " +
-                                                                snapshot
-                                                                    .data[index]
-                                                                    .salesRate
-                                                                    .toString(),
-                                                            style: TextStyle(
-                                                              fontFamily:
-                                                              'Arial',
-                                                              fontSize: 10,
-                                                              color:
-                                                              Colors.white,
-                                                              fontWeight:
-                                                              FontWeight
-                                                                  .w700,
-                                                            ),
-                                                            textAlign:
-                                                            TextAlign.left,
-                                                          ),
-                                                          leading: snapshot.data[index].productImage!=null? Container(width: 60, height:80, child: Image.memory(base64Decode(snapshot.data[index].productImage),fit: BoxFit.fill,)) :Image.asset(
-                                                            "assets/images/products.jpg",
-                                                            fit: BoxFit.scaleDown,
-                                                            //    color: Colors.white
-                                                          ),
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                );
-                                              } else {
-                                                return Container(
-                                                  color: Colors.blue,
-                                                );
-                                              }
-                                            }),
-                                      );
-                                    } else {
-                                      return Center(
-                                          child: CircularProgressIndicator());
-                                    }
-                                  }),
-                            ],
-                          ),
-                        )),
-                  ),
-                ));
-          });
-        },
-        transitionBuilder: (_, anim, __, child) {
-          return SlideTransition(
-            position:
-            Tween(begin: Offset(0, 1), end: Offset(0, 0)).animate(anim),
-            child: child,
-          );
-        },
-      );
-    }
-
     setState(() {
-      saleQty.text = "0";
+      saleQty.text = "1";
     });
 
-    if (textEditingController.text != "") {
-      saleQty.text = quantity.toString();
-    }
+
     void calculteAmount(String a) {
       if (vat > 0) {
-        print(rate);
         setState(() {
-          totalAmount = double.parse(saleQty.text) * double.parse(saleRate.text);
+          totalAmount =
+              double.parse(saleQty.text) * double.parse(saleRate.text);
           double t = totalAmount * (vat / 100);
           tax = double.parse(t.toStringAsFixed(User.decimals));
           totalAmount = totalAmount + tax;
@@ -1842,10 +1621,10 @@ class NewOrderPageState extends State<NewOrderPage> {
         });
       } else {
         setState(() {
-          print(saleRate.text);
           totalAmount = double.parse(saleQty.text) *
               double.parse(saleRate.text.toString());
-          lastSaleRate = double.parse(totalAmount.toStringAsFixed(User.decimals));
+          lastSaleRate =
+              double.parse(totalAmount.toStringAsFixed(User.decimals));
         });
       }
     }
@@ -1873,82 +1652,126 @@ class NewOrderPageState extends State<NewOrderPage> {
       });
     }
 
-    showGeneralDialog(
-      barrierLabel: "Barrier",
-      barrierDismissible: true,
-      barrierColor: Colors.black.withOpacity(0.5),
-      transitionDuration: Duration(milliseconds: 500),
-      context: context,
-      pageBuilder: (_, __, ___) {
-        return StatefulBuilder(builder: (context, setState) {
-          return Material(
-              type: MaterialType.transparency,
-              child: Align(
-                alignment: Alignment.bottomCenter,
-                child: Container(
-                    height: MediaQuery
-                        .of(context)
-                        .size
-                        .height * 0.75,
-                    width: MediaQuery
-                        .of(context)
-                        .size
-                        .width,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(5),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: ListView(
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.only(
-                                left: 10.0, right: 50, bottom: 5),
-                            child: Text(
-                              "Add Item",
-                              style:
-                              TextStyle(color: Colors.black, fontSize: 22),
+    searchItemDialog() {
+      showGeneralDialog(
+        barrierLabel: "Barrier",
+        barrierDismissible: true,
+        barrierColor: Colors.black.withOpacity(0.5),
+        transitionDuration: Duration(milliseconds: 500),
+        context: context,
+        pageBuilder: (_, __, ___) {
+          return StatefulBuilder(builder: (context, setState) {
+            return Material(
+                type: MaterialType.transparency,
+                child: Align(
+                  alignment: Alignment.bottomCenter,
+                  child: Container(
+                      height: MediaQuery
+                          .of(context)
+                          .size
+                          .height * 0.75,
+                      width: MediaQuery
+                          .of(context)
+                          .size
+                          .width,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(5),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: ListView(
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.only(
+                                  left: 10.0, right: 50, bottom: 5),
+                              child: Text(
+                                "Add Item",
+                                style:
+                                TextStyle(color: Colors.black, fontSize: 22),
+                              ),
                             ),
-                          ),
-                          SizedBox(
-                            height: 20,
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.all(5.0),
-                            child: Row(
-                              children: [
-                                GestureDetector(
-                                  onTap: () {
-                                    Navigator.pop(context);
-                                    searchItemDialog();
-                                  },
-                                  child: Container(
+                            SizedBox(
+                              height: 20,
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.all(5.0),
+                              child: Row(
+                                children: [
+                                  GestureDetector(
+                                    onTap: () {
+                                    },
+                                    child: Container(
+                                        height: 20,
+                                        width: 20,
+                                        child: Image.asset(
+                                            "assets/images/item.png",
+                                            fit: BoxFit.scaleDown,
+                                            color: Colors.black)),
+                                  ),
+                                  SizedBox(
+                                    width: 10,
+                                  ),
+                                  GestureDetector(
+                                    onTap: () {
+                                      Navigator.pop(context);
+                                      showBookingDialog();
+                                    },
+                                    child: Container(
+                                        width: MediaQuery
+                                            .of(context)
+                                            .size
+                                            .width *
+                                            0.8,
+                                        height: 50,
+                                        decoration: BoxDecoration(
+                                          borderRadius:
+                                          BorderRadius.circular(16.0),
+                                          color: const Color(0xffffffff),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: const Color(0x29000000),
+                                              offset: Offset(6, 3),
+                                              blurRadius: 12,
+                                            ),
+                                          ],
+                                        ),
+                                        child: Padding(
+                                          padding: const EdgeInsets.only(
+                                              top: 18.0, left: 10),
+                                          child: Text(Name),
+                                        )),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            SizedBox(
+                              height: 20,
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.all(5.0),
+                              child: Row(
+                                children: [
+                                  Container(
                                       height: 20,
                                       width: 20,
                                       child: Image.asset(
-                                          "assets/images/item.png",
+                                          "assets/images/weels.png",
                                           fit: BoxFit.scaleDown,
                                           color: Colors.black)),
-                                ),
-                                SizedBox(
-                                  width: 10,
-                                ),
-                                GestureDetector(
-                                  onTap: () {
-                                    Navigator.pop(context);
-                                    searchItemDialog();
-                                  },
-                                  child: Container(
+                                  SizedBox(
+                                    width: 10,
+                                  ),
+                                  Container(
                                       width: MediaQuery
                                           .of(context)
                                           .size
                                           .width *
-                                          0.8,
+                                          0.35,
                                       height: 50,
                                       decoration: BoxDecoration(
-                                        borderRadius:
-                                        BorderRadius.circular(16.0),
+                                        borderRadius: BorderRadius.circular(
+                                            16.0),
                                         color: const Color(0xffffffff),
                                         boxShadow: [
                                           BoxShadow(
@@ -1961,541 +1784,543 @@ class NewOrderPageState extends State<NewOrderPage> {
                                       child: Padding(
                                         padding: const EdgeInsets.only(
                                             top: 18.0, left: 10),
-                                        child: Text(Name),
+                                        child: Text(stock),
                                       )),
-                                ),
-                              ],
-                            ),
-                          ),
-                          SizedBox(
-                            height: 20,
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.all(5.0),
-                            child: Row(
-                              children: [
-                                Container(
-                                    height: 20,
-                                    width: 20,
-                                    child: Image.asset(
-                                        "assets/images/weels.png",
-                                        fit: BoxFit.scaleDown,
-                                        color: Colors.black)),
-                                SizedBox(
-                                  width: 10,
-                                ),
-                                Container(
-                                    width: MediaQuery
-                                        .of(context)
-                                        .size
-                                        .width *
-                                        0.35,
-                                    height: 50,
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(16.0),
-                                      color: const Color(0xffffffff),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: const Color(0x29000000),
-                                          offset: Offset(6, 3),
-                                          blurRadius: 12,
-                                        ),
-                                      ],
-                                    ),
-                                    child: Padding(
-                                      padding: const EdgeInsets.only(
-                                          top: 18.0, left: 10),
-                                      child: Text(stock),
-                                    )),
-                                SizedBox(
-                                  width: 10,
-                                ),
-                                Container(
-                                    height: 20,
-                                    width: 20,
-                                    child: Image.asset(
-                                        "assets/images/bucket.png",
-                                        fit: BoxFit.scaleDown,
-                                        color: Colors.black)),
-                                SizedBox(
-                                  width: 10,
-                                ),
-                                GestureDetector(
-                                  onTap: () {},
-                                  child: Container(
-                                    width: MediaQuery
-                                        .of(context)
-                                        .size
-                                        .width *
-                                        0.38,
-                                    height: 50,
-                                    padding: const EdgeInsets.only(
-                                        left: 10, right: 0, bottom: 0, top: 12),
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(16.0),
-                                      color: const Color(0xffffffff),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: const Color(0x29000000),
-                                          offset: Offset(6, 3),
-                                          blurRadius: 12,
-                                        ),
-                                      ],
-                                    ),
+                                  SizedBox(
+                                    width: 10,
+                                  ),
+                                  Container(
+                                      height: 20,
+                                      width: 20,
+                                      child: Image.asset(
+                                          "assets/images/bucket.png",
+                                          fit: BoxFit.scaleDown,
+                                          color: Colors.black)),
+                                  SizedBox(
+                                    width: 10,
+                                  ),
+                                  GestureDetector(
+                                    onTap: () {},
                                     child: Container(
-                                      //width:120,
-                                      child: FutureBuilder(
-                                          future: Future.delayed(
-                                              Duration(milliseconds: 200))
-                                              .then((value) => fetchUnits(ID)),
-                                          builder: (context,
-                                              AsyncSnapshot snapshot) {
-                                            if (snapshot.hasData &&
-                                                snapshot.data != null) {
-                                              final List<Units> _cadastro =
-                                                  snapshot.data;
-                                              return Theme(
-                                                data: Theme.of(context)
-                                                    .copyWith(
-                                                  // canvasColor: Colors.blueGrey, // background color for the dropdown items
-                                                    buttonTheme: ButtonTheme
-                                                        .of(context)
-                                                        .copyWith(
-                                                        alignedDropdown:
-                                                        true,
-                                                        padding: EdgeInsets
-                                                            .only(
-                                                            top: 25,
-                                                            left:
-                                                            10),
-                                                        height:
-                                                        50 //If false (the default), then the dropdown's menu will be wider than its button.
-                                                    )),
-                                                child: DropdownButton(
-                                                  isExpanded: true,
-                                                  isDense: true,
-                                                  value: null,
-                                                  items: _cadastro.map((map) {
-                                                    return DropdownMenuItem(
-                                                      child: Text(map
-                                                          .unitName.name
-                                                          .toString()),
-                                                      value: map.salesRate
-                                                          .toString(),
-                                                      onTap: () {
-                                                        setState(() {
-                                                          saleRate.text = map
-                                                              .salesRate
-                                                              .toString();
-                                                          unit = map
-                                                              .unitName.name
-                                                              .toString();
-                                                          unitID = map.unitId
-                                                              .toString();
-                                                        });
-                                                      },
-                                                    );
-                                                  }).toList(),
-                                                  onChanged: (selected) {
-                                                    setState(() {
-                                                      _selectedUnit = selected;
-                                                    });
-                                                    print(_selectedUnit);
-                                                  },
-                                                  hint: Text(unit),
-                                                ),
-                                              );
-                                            } else {
-                                              return Container(
-                                                  height: 20,
-                                                  width: 20,
-                                                  child: Center(
-                                                      child:
-                                                      CircularProgressIndicator()));
-                                            }
-                                          }),
+                                      width: MediaQuery
+                                          .of(context)
+                                          .size
+                                          .width *
+                                          0.38,
+                                      height: 50,
+                                      padding: const EdgeInsets.only(
+                                          left: 10,
+                                          right: 0,
+                                          bottom: 0,
+                                          top: 12),
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(
+                                            16.0),
+                                        color: const Color(0xffffffff),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: const Color(0x29000000),
+                                            offset: Offset(6, 3),
+                                            blurRadius: 12,
+                                          ),
+                                        ],
+                                      ),
+                                      child: Container(
+                                        //width:120,
+                                        child: FutureBuilder(
+                                            future: Future.delayed(
+                                                Duration(milliseconds: 200))
+                                                .then((value) =>
+                                                fetchUnits(ID)),
+                                            builder: (context,
+                                                AsyncSnapshot snapshot) {
+                                              if (snapshot.hasData &&
+                                                  snapshot.data != null) {
+                                                final List<Units> _cadastro =
+                                                    snapshot.data;
+                                                return Theme(
+                                                  data: Theme.of(context)
+                                                      .copyWith(
+                                                    // canvasColor: Colors.blueGrey, // background color for the dropdown items
+                                                      buttonTheme: ButtonTheme
+                                                          .of(context)
+                                                          .copyWith(
+                                                          alignedDropdown:
+                                                          true,
+                                                          padding: EdgeInsets
+                                                              .only(
+                                                              top: 25,
+                                                              left:
+                                                              10),
+                                                          height:
+                                                          50 //If false (the default), then the dropdown's menu will be wider than its button.
+                                                      )),
+                                                  child: DropdownButton(
+                                                    isExpanded: true,
+                                                    isDense: true,
+                                                    value: null,
+                                                    items: _cadastro.map((map) {
+                                                      return DropdownMenuItem(
+                                                        child: Text(map
+                                                            .unitName
+                                                            .toString()),
+                                                        value: map.salesRate
+                                                            .toString(),
+                                                        onTap: () {
+                                                          setState(() {
+                                                            saleRate.text = map
+                                                                .salesRate
+                                                                .toString();
+                                                            unit = map
+                                                                .unitName
+                                                                .toString();
+                                                            unitID = map.unitId
+                                                                .toString();
+                                                          });
+                                                          calculteAmount("");
+                                                        },
+                                                      );
+                                                    }).toList(),
+                                                    onChanged: (selected) {
+                                                      setState(() {
+                                                        _selectedUnit =
+                                                            selected;
+                                                      });
+                                                      print(_selectedUnit);
+                                                      calculteAmount("");
+                                                    },
+                                                    hint: Text(unit),
+                                                  ),
+                                                );
+                                              } else {
+                                                return Container(
+                                                    height: 20,
+                                                    width: 20,
+                                                    child: Center(
+                                                        child:
+                                                        CircularProgressIndicator()));
+                                              }
+                                            }),
+                                      ),
                                     ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.only(
-                                left: 10.0, right: 10, bottom: 5, top: 20),
-                            child: Row(
-                              children: [
-                                Container(
-                                    height: 20,
+                            Padding(
+                              padding: const EdgeInsets.only(
+                                  left: 10.0, right: 10, bottom: 5, top: 20),
+                              child: Row(
+                                children: [
+                                  Container(
+                                      height: 20,
+                                      width: 20,
+                                      child: Image.asset(
+                                          "assets/images/dollar.png",
+                                          fit: BoxFit.scaleDown,
+                                          color: Colors.black)),
+                                  SizedBox(
                                     width: 20,
-                                    child: Image.asset(
-                                        "assets/images/dollar.png",
-                                        fit: BoxFit.scaleDown,
-                                        color: Colors.black)),
-                                SizedBox(
-                                  width: 20,
-                                ),
-                                Container(
-                                  width:
-                                  MediaQuery
-                                      .of(context)
-                                      .size
-                                      .width * 0.35,
-                                  height: 50,
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(16.0),
-                                    color: const Color(0xffffffff),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: const Color(0x29000000),
-                                        offset: Offset(6, 3),
-                                        blurRadius: 12,
-                                      ),
-                                    ],
                                   ),
-                                  child: TextFormField(
-                                      controller: saleRate,
-                                      keyboardType: TextInputType.number,
-                                      decoration: InputDecoration(
-                                        hintText: 'Rate',
-                                        //filled: true,
-                                        hintStyle:
-                                        TextStyle(color: Color(0xffb0b0b0)),
-                                        border: InputBorder.none,
-                                        contentPadding: EdgeInsets.only(
-                                            left: 15,
-                                            bottom: 15,
-                                            top: 15,
-                                            right: 15),
-                                        filled: false,
-                                        isDense: false,
+                                  Container(
+                                    width:
+                                    MediaQuery
+                                        .of(context)
+                                        .size
+                                        .width * 0.35,
+                                    height: 50,
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(16.0),
+                                      color: const Color(0xffffffff),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: const Color(0x29000000),
+                                          offset: Offset(6, 3),
+                                          blurRadius: 12,
+                                        ),
+                                      ],
+                                    ),
+                                    child: TextFormField(
+                                        controller: saleRate,
+                                        keyboardType: TextInputType.number,
+                                        decoration: InputDecoration(
+                                          hintText: 'Rate',
+                                          //filled: true,
+                                          hintStyle:
+                                          TextStyle(color: Color(0xffb0b0b0)),
+                                          border: InputBorder.none,
+                                          contentPadding: EdgeInsets.only(
+                                              left: 15,
+                                              bottom: 15,
+                                              top: 15,
+                                              right: 15),
+                                          filled: false,
+                                          isDense: false,
+                                        )),
+                                  ),
+                                  SizedBox(
+                                    width: 20,
+                                  ),
+                                  // Adobe XD layer: 'surface1' (group)
+                                  GestureDetector(
+                                      onTap: () {
+                                        if (saleQty.text != "0") {
+                                          setState(() {
+                                            byPri.text = "";
+                                            byPer.text = "";
+                                            int a = int.parse(saleQty.text) - 1;
+                                            saleQty.text = a.toString();
+                                            calculteAmount("0");
+                                          });
+                                        }
+                                      },
+                                      child: Icon(
+                                        Icons.remove,
+                                        color: Colors.blueGrey,
                                       )),
-                                ),
-                                SizedBox(
-                                  width: 20,
-                                ),
-                                // Adobe XD layer: 'surface1' (group)
-                                GestureDetector(
-                                    onTap: () {
-                                      if (saleQty.text != "0") {
+                                  Container(
+                                    width:
+                                    MediaQuery
+                                        .of(context)
+                                        .size
+                                        .width * 0.2,
+                                    height: 50,
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(16.0),
+                                      color: const Color(0xffffffff),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: const Color(0x29000000),
+                                          offset: Offset(6, 3),
+                                          blurRadius: 12,
+                                        ),
+                                      ],
+                                    ),
+                                    child: TextFormField(
+                                        controller: saleQty,
+                                        onChanged: calculteAmount,
+                                        keyboardType: TextInputType.number,
+                                        decoration: InputDecoration(
+                                          hintText: 'Qty',
+                                          //filled: true,
+                                          hintStyle:
+                                          TextStyle(color: Color(0xffb0b0b0)),
+                                          border: InputBorder.none,
+                                          contentPadding: EdgeInsets.only(
+                                              left: 15,
+                                              bottom: 15,
+                                              top: 15,
+                                              right: 15),
+                                          filled: false,
+                                          isDense: false,
+                                        )),
+                                  ),
+                                  GestureDetector(
+                                      onTap: () {
                                         setState(() {
                                           byPri.text = "";
                                           byPer.text = "";
-                                          int a = int.parse(saleQty.text) - 1;
+                                          int a = int.parse(saleQty.text) + 1;
                                           saleQty.text = a.toString();
                                           calculteAmount("0");
                                         });
-                                      }
-                                    },
-                                    child: Icon(
-                                      Icons.remove,
-                                      color: Colors.blueGrey,
-                                    )),
-                                Container(
-                                  width:
-                                  MediaQuery
-                                      .of(context)
-                                      .size
-                                      .width * 0.2,
-                                  height: 50,
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(16.0),
-                                    color: const Color(0xffffffff),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: const Color(0x29000000),
-                                        offset: Offset(6, 3),
-                                        blurRadius: 12,
-                                      ),
-                                    ],
-                                  ),
-                                  child: TextFormField(
-                                      controller: saleQty,
-                                      onChanged: calculteAmount,
-                                      keyboardType: TextInputType.number,
-                                      decoration: InputDecoration(
-                                        hintText: 'Qty',
-                                        //filled: true,
-                                        hintStyle:
-                                        TextStyle(color: Color(0xffb0b0b0)),
-                                        border: InputBorder.none,
-                                        contentPadding: EdgeInsets.only(
-                                            left: 15,
-                                            bottom: 15,
-                                            top: 15,
-                                            right: 15),
-                                        filled: false,
-                                        isDense: false,
+                                      },
+                                      child: Icon(
+                                        Icons.add,
+                                        color: Colors.blueGrey,
                                       )),
-                                ),
-                                GestureDetector(
-                                    onTap: () {
-                                      setState(() {
-                                        byPri.text = "";
-                                        byPer.text = "";
-                                        int a = int.parse(saleQty.text) + 1;
-                                        saleQty.text = a.toString();
-                                        calculteAmount("0");
-                                      });
-                                    },
-                                    child: Icon(
-                                      Icons.add,
-                                      color: Colors.blueGrey,
-                                    )),
-                              ],
+                                ],
+                              ),
                             ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.only(
-                                left: 10.0, right: 50, bottom: 5, top: 20),
-                            child: Row(
-                              children: [
-                                Container(
-                                    height: 20,
+                            Padding(
+                              padding: const EdgeInsets.only(
+                                  left: 10.0, right: 50, bottom: 5, top: 20),
+                              child: Row(
+                                children: [
+                                  Container(
+                                      height: 20,
+                                      width: 20,
+                                      child: Image.asset(
+                                          "assets/images/percentage.png",
+                                          fit: BoxFit.scaleDown,
+                                          color: Colors.black)),
+                                  SizedBox(
                                     width: 20,
+                                  ),
+                                  Text(
+                                    "Tax :  " +
+                                        tax.toString() +
+                                        "  (" +
+                                        vat.toString() +
+                                        "%)",
+                                    style: TextStyle(
+                                        color: Colors.grey, fontSize: 18),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Row(
+                                children: [
+                                  Text(
+                                    'Discount',
+                                    style: TextStyle(
+                                      fontFamily: 'Arial',
+                                      fontSize: 15,
+                                      color: const Color(0xff5b5b5b),
+                                    ),
+                                    textAlign: TextAlign.left,
+                                  ),
+                                  SizedBox(
+                                    width: 20,
+                                  ),
+                                  Center(
                                     child: Image.asset(
-                                        "assets/images/percentage.png",
-                                        fit: BoxFit.scaleDown,
-                                        color: Colors.black)),
-                                SizedBox(
-                                  width: 20,
-                                ),
-                                Text(
-                                  "Tax :  " +
-                                      tax.toString() +
-                                      "  (" +
-                                      vat.toString() +
-                                      "%)",
-                                  style: TextStyle(
-                                      color: Colors.grey, fontSize: 18),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Row(
-                              children: [
-                                Text(
-                                  'Discount',
-                                  style: TextStyle(
-                                    fontFamily: 'Arial',
-                                    fontSize: 15,
-                                    color: const Color(0xff5b5b5b),
+                                      'assets/images/percentage.png',
+                                      fit: BoxFit.scaleDown,
+                                      height: 25,
+                                      width: 25,
+                                    ),
                                   ),
-                                  textAlign: TextAlign.left,
-                                ),
-                                SizedBox(
-                                  width: 20,
-                                ),
-                                Center(
-                                  child: Image.asset(
-                                    'assets/images/percentage.png',
-                                    fit: BoxFit.scaleDown,
-                                    height: 25,
-                                    width: 25,
+                                  SizedBox(
+                                    width: 10,
                                   ),
-                                ),
-                                SizedBox(
-                                  width: 10,
-                                ),
-                                Container(
-                                  width: 100,
-                                  height: 30,
-                                  padding: EdgeInsets.only(bottom: 7, left: 5),
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(5.0),
-                                    color: const Color(0xffffffff),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: const Color(0x29000000),
-                                        offset: Offset(6, 3),
-                                        blurRadius: 12,
-                                      ),
-                                    ],
-                                  ),
-                                  child: TextFormField(
-                                      controller: byPer,
-                                      maxLines: 1,
-                                      onChanged: disPer,
-                                      keyboardType: TextInputType.number,
-                                      decoration: InputDecoration(
-                                        hintText: 'By Percentage',
-                                        hintStyle: TextStyle(
-                                          fontFamily: 'Arial',
-                                          fontSize: 10,
-                                          color: const Color(0x8cb0b0b0),
+                                  Container(
+                                    width: 100,
+                                    height: 30,
+                                    padding: EdgeInsets.only(
+                                        bottom: 7, left: 5),
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(5.0),
+                                      color: const Color(0xffffffff),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: const Color(0x29000000),
+                                          offset: Offset(6, 3),
+                                          blurRadius: 12,
                                         ),
-                                        //filled: true,
-                                        border: InputBorder.none,
-                                        filled: false,
-                                        isDense: false,
-                                      )),
-                                ),
-                                SizedBox(
-                                  width: 10,
-                                ),
-                                Center(
-                                  child: Image.asset(
-                                    'assets/images/dollar.png',
-                                    fit: BoxFit.scaleDown,
-                                    height: 25,
-                                    width: 25,
+                                      ],
+                                    ),
+                                    child: TextFormField(
+                                        controller: byPer,
+                                        maxLines: 1,
+                                        onChanged: disPer,
+                                        keyboardType: TextInputType.number,
+                                        decoration: InputDecoration(
+                                          hintText: 'By Percentage',
+                                          hintStyle: TextStyle(
+                                            fontFamily: 'Arial',
+                                            fontSize: 10,
+                                            color: const Color(0x8cb0b0b0),
+                                          ),
+                                          //filled: true,
+                                          border: InputBorder.none,
+                                          filled: false,
+                                          isDense: false,
+                                        )),
                                   ),
-                                ),
-                                SizedBox(
-                                  width: 10,
-                                ),
-                                Container(
-                                  width: 100,
-                                  height: 30,
-                                  padding: EdgeInsets.only(bottom: 5, left: 5),
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(5.0),
-                                    color: const Color(0xffffffff),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: const Color(0x29000000),
-                                        offset: Offset(6, 3),
-                                        blurRadius: 12,
-                                      ),
-                                    ],
+                                  SizedBox(
+                                    width: 10,
                                   ),
-                                  child: TextFormField(
-                                      onChanged: disPri,
-                                      controller: byPri,
-                                      maxLines: 1,
-                                      keyboardType: TextInputType.number,
-                                      decoration: InputDecoration(
-                                        hintText: 'By Price',
-                                        hintStyle: TextStyle(
-                                          fontFamily: 'Arial',
-                                          fontSize: 10,
-                                          color: const Color(0x8cb0b0b0),
+                                  Center(
+                                    child: Image.asset(
+                                      'assets/images/dollar.png',
+                                      fit: BoxFit.scaleDown,
+                                      height: 25,
+                                      width: 25,
+                                    ),
+                                  ),
+                                  SizedBox(
+                                    width: 10,
+                                  ),
+                                  Container(
+                                    width: 100,
+                                    height: 30,
+                                    padding: EdgeInsets.only(
+                                        bottom: 5, left: 5),
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(5.0),
+                                      color: const Color(0xffffffff),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: const Color(0x29000000),
+                                          offset: Offset(6, 3),
+                                          blurRadius: 12,
                                         ),
-                                        //filled: true,
-                                        border: InputBorder.none,
-                                        filled: false,
-                                        isDense: false,
-                                      )),
-                                )
-                              ],
+                                      ],
+                                    ),
+                                    child: TextFormField(
+                                        onChanged: disPri,
+                                        controller: byPri,
+                                        maxLines: 1,
+                                        keyboardType: TextInputType.number,
+                                        decoration: InputDecoration(
+                                          hintText: 'By Price',
+                                          hintStyle: TextStyle(
+                                            fontFamily: 'Arial',
+                                            fontSize: 10,
+                                            color: const Color(0x8cb0b0b0),
+                                          ),
+                                          //filled: true,
+                                          border: InputBorder.none,
+                                          filled: false,
+                                          isDense: false,
+                                        )),
+                                  )
+                                ],
+                              ),
                             ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Row(
+                            Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Row(
+                                children: [
+                                  Spacer(),
+                                  Text(
+                                    'Total Amount   ',
+                                    style: TextStyle(
+                                      fontFamily: 'Arial',
+                                      fontSize: 14,
+                                      color: const Color(0xff5b5b5b),
+                                    ),
+                                    textAlign: TextAlign.left,
+                                  ),
+                                  Container(
+                                    width: 150,
+                                    height: 40,
+                                    decoration: BoxDecoration(
+                                      gradient: LinearGradient(
+                                        begin: Alignment(0.0, -1.0),
+                                        end: Alignment(0.0, 1.0),
+                                        colors: [
+                                          const Color(0xff00ecb2),
+                                          const Color(0xff22bef1)
+                                        ],
+                                        stops: [0.0, 1.0],
+                                      ),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: const Color(0x80747474),
+                                          offset: Offset(6, 3),
+                                          blurRadius: 6,
+                                        ),
+                                      ],
+                                    ),
+                                    child: Center(
+                                        child: Text(lastSaleRate.toString())),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            SizedBox(
+                              height: 40,
+                            ),
+                            Row(
                               children: [
                                 Spacer(),
-                                Text(
-                                  'Total Amount   ',
-                                  style: TextStyle(
-                                    fontFamily: 'Arial',
-                                    fontSize: 14,
-                                    color: const Color(0xff5b5b5b),
-                                  ),
-                                  textAlign: TextAlign.left,
-                                ),
-                                Container(
-                                  width: 150,
-                                  height: 40,
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      begin: Alignment(0.0, -1.0),
-                                      end: Alignment(0.0, 1.0),
-                                      colors: [
-                                        const Color(0xff00ecb2),
-                                        const Color(0xff22bef1)
-                                      ],
-                                      stops: [0.0, 1.0],
-                                    ),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: const Color(0x80747474),
-                                        offset: Offset(6, 3),
-                                        blurRadius: 6,
-                                      ),
-                                    ],
-                                  ),
-                                  child: Center(
-                                      child: Text(lastSaleRate.toString())),
-                                ),
-                              ],
-                            ),
-                          ),
-                          SizedBox(
-                            height: 40,
-                          ),
-                          Row(
-                            children: [
-                              Spacer(),
-                              Center(
-                                child: GestureDetector(
-                                  onTap: () {
-                                    if (Name != "" &&
-                                        saleQty.text != "0" &&
-                                        lastSaleRate > 0) {
-                                      if (byPri.text.isEmpty &&
-                                          byPer.text.isEmpty) {
-                                        addItem(
-                                            Name,
-                                            unit,
-                                            unitID,
-                                            totalAmount.toString(),
-                                            int.parse(saleQty.text),
-                                            ID,
-                                            tax.toString(),
-                                            tax.toString(),
-                                            gst.toString(),
-                                            saleRate.text,
-                                            totalAmount.toString(),
-                                            "0");
+                                Center(
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      if (Name != "" &&
+                                          saleQty.text != "0" &&
+                                          lastSaleRate > 0) {
+                                        if (byPri.text.isEmpty &&
+                                            byPer.text.isEmpty) {
+                                          addItem(
+                                              Name,
+                                              unit,
+                                              unitID,
+                                              totalAmount.toString(),
+                                              int.parse(saleQty.text),
+                                              ID,
+                                              tax.toString(),
+                                              tax.toString(),
+                                              gst.toString(),
+                                              saleRate.text,
+                                              totalAmount.toString(),
+                                              "0");
+                                        } else {
+                                          print("xxx4xxxxxx");
+                                          addItem(
+                                              Name,
+                                              unit,
+                                              unitID,
+                                              lastSaleRate.toString(),
+                                              int.parse(saleQty.text),
+                                              ID,
+                                              tax.toString(),
+                                              tax.toString(),
+                                              gst.toString(),
+                                              saleRate.text,
+                                              totalAmount.toString(),
+                                              byPer.text);
+                                        }
+
+                                        setState(() {
+                                          unit = "";
+                                          unitID = "";
+                                          ID = "";
+                                          textEditingController.text = "";
+                                          rate = "";
+                                          saleQty.text = "";
+                                          saleRate.text = "";
+                                          unitController.text = "";
+                                          totalAmount = 0.0;
+                                          tax = 0;
+                                          vat = 0;
+                                          depoStock.text = "";
+                                          lastSaleRate = 0;
+                                        });
+
+                                        Navigator.pop(context);
                                       } else {
-                                        print("xxx4xxxxxx");
-                                        addItem(
-                                            Name,
-                                            unit,
-                                            unitID,
-                                            lastSaleRate.toString(),
-                                            int.parse(saleQty.text),
-                                            ID,
-                                            tax.toString(),
-                                            tax.toString(),
-                                            gst.toString(),
-                                            saleRate.text,
-                                            totalAmount.toString(),
-                                            byPer.text);
+                                        FlutterFlexibleToast.showToast(
+                                            message: "Please add quantity",
+                                            toastGravity: ToastGravity.BOTTOM,
+                                            icon: ICON.ERROR,
+                                            radius: 50,
+                                            elevation: 10,
+                                            imageSize: 15,
+                                            textColor: Colors.white,
+                                            backgroundColor: Colors.black,
+                                            timeInSeconds: 2);
                                       }
-
-                                      setState(() {
-                                        unit = "";
-                                        unitID = "";
-                                        ID = "";
-                                        textEditingController.text = "";
-                                        rate = "";
-                                        saleQty.text = "";
-                                        saleRate.text = "";
-                                        unitController.text = "";
-                                        totalAmount = 0.0;
-                                        tax = 0;
-                                        vat = 0;
-                                        depoStock.text = "";
-                                        lastSaleRate = 0;
-                                      });
-
-                                      Navigator.pop(context);
-                                    } else {
-                                      FlutterFlexibleToast.showToast(
-                                          message: "Please add quantity",
-                                          toastGravity: ToastGravity.BOTTOM,
-                                          icon: ICON.ERROR,
-                                          radius: 50,
-                                          elevation: 10,
-                                          imageSize: 15,
-                                          textColor: Colors.white,
-                                          backgroundColor: Colors.black,
-                                          timeInSeconds: 2);
-                                    }
+                                    },
+                                    child: Container(
+                                      height: 50,
+                                      width: 120,
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(
+                                            8.0),
+                                        color: const Color(0xff20474f),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: const Color(0x85747474),
+                                            offset: Offset(6, 3),
+                                            blurRadius: 6,
+                                          ),
+                                        ],
+                                      ),
+                                      child: Center(
+                                        child: Text(
+                                          'Save',
+                                          style: TextStyle(
+                                            fontFamily: 'Arial',
+                                            fontSize: 18,
+                                            color: const Color(0xfff7fdfd),
+                                          ),
+                                          textAlign: TextAlign.left,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(
+                                  width: 15,
+                                ),
+                                GestureDetector(
+                                  onTap: () {
+                                    Navigator.pop(context);
                                   },
                                   child: Container(
                                     height: 50,
@@ -2513,7 +2338,7 @@ class NewOrderPageState extends State<NewOrderPage> {
                                     ),
                                     child: Center(
                                       child: Text(
-                                        'Save',
+                                        'Cancel',
                                         style: TextStyle(
                                           fontFamily: 'Arial',
                                           fontSize: 18,
@@ -2524,60 +2349,273 @@ class NewOrderPageState extends State<NewOrderPage> {
                                     ),
                                   ),
                                 ),
-                              ),
-                              SizedBox(
-                                width: 15,
-                              ),
-                              GestureDetector(
-                                onTap: () {
-                                  Navigator.pop(context);
-                                },
-                                child: Container(
-                                  height: 50,
-                                  width: 120,
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(8.0),
-                                    color: const Color(0xff20474f),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: const Color(0x85747474),
-                                        offset: Offset(6, 3),
-                                        blurRadius: 6,
-                                      ),
-                                    ],
-                                  ),
-                                  child: Center(
-                                    child: Text(
-                                      'Cancel',
-                                      style: TextStyle(
-                                        fontFamily: 'Arial',
-                                        fontSize: 18,
-                                        color: const Color(0xfff7fdfd),
-                                      ),
-                                      textAlign: TextAlign.left,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              Spacer()
-                            ],
-                          ),
-                          SizedBox(
-                            height: 40,
-                          ),
-                        ],
+                                Spacer()
+                              ],
+                            ),
+                            SizedBox(
+                              height: 40,
+                            ),
+                          ],
+                        ),
+                      )),
+                ));
+          });
+        },
+        transitionBuilder: (_, anim, __, child) {
+          return SlideTransition(
+            position: Tween(begin: Offset(0, 1), end: Offset(0, 0)).animate(
+                anim),
+            child: child,
+          );
+        },
+      );
+    }
+
+    //searchItemDialog() {
+    showGeneralDialog(
+      barrierLabel: "Barrier",
+      barrierDismissible: true,
+      barrierColor: Colors.black.withOpacity(0.5),
+      transitionDuration: Duration(milliseconds: 500),
+      context: context,
+      pageBuilder: (_, __, ___) {
+        return StatefulBuilder(builder: (context, setState) {
+          return Material(
+              type: MaterialType.transparency,
+              child: Align(
+                alignment: Alignment.center,
+                child: Padding(
+                  padding: const EdgeInsets.all(15.0),
+                  child: Container(
+                      height: MediaQuery
+                          .of(context)
+                          .size
+                          .height * 0.7,
+                      width: MediaQuery
+                          .of(context)
+                          .size
+                          .width,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(5),
                       ),
-                    )),
+                      child: Padding(
+                        padding: const EdgeInsets.all(10.0),
+                        child: ListView(
+                          children: [
+                            Container(
+                              width: MediaQuery
+                                  .of(context)
+                                  .size
+                                  .width * 0.8,
+                              height: 50,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(5.0),
+                                color: const Color(0xffffffff),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color(0x29000000),
+                                    offset: Offset(6, 3),
+                                    blurRadius: 5,
+                                  ),
+                                ],
+                              ),
+                              child: TextFormField(
+                                  controller: name,
+                                  onChanged: (data) {
+                                    setState(() {
+                                      as = name.text;
+                                      fetchProducts = fetchDatas();
+                                    });
+                                  },
+                                  decoration: InputDecoration(
+                                    hintText: 'Search product here',
+                                    //filled: true,
+                                    border: InputBorder.none,
+                                    contentPadding: EdgeInsets.only(
+                                        left: 15,
+                                        bottom: 5,
+                                        top: 15,
+                                        right: 15),
+                                    filled: false,
+                                    isDense: false,
+                                    prefixIcon: Icon(
+                                      Icons.search,
+                                      size: 25.0,
+                                      color: Colors.grey,
+                                    ),
+                                  )),
+                            ),
+                            SizedBox(
+                              height: 10,
+                            ),
+                            FutureBuilder<List<Products>>(
+                                future: fetchProducts,
+                                builder: (context, snapshot) {
+                                  if (snapshot.hasData) {
+                                    return Container(
+                                      height:
+                                      MediaQuery
+                                          .of(context)
+                                          .size
+                                          .height,
+                                      width:
+                                      MediaQuery
+                                          .of(context)
+                                          .size
+                                          .width,
+                                      child: ListView.builder(
+                                          shrinkWrap: true,
+                                          itemCount: snapshot.data.length,
+                                          itemBuilder: (context, index) {
+                                            if (snapshot.data[index].name
+                                                .toLowerCase()
+                                                .contains(as.toLowerCase())) {
+                                              return Card(
+                                                color: Colors.blueGrey[300],
+                                                child: Row(
+                                                  children: [
+                                                    Container(
+                                                      width: MediaQuery
+                                                          .of(
+                                                          context)
+                                                          .size
+                                                          .width -
+                                                          180,
+                                                      child: ListTile(
+                                                        onTap: () {
+                                                          setState(() {
+                                                            textEditingController
+                                                                .text =
+                                                                snapshot
+                                                                    .data[
+                                                                index]
+                                                                    .name;
+                                                            vat = snapshot
+                                                                .data[
+                                                            index]
+                                                                .vatPerc;
+                                                            tax = snapshot
+                                                                .data[
+                                                            index]
+                                                                .vatPerc;
+                                                            Name = snapshot
+                                                                .data[index]
+                                                                .name;
+                                                            saleRate.text =
+                                                                snapshot
+                                                                    .data[
+                                                                index]
+                                                                    .salesRate
+                                                                    .toString();
+                                                            unitController
+                                                                .text =
+                                                                snapshot
+                                                                    .data[
+                                                                index]
+                                                                    .baseUnit
+                                                                    .toString();
+                                                            stock = snapshot
+                                                                .data[index]
+                                                                .stock
+                                                                .toString();
+                                                            ID = snapshot
+                                                                .data[index]
+                                                                .id
+                                                                .toString();
+                                                          });
+                                                          Navigator.pop(
+                                                              context);
+                                                          searchItemDialog();
+                                                        },
+                                                        title: Text(
+                                                          snapshot.data[index]
+                                                              .name,
+                                                          style: TextStyle(
+                                                            fontFamily:
+                                                            'Arial',
+                                                            fontSize: 10,
+                                                            color:
+                                                            Colors.white,
+                                                            fontWeight:
+                                                            FontWeight
+                                                                .w700,
+                                                          ),
+                                                          textAlign:
+                                                          TextAlign.left,
+                                                        ),
+                                                        subtitle: Text(
+                                                          "Price : " +
+                                                              snapshot
+                                                                  .data[index]
+                                                                  .salesRate
+                                                                  .toString(),
+                                                          style: TextStyle(
+                                                            fontFamily:
+                                                            'Arial',
+                                                            fontSize: 10,
+                                                            color:
+                                                            Colors.white,
+                                                            fontWeight:
+                                                            FontWeight
+                                                                .w700,
+                                                          ),
+                                                          textAlign:
+                                                          TextAlign.left,
+                                                        ),
+                                                        leading: snapshot
+                                                            .data[index]
+                                                            .productImage !=
+                                                            null
+                                                            ? Container(
+                                                            width: 60,
+                                                            height: 80,
+                                                            child: Image.memory(
+                                                              base64Decode(
+                                                                  snapshot
+                                                                      .data[index]
+                                                                      .productImage),
+                                                              fit: BoxFit
+                                                                  .fill,))
+                                                            : Image.asset(
+                                                          "assets/images/products.jpg",
+                                                          fit: BoxFit.scaleDown,
+                                                          //    color: Colors.white
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              );
+                                            } else {
+                                              return Container(
+                                                color: Colors.blue,
+                                              );
+                                            }
+                                          }),
+                                    );
+                                  } else {
+                                    return Center(
+                                        child: CircularProgressIndicator());
+                                  }
+                                }),
+                          ],
+                        ),
+                      )),
+                ),
               ));
         });
       },
       transitionBuilder: (_, anim, __, child) {
         return SlideTransition(
-          position: Tween(begin: Offset(0, 1), end: Offset(0, 0)).animate(anim),
+          position:
+          Tween(begin: Offset(0, 1), end: Offset(0, 0)).animate(anim),
           child: child,
         );
       },
     );
+    // }
+
   }
 
   takeBillPdf() async {
@@ -2698,6 +2736,32 @@ class NewOrderPageState extends State<NewOrderPage> {
   Future<void> showBookingDialog2() {
     var textEditingController = TextEditingController();
 
+
+    setState(() {
+      saleQty.text = "1";
+    });
+
+
+    void calculteAmount(String a) {
+      if (vat > 0) {
+        setState(() {
+          totalAmount =
+              double.parse(saleQty.text) * double.parse(saleRate.text);
+          double t = totalAmount * (vat / 100);
+          tax = double.parse(t.toStringAsFixed(User.decimals));
+          totalAmount = totalAmount + tax;
+          lastSaleRate = totalAmount;
+        });
+      } else {
+        setState(() {
+          totalAmount = double.parse(saleQty.text) *
+              double.parse(saleRate.text.toString());
+          lastSaleRate =
+              double.parse(totalAmount.toStringAsFixed(User.decimals));
+        });
+      }
+    }
+
     searchItemDialog2() {
       showGeneralDialog(
         barrierLabel: "Barrier",
@@ -2710,328 +2774,113 @@ class NewOrderPageState extends State<NewOrderPage> {
             return Material(
                 type: MaterialType.transparency,
                 child: Align(
-                  alignment: Alignment.center,
-                  child: Padding(
-                    padding: const EdgeInsets.all(15.0),
-                    child: Container(
-                        height: MediaQuery
-                            .of(context)
-                            .size
-                            .height * 0.5,
-                        width: MediaQuery
-                            .of(context)
-                            .size
-                            .width,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(5),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(10.0),
-                          child: ListView(
-                            children: [
-                              Container(
-                                width: MediaQuery
-                                    .of(context)
-                                    .size
-                                    .width * 0.9,
-                                height: 50,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(5.0),
-                                  color: const Color(0xffffffff),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: const Color(0x29000000),
-                                      offset: Offset(6, 3),
-                                      blurRadius: 5,
-                                    ),
-                                  ],
-                                ),
-                                child: TextFormField(
-                                    controller: name,
-                                    onChanged: (data) {
-                                      setState(() {
-                                        as = name.text;
-                                        fetchProducts = fetchDatas();
-                                      });
-                                    },
-                                    decoration: InputDecoration(
-                                      hintText: 'Enter product name here',
-                                      //filled: true,
-                                      border: InputBorder.none,
-                                      contentPadding: EdgeInsets.only(
-                                          left: 15,
-                                          bottom: 5,
-                                          top: 15,
-                                          right: 15),
-                                      filled: false,
-                                      isDense: false,
-                                      prefixIcon: Icon(
-                                        Icons.search,
-                                        size: 25.0,
-                                        color: Colors.grey,
-                                      ),
-                                    )),
+                  alignment: Alignment.bottomCenter,
+                  child: Container(
+                      height: MediaQuery
+                          .of(context)
+                          .size
+                          .height * 0.65,
+                      width: MediaQuery
+                          .of(context)
+                          .size
+                          .width,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(5),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: ListView(
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.only(
+                                  left: 10.0, right: 50, bottom: 5),
+                              child: Text(
+                                "Return Item",
+                                style:
+                                TextStyle(color: Colors.black, fontSize: 22),
                               ),
-                              SizedBox(
-                                height: 10,
-                              ),
-                              FutureBuilder<List<Products>>(
-                                  future: fetchProducts,
-                                  builder: (context, snapshot) {
-                                    if (snapshot.hasData) {
-                                      return Container(
-                                        height:
-                                        MediaQuery
-                                            .of(context)
-                                            .size
-                                            .height,
-                                        width:
-                                        MediaQuery
-                                            .of(context)
-                                            .size
-                                            .width,
-                                        child: ListView.builder(
-                                            shrinkWrap: true,
-                                            itemCount: snapshot.data.length,
-                                            itemBuilder: (context, index) {
-                                              if (snapshot.data[index].name
-                                                  .toLowerCase()
-                                                  .contains(as.toLowerCase())) {
-                                                return Card(
-                                                  color: Colors.blueGrey[300],
-                                                  child: Row(
-                                                    children: [
-                                                      Container(
-                                                        width: MediaQuery
-                                                            .of(
-                                                            context)
-                                                            .size
-                                                            .width -
-                                                            180,
-                                                        child: ListTile(
-                                                          onTap: () {
-                                                            setState(() {
-                                                              textEditingController
-                                                                  .text =
-                                                                  snapshot
-                                                                      .data[
-                                                                  index]
-                                                                      .name;
-                                                              vat=snapshot
-                                                                  .data[
-                                                              index]
-                                                                  .vatPerc;
-                                                              tax=snapshot
-                                                                  .data[
-                                                              index]
-                                                                  .vatPerc;
-                                                              Name = snapshot
-                                                                  .data[index]
-                                                                  .name;
-                                                              saleRate.text =
-                                                                  snapshot
-                                                                      .data[
-                                                                  index]
-                                                                      .salesRate
-                                                                      .toString();
-                                                              unitController
-                                                                  .text =
-                                                                  snapshot
-                                                                      .data[
-                                                                  index]
-                                                                      .baseUnit
-                                                                      .toString();
-                                                              stock = snapshot
-                                                                  .data[index]
-                                                                  .stock
-                                                                  .toString();
-                                                              ID = snapshot
-                                                                  .data[index]
-                                                                  .id
-                                                                  .toString();
-                                                            });
-                                                            Navigator.pop(
-                                                                context);
-                                                            showBookingDialog2();
-                                                          },
-                                                          title: Text(
-                                                            snapshot.data[index]
-                                                                .name,
-                                                            style: TextStyle(
-                                                              fontFamily:
-                                                              'Arial',
-                                                              fontSize: 10,
-                                                              color:
-                                                              Colors.white,
-                                                              fontWeight:
-                                                              FontWeight
-                                                                  .w700,
-                                                            ),
-                                                            textAlign:
-                                                            TextAlign.left,
-                                                          ),
-                                                          subtitle: Text(
-                                                            "Price : " +
-                                                                snapshot
-                                                                    .data[index]
-                                                                    .salesRate
-                                                                    .toString(),
-                                                            style: TextStyle(
-                                                              fontFamily:
-                                                              'Arial',
-                                                              fontSize: 10,
-                                                              color:
-                                                              Colors.white,
-                                                              fontWeight:
-                                                              FontWeight
-                                                                  .w700,
-                                                            ),
-                                                            textAlign:
-                                                            TextAlign.left,
-                                                          ),
-                                                          leading: snapshot.data[index].productImage!=null? Container(width: 60, height:80, child: Image.memory(base64Decode(snapshot.data[index].productImage),fit: BoxFit.fill,)) :Image.asset(
-                                                            "assets/images/products.jpg",
-                                                            fit: BoxFit.scaleDown,
-                                                            //    color: Colors.white
-                                                          ),
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                );
-                                              } else {
-                                                return Container(
-                                                  color: Colors.blue,
-                                                );
-                                              }
-                                            }),
-                                      );
-                                    } else {
-                                      return Center(
-                                          child: CircularProgressIndicator());
-                                    }
-                                  }),
-                            ],
-                          ),
-                        )),
-                  ),
-                ));
-          });
-        },
-        transitionBuilder: (_, anim, __, child) {
-          return SlideTransition(
-            position:
-            Tween(begin: Offset(0, 1), end: Offset(0, 0)).animate(anim),
-            child: child,
-          );
-        },
-      );
-    }
-
-    setState(() {
-      saleQty.text = "0";
-    });
-
-    if (textEditingController.text != "") {
-      saleQty.text = quantity.toString();
-    }
-    void calculteAmount(String a) {
-      if (vat > 0) {
-        print(rate);
-        setState(() {
-          totalAmount = double.parse(saleQty.text) * double.parse(saleRate.text);
-          double t = totalAmount * (vat / 100);
-          tax = double.parse(t.toStringAsFixed(User.decimals));
-          totalAmount = totalAmount + tax;
-          lastSaleRate = totalAmount;
-        });
-      } else {
-        setState(() {
-          print(saleRate.text);
-          totalAmount = double.parse(saleQty.text) *
-              double.parse(saleRate.text.toString());
-          lastSaleRate = double.parse(totalAmount.toStringAsFixed(User.decimals));
-        });
-      }
-    }
-
-    showGeneralDialog(
-      barrierLabel: "Barrier",
-      barrierDismissible: true,
-      barrierColor: Colors.black.withOpacity(0.5),
-      transitionDuration: Duration(milliseconds: 500),
-      context: context,
-      pageBuilder: (_, __, ___) {
-        return StatefulBuilder(builder: (context, setState) {
-          return Material(
-              type: MaterialType.transparency,
-              child: Align(
-                alignment: Alignment.bottomCenter,
-                child: Container(
-                    height: MediaQuery
-                        .of(context)
-                        .size
-                        .height * 0.65,
-                    width: MediaQuery
-                        .of(context)
-                        .size
-                        .width,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(5),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: ListView(
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.only(
-                                left: 10.0, right: 50, bottom: 5),
-                            child: Text(
-                              "Return Item",
-                              style:
-                              TextStyle(color: Colors.black, fontSize: 22),
                             ),
-                          ),
-                          SizedBox(
-                            height: 20,
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.all(5.0),
-                            child: Row(
-                              children: [
-                                GestureDetector(
-                                  onTap: () {
-                                    Navigator.pop(context);
-                                    searchItemDialog2();
-                                  },
-                                  child: Container(
+                            SizedBox(
+                              height: 20,
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.all(5.0),
+                              child: Row(
+                                children: [
+                                  GestureDetector(
+                                    onTap: () {
+                                    },
+                                    child: Container(
+                                        height: 20,
+                                        width: 20,
+                                        child: Image.asset(
+                                            "assets/images/item.png",
+                                            fit: BoxFit.scaleDown,
+                                            color: Colors.black)),
+                                  ),
+                                  SizedBox(
+                                    width: 10,
+                                  ),
+                                  GestureDetector(
+                                    onTap: () {
+                                      Navigator.pop(context);
+                                      showBookingDialog2();
+                                    },
+                                    child: Container(
+                                        width: MediaQuery
+                                            .of(context)
+                                            .size
+                                            .width *
+                                            0.8,
+                                        height: 50,
+                                        decoration: BoxDecoration(
+                                          borderRadius:
+                                          BorderRadius.circular(16.0),
+                                          color: const Color(0xffffffff),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: const Color(0x29000000),
+                                              offset: Offset(6, 3),
+                                              blurRadius: 12,
+                                            ),
+                                          ],
+                                        ),
+                                        child: Padding(
+                                          padding: const EdgeInsets.only(
+                                              top: 18.0, left: 10),
+                                          child: Text(Name),
+                                        )),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            SizedBox(
+                              height: 20,
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.all(5.0),
+                              child: Row(
+                                children: [
+                                  Container(
                                       height: 20,
                                       width: 20,
                                       child: Image.asset(
-                                          "assets/images/item.png",
+                                          "assets/images/weels.png",
                                           fit: BoxFit.scaleDown,
                                           color: Colors.black)),
-                                ),
-                                SizedBox(
-                                  width: 10,
-                                ),
-                                GestureDetector(
-                                  onTap: () {
-                                    Navigator.pop(context);
-                                    searchItemDialog2();
-                                  },
-                                  child: Container(
+                                  SizedBox(
+                                    width: 10,
+                                  ),
+                                  Container(
                                       width: MediaQuery
                                           .of(context)
                                           .size
                                           .width *
-                                          0.8,
+                                          0.35,
                                       height: 50,
                                       decoration: BoxDecoration(
-                                        borderRadius:
-                                        BorderRadius.circular(16.0),
+                                        borderRadius: BorderRadius.circular(16.0),
                                         color: const Color(0xffffffff),
                                         boxShadow: [
                                           BoxShadow(
@@ -3044,409 +2893,402 @@ class NewOrderPageState extends State<NewOrderPage> {
                                       child: Padding(
                                         padding: const EdgeInsets.only(
                                             top: 18.0, left: 10),
-                                        child: Text(Name),
+                                        child: Text(stock),
                                       )),
-                                ),
-                              ],
-                            ),
-                          ),
-                          SizedBox(
-                            height: 20,
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.all(5.0),
-                            child: Row(
-                              children: [
-                                Container(
-                                    height: 20,
-                                    width: 20,
-                                    child: Image.asset(
-                                        "assets/images/weels.png",
-                                        fit: BoxFit.scaleDown,
-                                        color: Colors.black)),
-                                SizedBox(
-                                  width: 10,
-                                ),
-                                Container(
-                                    width: MediaQuery
-                                        .of(context)
-                                        .size
-                                        .width *
-                                        0.35,
-                                    height: 50,
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(16.0),
-                                      color: const Color(0xffffffff),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: const Color(0x29000000),
-                                          offset: Offset(6, 3),
-                                          blurRadius: 12,
-                                        ),
-                                      ],
-                                    ),
-                                    child: Padding(
-                                      padding: const EdgeInsets.only(
-                                          top: 18.0, left: 10),
-                                      child: Text(stock),
-                                    )),
-                                SizedBox(
-                                  width: 10,
-                                ),
-                                Container(
-                                    height: 20,
-                                    width: 20,
-                                    child: Image.asset(
-                                        "assets/images/bucket.png",
-                                        fit: BoxFit.scaleDown,
-                                        color: Colors.black)),
-                                SizedBox(
-                                  width: 10,
-                                ),
-                                GestureDetector(
-                                  onTap: () {},
-                                  child: Container(
-                                    width: MediaQuery
-                                        .of(context)
-                                        .size
-                                        .width *
-                                        0.38,
-                                    height: 50,
-                                    padding: const EdgeInsets.only(
-                                        left: 10, right: 0, bottom: 0, top: 12),
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(16.0),
-                                      color: const Color(0xffffffff),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: const Color(0x29000000),
-                                          offset: Offset(6, 3),
-                                          blurRadius: 12,
-                                        ),
-                                      ],
-                                    ),
+                                  SizedBox(
+                                    width: 10,
+                                  ),
+                                  Container(
+                                      height: 20,
+                                      width: 20,
+                                      child: Image.asset(
+                                          "assets/images/bucket.png",
+                                          fit: BoxFit.scaleDown,
+                                          color: Colors.black)),
+                                  SizedBox(
+                                    width: 10,
+                                  ),
+                                  GestureDetector(
+                                    onTap: () {},
                                     child: Container(
-                                      //width:120,
-                                      child: FutureBuilder(
-                                          future: Future.delayed(
-                                              Duration(milliseconds: 200))
-                                              .then((value) => fetchUnits(ID)),
-                                          builder: (context,
-                                              AsyncSnapshot snapshot) {
-                                            if (snapshot.hasData &&
-                                                snapshot.data != null) {
-                                              final List<Units> _cadastro =
-                                                  snapshot.data;
-                                              return Theme(
-                                                data: Theme.of(context)
-                                                    .copyWith(
-                                                  // canvasColor: Colors.blueGrey, // background color for the dropdown items
-                                                    buttonTheme: ButtonTheme
-                                                        .of(context)
-                                                        .copyWith(
-                                                        alignedDropdown:
-                                                        true,
-                                                        padding: EdgeInsets
-                                                            .only(
-                                                            top: 25,
-                                                            left:
-                                                            10),
-                                                        height:
-                                                        50 //If false (the default), then the dropdown's menu will be wider than its button.
-                                                    )),
-                                                child: DropdownButton(
-                                                  isExpanded: true,
-                                                  isDense: true,
-                                                  value: null,
-                                                  items: _cadastro.map((map) {
-                                                    return DropdownMenuItem(
-                                                      child: Text(map
-                                                          .unitName.name
-                                                          .toString()),
-                                                      value: map.salesRate
-                                                          .toString(),
-                                                      onTap: () {
-                                                        setState(() {
-                                                          saleRate.text = map
-                                                              .salesRate
-                                                              .toString();
-                                                          unit = map
-                                                              .unitName.name
-                                                              .toString();
-                                                          unitID = map.unitId
-                                                              .toString();
-                                                        });
-                                                      },
-                                                    );
-                                                  }).toList(),
-                                                  onChanged: (selected) {
-                                                    setState(() {
-                                                      _selectedUnit = selected;
-                                                    });
-                                                    print(_selectedUnit);
-                                                  },
-                                                  hint: Text(unit),
-                                                ),
-                                              );
-                                            } else {
-                                              return Container(
-                                                  height: 20,
-                                                  width: 20,
-                                                  child: Center(
-                                                      child:
-                                                      CircularProgressIndicator()));
-                                            }
-                                          }),
+                                      width: MediaQuery
+                                          .of(context)
+                                          .size
+                                          .width *
+                                          0.38,
+                                      height: 50,
+                                      padding: const EdgeInsets.only(
+                                          left: 10, right: 0, bottom: 0, top: 12),
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(16.0),
+                                        color: const Color(0xffffffff),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: const Color(0x29000000),
+                                            offset: Offset(6, 3),
+                                            blurRadius: 12,
+                                          ),
+                                        ],
+                                      ),
+                                      child: Container(
+                                        //width:120,
+                                        child: FutureBuilder(
+                                            future: Future.delayed(
+                                                Duration(milliseconds: 200))
+                                                .then((value) => fetchUnits(ID)),
+                                            builder: (context,
+                                                AsyncSnapshot snapshot) {
+                                              if (snapshot.hasData &&
+                                                  snapshot.data != null) {
+                                                final List<Units> _cadastro =
+                                                    snapshot.data;
+                                                return Theme(
+                                                  data: Theme.of(context)
+                                                      .copyWith(
+                                                    // canvasColor: Colors.blueGrey, // background color for the dropdown items
+                                                      buttonTheme: ButtonTheme
+                                                          .of(context)
+                                                          .copyWith(
+                                                          alignedDropdown:
+                                                          true,
+                                                          padding: EdgeInsets
+                                                              .only(
+                                                              top: 25,
+                                                              left:
+                                                              10),
+                                                          height:
+                                                          50 //If false (the default), then the dropdown's menu will be wider than its button.
+                                                      )),
+                                                  child: DropdownButton(
+                                                    isExpanded: true,
+                                                    isDense: true,
+                                                    value: null,
+                                                    items: _cadastro.map((map) {
+                                                      return DropdownMenuItem(
+                                                        child: Text(map
+                                                            .unitName
+                                                            .toString()),
+                                                        value: map.salesRate
+                                                            .toString(),
+                                                        onTap: () {
+                                                          setState(() {
+                                                            saleRate.text = map
+                                                                .salesRate
+                                                                .toString();
+                                                            unit = map
+                                                                .unitName
+                                                                .toString();
+                                                            unitID = map.unitId
+                                                                .toString();
+                                                          });
+                                                          calculteAmount("");
+                                                        },
+                                                      );
+                                                    }).toList(),
+                                                    onChanged: (selected) {
+                                                      setState(() {
+                                                        _selectedUnit = selected;
+                                                      });
+                                                      print(_selectedUnit);
+                                                      calculteAmount("");
+                                                    },
+                                                    hint: Text(unit),
+                                                  ),
+                                                );
+                                              } else {
+                                                return Container(
+                                                    height: 20,
+                                                    width: 20,
+                                                    child: Center(
+                                                        child:
+                                                        CircularProgressIndicator()));
+                                              }
+                                            }),
+                                      ),
                                     ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.only(
-                                left: 10.0, right: 10, bottom: 5, top: 20),
-                            child: Row(
-                              children: [
-                                Container(
-                                    height: 20,
+                            Padding(
+                              padding: const EdgeInsets.only(
+                                  left: 10.0, right: 10, bottom: 5, top: 20),
+                              child: Row(
+                                children: [
+                                  Container(
+                                      height: 20,
+                                      width: 20,
+                                      child: Image.asset(
+                                          "assets/images/dollar.png",
+                                          fit: BoxFit.scaleDown,
+                                          color: Colors.black)),
+                                  SizedBox(
                                     width: 20,
-                                    child: Image.asset(
-                                        "assets/images/dollar.png",
-                                        fit: BoxFit.scaleDown,
-                                        color: Colors.black)),
-                                SizedBox(
-                                  width: 20,
-                                ),
-                                Container(
-                                  width:
-                                  MediaQuery
-                                      .of(context)
-                                      .size
-                                      .width * 0.35,
-                                  height: 50,
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(16.0),
-                                    color: const Color(0xffffffff),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: const Color(0x29000000),
-                                        offset: Offset(6, 3),
-                                        blurRadius: 12,
-                                      ),
-                                    ],
                                   ),
-                                  child: TextFormField(
-                                      controller: saleRate,
-                                      keyboardType: TextInputType.number,
-                                      decoration: InputDecoration(
-                                        hintText: 'Rate',
-                                        //filled: true,
-                                        hintStyle:
-                                        TextStyle(color: Color(0xffb0b0b0)),
-                                        border: InputBorder.none,
-                                        contentPadding: EdgeInsets.only(
-                                            left: 15,
-                                            bottom: 15,
-                                            top: 15,
-                                            right: 15),
-                                        filled: false,
-                                        isDense: false,
+                                  Container(
+                                    width:
+                                    MediaQuery
+                                        .of(context)
+                                        .size
+                                        .width * 0.35,
+                                    height: 50,
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(16.0),
+                                      color: const Color(0xffffffff),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: const Color(0x29000000),
+                                          offset: Offset(6, 3),
+                                          blurRadius: 12,
+                                        ),
+                                      ],
+                                    ),
+                                    child: TextFormField(
+                                        controller: saleRate,
+                                        keyboardType: TextInputType.number,
+                                        decoration: InputDecoration(
+                                          hintText: 'Rate',
+                                          //filled: true,
+                                          hintStyle:
+                                          TextStyle(color: Color(0xffb0b0b0)),
+                                          border: InputBorder.none,
+                                          contentPadding: EdgeInsets.only(
+                                              left: 15,
+                                              bottom: 15,
+                                              top: 15,
+                                              right: 15),
+                                          filled: false,
+                                          isDense: false,
+                                        )),
+                                  ),
+                                  SizedBox(
+                                    width: 20,
+                                  ),
+                                  // Adobe XD layer: 'surface1' (group)
+                                  GestureDetector(
+                                      onTap: () {
+                                        if (saleQty.text != "0") {
+                                          setState(() {
+                                            int a = int.parse(saleQty.text) - 1;
+                                            saleQty.text = a.toString();
+                                            calculteAmount("0");
+                                          });
+                                        }
+                                      },
+                                      child: Icon(
+                                        Icons.remove,
+                                        color: Colors.blueGrey,
                                       )),
-                                ),
-                                SizedBox(
-                                  width: 20,
-                                ),
-                                // Adobe XD layer: 'surface1' (group)
-                                GestureDetector(
-                                    onTap: () {
-                                      if (saleQty.text != "0") {
+                                  Container(
+                                    width:
+                                    MediaQuery
+                                        .of(context)
+                                        .size
+                                        .width * 0.2,
+                                    height: 50,
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(16.0),
+                                      color: const Color(0xffffffff),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: const Color(0x29000000),
+                                          offset: Offset(6, 3),
+                                          blurRadius: 12,
+                                        ),
+                                      ],
+                                    ),
+                                    child: TextFormField(
+                                        controller: saleQty,
+                                        onChanged: calculteAmount,
+                                        keyboardType: TextInputType.number,
+                                        decoration: InputDecoration(
+                                          hintText: 'Qty',
+                                          //filled: true,
+                                          hintStyle:
+                                          TextStyle(color: Color(0xffb0b0b0)),
+                                          border: InputBorder.none,
+                                          contentPadding: EdgeInsets.only(
+                                              left: 15,
+                                              bottom: 15,
+                                              top: 15,
+                                              right: 15),
+                                          filled: false,
+                                          isDense: false,
+                                        )),
+                                  ),
+                                  GestureDetector(
+                                      onTap: () {
                                         setState(() {
-                                          int a = int.parse(saleQty.text) - 1;
+                                          int a = int.parse(saleQty.text) + 1;
                                           saleQty.text = a.toString();
                                           calculteAmount("0");
                                         });
-                                      }
-                                    },
-                                    child: Icon(
-                                      Icons.remove,
-                                      color: Colors.blueGrey,
-                                    )),
-                                Container(
-                                  width:
-                                  MediaQuery
-                                      .of(context)
-                                      .size
-                                      .width * 0.2,
-                                  height: 50,
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(16.0),
-                                    color: const Color(0xffffffff),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: const Color(0x29000000),
-                                        offset: Offset(6, 3),
-                                        blurRadius: 12,
-                                      ),
-                                    ],
-                                  ),
-                                  child: TextFormField(
-                                      controller: saleQty,
-                                      onChanged: calculteAmount,
-                                      keyboardType: TextInputType.number,
-                                      decoration: InputDecoration(
-                                        hintText: 'Qty',
-                                        //filled: true,
-                                        hintStyle:
-                                        TextStyle(color: Color(0xffb0b0b0)),
-                                        border: InputBorder.none,
-                                        contentPadding: EdgeInsets.only(
-                                            left: 15,
-                                            bottom: 15,
-                                            top: 15,
-                                            right: 15),
-                                        filled: false,
-                                        isDense: false,
+                                      },
+                                      child: Icon(
+                                        Icons.add,
+                                        color: Colors.blueGrey,
                                       )),
-                                ),
-                                GestureDetector(
-                                    onTap: () {
-                                      setState(() {
-                                        int a = int.parse(saleQty.text) + 1;
-                                        saleQty.text = a.toString();
-                                        calculteAmount("0");
-                                      });
-                                    },
-                                    child: Icon(
-                                      Icons.add,
-                                      color: Colors.blueGrey,
-                                    )),
-                              ],
+                                ],
+                              ),
                             ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.only(
-                                left: 10.0, right: 50, bottom: 5, top: 20),
-                            child: Row(
-                              children: [
-                                Container(
-                                    height: 20,
+                            Padding(
+                              padding: const EdgeInsets.only(
+                                  left: 10.0, right: 50, bottom: 5, top: 20),
+                              child: Row(
+                                children: [
+                                  Container(
+                                      height: 20,
+                                      width: 20,
+                                      child: Image.asset(
+                                          "assets/images/percentage.png",
+                                          fit: BoxFit.scaleDown,
+                                          color: Colors.black)),
+                                  SizedBox(
                                     width: 20,
-                                    child: Image.asset(
-                                        "assets/images/percentage.png",
-                                        fit: BoxFit.scaleDown,
-                                        color: Colors.black)),
-                                SizedBox(
-                                  width: 20,
-                                ),
-                                Text(
-                                  "Tax :  " +
-                                      tax.toString() +
-                                      "  (" +
-                                      vat.toString() +
-                                      "%)",
-                                  style: TextStyle(
-                                      color: Colors.grey, fontSize: 18),
-                                ),
-                              ],
+                                  ),
+                                  Text(
+                                    "Tax :  " +
+                                        tax.toString() +
+                                        "  (" +
+                                        vat.toString() +
+                                        "%)",
+                                    style: TextStyle(
+                                        color: Colors.grey, fontSize: 18),
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Row(
+                            Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Row(
+                                children: [
+                                  Spacer(),
+                                  Text(
+                                    'Total Amount   ',
+                                    style: TextStyle(
+                                      fontFamily: 'Arial',
+                                      fontSize: 14,
+                                      color: const Color(0xff5b5b5b),
+                                    ),
+                                    textAlign: TextAlign.left,
+                                  ),
+                                  Container(
+                                    width: 150,
+                                    height: 40,
+                                    decoration: BoxDecoration(
+                                      gradient: LinearGradient(
+                                        begin: Alignment(0.0, -1.0),
+                                        end: Alignment(0.0, 1.0),
+                                        colors: [
+                                          const Color(0xff00ecb2),
+                                          const Color(0xff22bef1)
+                                        ],
+                                        stops: [0.0, 1.0],
+                                      ),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: const Color(0x80747474),
+                                          offset: Offset(6, 3),
+                                          blurRadius: 6,
+                                        ),
+                                      ],
+                                    ),
+                                    child: Center(
+                                        child: Text(lastSaleRate.toString())),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            SizedBox(
+                              height: 40,
+                            ),
+                            Row(
                               children: [
                                 Spacer(),
-                                Text(
-                                  'Total Amount   ',
-                                  style: TextStyle(
-                                    fontFamily: 'Arial',
-                                    fontSize: 14,
-                                    color: const Color(0xff5b5b5b),
-                                  ),
-                                  textAlign: TextAlign.left,
-                                ),
-                                Container(
-                                  width: 150,
-                                  height: 40,
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      begin: Alignment(0.0, -1.0),
-                                      end: Alignment(0.0, 1.0),
-                                      colors: [
-                                        const Color(0xff00ecb2),
-                                        const Color(0xff22bef1)
-                                      ],
-                                      stops: [0.0, 1.0],
-                                    ),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: const Color(0x80747474),
-                                        offset: Offset(6, 3),
-                                        blurRadius: 6,
+                                Center(
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      if (Name != "" &&
+                                          saleQty.text != "0" &&
+                                          lastSaleRate > 0) {
+                                        addItem(
+                                            Name,
+                                            unit,
+                                            unitID,
+                                            "-" + totalAmount.toString(),
+                                            int.parse("-" + saleQty.text),
+                                            ID,
+                                            "-" +tax.toString(),
+                                            "-" +tax.toString(),
+                                            "-" +gst.toString(),
+                                            saleRate.text,
+                                            "-" + totalAmount.toString(),
+                                            "0");
+
+                                        setState(() {
+                                          unit = "";
+                                          unitID = "";
+                                          ID = "";
+                                          textEditingController.text = "";
+                                          rate = "";
+                                          saleQty.text = "";
+                                          saleRate.text = "";
+                                          unitController.text = "";
+                                          totalAmount = 0.0;
+                                          tax = 0;
+                                          vat = 0;
+                                          depoStock.text = "";
+                                          lastSaleRate = 0;
+                                        });
+
+                                        Navigator.pop(context);
+                                      } else {
+                                        FlutterFlexibleToast.showToast(
+                                            message: "Please add quantity",
+                                            toastGravity: ToastGravity.BOTTOM,
+                                            icon: ICON.ERROR,
+                                            radius: 50,
+                                            elevation: 10,
+                                            imageSize: 15,
+                                            textColor: Colors.white,
+                                            backgroundColor: Colors.black,
+                                            timeInSeconds: 2);
+                                      }
+                                    },
+                                    child: Container(
+                                      height: 50,
+                                      width: 120,
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(8.0),
+                                        color: const Color(0xff20474f),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: const Color(0x85747474),
+                                            offset: Offset(6, 3),
+                                            blurRadius: 6,
+                                          ),
+                                        ],
                                       ),
-                                    ],
+                                      child: Center(
+                                        child: Text(
+                                          'Save',
+                                          style: TextStyle(
+                                            fontFamily: 'Arial',
+                                            fontSize: 18,
+                                            color: const Color(0xfff7fdfd),
+                                          ),
+                                          textAlign: TextAlign.left,
+                                        ),
+                                      ),
+                                    ),
                                   ),
-                                  child: Center(
-                                      child: Text(lastSaleRate.toString())),
                                 ),
-                              ],
-                            ),
-                          ),
-                          SizedBox(
-                            height: 40,
-                          ),
-                          Row(
-                            children: [
-                              Spacer(),
-                              Center(
-                                child: GestureDetector(
+                                SizedBox(
+                                  width: 15,
+                                ),
+                                GestureDetector(
                                   onTap: () {
-                                    if (Name != "" &&
-                                        saleQty.text != "0" &&
-                                        lastSaleRate > 0) {
-                                      addItem(
-                                          Name,
-                                          unit,
-                                          unitID,
-                                          "-" + totalAmount.toString(),
-                                          int.parse("-" + saleQty.text),
-                                          ID,
-                                          "-" +tax.toString(),
-                                          "-" +tax.toString(),
-                                          "-" +gst.toString(),
-                                          saleRate.text,
-                                          "-" + totalAmount.toString(),
-                                          "0");
-
-                                      setState(() {
-                                        unit = "";
-                                        unitID = "";
-                                        ID = "";
-                                        textEditingController.text = "";
-                                        rate = "";
-                                        saleQty.text = "";
-                                        saleRate.text = "";
-                                        unitController.text = "";
-                                        totalAmount = 0.0;
-                                        tax = 0;
-                                        vat = 0;
-                                        depoStock.text = "";
-                                        lastSaleRate = 0;
-                                      });
-
-                                      Navigator.pop(context);
-                                    } else {
-                                      FlutterFlexibleToast.showToast(
-                                          message: "Please add quantity",
-                                          toastGravity: ToastGravity.BOTTOM,
-                                          icon: ICON.ERROR,
-                                          radius: 50,
-                                          elevation: 10,
-                                          imageSize: 15,
-                                          textColor: Colors.white,
-                                          backgroundColor: Colors.black,
-                                          timeInSeconds: 2);
-                                    }
+                                    Navigator.pop(context);
                                   },
                                   child: Container(
                                     height: 50,
@@ -3464,7 +3306,7 @@ class NewOrderPageState extends State<NewOrderPage> {
                                     ),
                                     child: Center(
                                       child: Text(
-                                        'Save',
+                                        'Cancel',
                                         style: TextStyle(
                                           fontFamily: 'Arial',
                                           fontSize: 18,
@@ -3475,59 +3317,274 @@ class NewOrderPageState extends State<NewOrderPage> {
                                     ),
                                   ),
                                 ),
-                              ),
-                              SizedBox(
-                                width: 15,
-                              ),
-                              GestureDetector(
-                                onTap: () {
-                                  Navigator.pop(context);
-                                },
-                                child: Container(
-                                  height: 50,
-                                  width: 120,
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(8.0),
-                                    color: const Color(0xff20474f),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: const Color(0x85747474),
-                                        offset: Offset(6, 3),
-                                        blurRadius: 6,
-                                      ),
-                                    ],
-                                  ),
-                                  child: Center(
-                                    child: Text(
-                                      'Cancel',
-                                      style: TextStyle(
-                                        fontFamily: 'Arial',
-                                        fontSize: 18,
-                                        color: const Color(0xfff7fdfd),
-                                      ),
-                                      textAlign: TextAlign.left,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              Spacer()
-                            ],
-                          ),
-                          SizedBox(
-                            height: 40,
-                          ),
-                        ],
+                                Spacer()
+                              ],
+                            ),
+                            SizedBox(
+                              height: 40,
+                            ),
+                          ],
+                        ),
+                      )),
+                ));
+          });
+        },
+        transitionBuilder: (_, anim, __, child) {
+          return SlideTransition(
+            position: Tween(begin: Offset(0, 1), end: Offset(0, 0)).animate(anim),
+            child: child,
+          );
+        },
+      );
+
+    }
+
+
+
+    ///searchItemDialog2() {
+    showGeneralDialog(
+      barrierLabel: "Barrier",
+      barrierDismissible: true,
+      barrierColor: Colors.black.withOpacity(0.5),
+      transitionDuration: Duration(milliseconds: 500),
+      context: context,
+      pageBuilder: (_, __, ___) {
+        return StatefulBuilder(builder: (context, setState) {
+          return Material(
+              type: MaterialType.transparency,
+              child: Align(
+                alignment: Alignment.center,
+                child: Padding(
+                  padding: const EdgeInsets.all(15.0),
+                  child: Container(
+                      height: MediaQuery
+                          .of(context)
+                          .size
+                          .height * 0.7,
+                      width: MediaQuery
+                          .of(context)
+                          .size
+                          .width,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(5),
                       ),
-                    )),
+                      child: Padding(
+                        padding: const EdgeInsets.all(10.0),
+                        child: ListView(
+                          children: [
+                            Container(
+                              width: MediaQuery
+                                  .of(context)
+                                  .size
+                                  .width * 0.9,
+                              height: 50,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(5.0),
+                                color: const Color(0xffffffff),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color(0x29000000),
+                                    offset: Offset(6, 3),
+                                    blurRadius: 5,
+                                  ),
+                                ],
+                              ),
+                              child: TextFormField(
+                                  controller: name,
+                                  onChanged: (data) {
+                                    setState(() {
+                                      as = name.text;
+                                      fetchProducts = fetchDatas();
+                                    });
+                                  },
+                                  decoration: InputDecoration(
+                                    hintText: 'Enter product name here',
+                                    //filled: true,
+                                    border: InputBorder.none,
+                                    contentPadding: EdgeInsets.only(
+                                        left: 15,
+                                        bottom: 5,
+                                        top: 15,
+                                        right: 15),
+                                    filled: false,
+                                    isDense: false,
+                                    prefixIcon: Icon(
+                                      Icons.search,
+                                      size: 25.0,
+                                      color: Colors.grey,
+                                    ),
+                                  )),
+                            ),
+                            SizedBox(
+                              height: 10,
+                            ),
+                            FutureBuilder<List<Products>>(
+                                future: fetchProducts,
+                                builder: (context, snapshot) {
+                                  if (snapshot.hasData) {
+                                    return Container(
+                                      height:
+                                      MediaQuery
+                                          .of(context)
+                                          .size
+                                          .height,
+                                      width:
+                                      MediaQuery
+                                          .of(context)
+                                          .size
+                                          .width,
+                                      child: ListView.builder(
+                                          shrinkWrap: true,
+                                          itemCount: snapshot.data.length,
+                                          itemBuilder: (context, index) {
+                                            if (snapshot.data[index].name
+                                                .toLowerCase()
+                                                .contains(as.toLowerCase())) {
+                                              return Card(
+                                                color: Colors.blueGrey[300],
+                                                child: Row(
+                                                  children: [
+                                                    Container(
+                                                      width: MediaQuery
+                                                          .of(
+                                                          context)
+                                                          .size
+                                                          .width -
+                                                          180,
+                                                      child: ListTile(
+                                                        onTap: () {
+                                                          setState(() {
+                                                            textEditingController
+                                                                .text =
+                                                                snapshot
+                                                                    .data[
+                                                                index]
+                                                                    .name;
+                                                            vat = snapshot
+                                                                .data[
+                                                            index]
+                                                                .vatPerc;
+                                                            tax = snapshot
+                                                                .data[
+                                                            index]
+                                                                .vatPerc;
+                                                            Name = snapshot
+                                                                .data[index]
+                                                                .name;
+                                                            saleRate.text =
+                                                                snapshot
+                                                                    .data[
+                                                                index]
+                                                                    .salesRate
+                                                                    .toString();
+                                                            unitController
+                                                                .text =
+                                                                snapshot
+                                                                    .data[
+                                                                index]
+                                                                    .baseUnit
+                                                                    .toString();
+                                                            stock = snapshot
+                                                                .data[index]
+                                                                .stock
+                                                                .toString();
+                                                            ID = snapshot
+                                                                .data[index]
+                                                                .id
+                                                                .toString();
+                                                          });
+                                                          Navigator.pop(
+                                                              context);
+                                                          searchItemDialog2();
+                                                        },
+                                                        title: Text(
+                                                          snapshot.data[index]
+                                                              .name,
+                                                          style: TextStyle(
+                                                            fontFamily:
+                                                            'Arial',
+                                                            fontSize: 10,
+                                                            color:
+                                                            Colors.white,
+                                                            fontWeight:
+                                                            FontWeight
+                                                                .w700,
+                                                          ),
+                                                          textAlign:
+                                                          TextAlign.left,
+                                                        ),
+                                                        subtitle: Text(
+                                                          "Price : " +
+                                                              snapshot
+                                                                  .data[index]
+                                                                  .salesRate
+                                                                  .toString(),
+                                                          style: TextStyle(
+                                                            fontFamily:
+                                                            'Arial',
+                                                            fontSize: 10,
+                                                            color:
+                                                            Colors.white,
+                                                            fontWeight:
+                                                            FontWeight
+                                                                .w700,
+                                                          ),
+                                                          textAlign:
+                                                          TextAlign.left,
+                                                        ),
+                                                        leading: snapshot
+                                                            .data[index]
+                                                            .productImage !=
+                                                            null
+                                                            ? Container(
+                                                            width: 60,
+                                                            height: 80,
+                                                            child: Image.memory(
+                                                              base64Decode(
+                                                                  snapshot
+                                                                      .data[index]
+                                                                      .productImage),
+                                                              fit: BoxFit
+                                                                  .fill,))
+                                                            : Image.asset(
+                                                          "assets/images/products.jpg",
+                                                          fit: BoxFit.scaleDown,
+                                                          //    color: Colors.white
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              );
+                                            } else {
+                                              return Container(
+                                                color: Colors.blue,
+                                              );
+                                            }
+                                          }),
+                                    );
+                                  } else {
+                                    return Center(
+                                        child: CircularProgressIndicator());
+                                  }
+                                }),
+                          ],
+                        ),
+                      )),
+                ),
               ));
         });
       },
       transitionBuilder: (_, anim, __, child) {
         return SlideTransition(
-          position: Tween(begin: Offset(0, 1), end: Offset(0, 0)).animate(anim),
+          position:
+          Tween(begin: Offset(0, 1), end: Offset(0, 0)).animate(anim),
           child: child,
         );
       },
     );
+    //}
+
   }
 }

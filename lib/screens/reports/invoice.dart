@@ -6,11 +6,9 @@ import 'dart:ui';
 import 'package:http/http.dart' as http;
 import 'dart:async';
 import 'dart:convert';
-import 'package:optimist_erp_app/screens/setleAfterOrder.dart';
 import '../../app_config.dart';
 import '../../models/all_invoice.dart';
 import '../../models/all_orders.dart';
-import '../setleAfterOrder.dart';
 
 class InvoicePage extends StatefulWidget {
   @override

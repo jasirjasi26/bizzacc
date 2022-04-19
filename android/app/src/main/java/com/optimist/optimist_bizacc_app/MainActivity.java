@@ -1,4 +1,4 @@
-package com.example.optimist_erp_app;
+package com.optimist.optimist_bizacc_app;
 
 import io.flutter.embedding.android.FlutterActivity;
 

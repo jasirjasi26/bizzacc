@@ -4,9 +4,7 @@ import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'package:flutter/services.dart';
 import 'package:optimist_erp_app/models/sales_types.dart';
-import 'package:optimist_erp_app/screens/db_page.dart';
 import 'package:optimist_erp_app/screens/home.dart';
-import 'package:optimist_erp_app/screens/all_products.dart';
 import 'package:textfield_search/textfield_search.dart';
 import '../screens/newOrderPage.dart';
 import 'package:api_cache_manager/models/cache_db_model.dart';
@@ -25,7 +23,7 @@ class BottomBar extends StatefulWidget {
 class BottomBarState extends State<BottomBar> {
   int _currentIndex = 0;
   List<String> _locations = []; // Option 2
-  String _selectedLocation; // Opt
+  String _selectedLocation="[None]"; // Opt
   var _children = [MyHomePage(), Container()];
   String label = "Enter Customer Name";
   String salesType="";
@@ -47,8 +45,6 @@ class BottomBarState extends State<BottomBar> {
       );
 
       if (response.statusCode == 200) {
-        // If the server did return a 200 OK response,
-        // then parse the JSON.
         APICacheDBModel cacheDBModel =
         new APICacheDBModel(key: "types", syncData: response.body);
         await APICacheManager().addCacheData(cacheDBModel);
@@ -220,7 +216,7 @@ class BottomBarState extends State<BottomBar> {
                 child: Align(
                   alignment: Alignment.bottomCenter,
                   child: Container(
-                      height: MediaQuery.of(context).size.height * 0.65,
+                      height: MediaQuery.of(context).size.height * 0.75,
                       width: MediaQuery.of(context).size.width,
                       decoration: BoxDecoration(
                         color: Colors.white,

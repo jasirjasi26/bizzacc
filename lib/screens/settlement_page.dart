@@ -2,9 +2,7 @@
 import 'dart:convert';
 import 'package:api_cache_manager/models/cache_db_model.dart';
 import 'package:api_cache_manager/utils/cache_manager.dart';
-import 'package:connectivity/connectivity.dart';
 import 'package:data_connection_checker/data_connection_checker.dart';
-import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
@@ -22,11 +20,11 @@ class SettlementPage extends StatefulWidget {
       this.customerName,
       this.date,
       this.values,
-      this.itemCount,
+      this.balance,
       this.radioValue})
       : super(key: key);
   final int radioValue;
-  final int itemCount;
+  final String balance;
   final String date;
   final String customerName;
   final Map<String, dynamic> values;
@@ -46,10 +44,9 @@ class SettlementPageState extends State<SettlementPage> {
   var totalDisc = 0.0;
   double rounoff = 0;
   double totalReceived = 0;
-bool isLoading=false;
+  bool isLoading=false;
 
   roundOff() {
-
     double total;
     setState(() {
       total = double.parse(subTotal.text);
@@ -68,12 +65,13 @@ bool isLoading=false;
   }
 
   payOn(String a) {
-    finalBalance = double.parse(Customer.balance) + double.parse(subTotal.text);
+    finalBalance = double.parse(widget.balance) + double.parse(subTotal.text);
     setState(() {
       finalBalance = finalBalance -
           (double.parse(paidCard.text) + double.parse(paidCash.text));
       totalReceived =
           (double.parse(paidCard.text) + double.parse(paidCash.text));
+      finalBalance=double.parse(finalBalance.toStringAsFixed(User.decimals));
     });
   }
 
@@ -83,8 +81,7 @@ setState(() {
 });
 
     Map<String, dynamic> datas = {
-     // 'Balance': finalBalance,
-      //'Amount': double.parse(subTotal.text),
+      'Balance': finalBalance,
       'CardReceived': paidCard.text,
       'CashReceived': paidCash.text,
       'RoundOff': rounoff.toStringAsFixed(User.decimals),
@@ -106,6 +103,7 @@ setState(() {
           'Accept': 'application/json',
         },
       );
+      print(response.body);
       if (response.statusCode == 200) {
         setState(() {
           isLoading=false;
@@ -155,9 +153,10 @@ setState(() {
 
   void initState() {
     // TODO: implement initState
-
     setState(() {
-      oldBalance.text = Customer.balance;
+      oldBalance.text = widget.balance;
+      finalBalance=double.parse(widget.balance)+double.parse(widget.values['BillAmount']);
+      finalBalance=double.parse(finalBalance.toStringAsFixed(User.decimals));
       billAmount.text = widget.values['BillAmount'].toString();
       subTotal.text = widget.values['BillAmount'].toString();
       paidCash.text = "0";
@@ -608,7 +607,7 @@ setState(() {
                     children: [
                       Spacer(),
                       Text(
-                        'Balance   ',
+                        'New Balance   ',
                         style: TextStyle(
                           fontFamily: 'Arial',
                           fontSize: 14,

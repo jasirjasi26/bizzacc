@@ -205,10 +205,10 @@ class PrintState extends State<Print> {
   void initState() {
     super.initState();
     initPlatformState();
-    Uint8List bytes = base64Decode(User.companylogo);
-    setState(() {
-      image = bytes;
-    });
+    // Uint8List bytes = base64Decode(User.companylogo);
+    // setState(() {
+    //   image = bytes;
+    // });
     getBill();
   }
 
@@ -314,9 +314,9 @@ class PrintState extends State<Print> {
                 SizedBox(
                   height: 100,
                 ),
-                image != null
-                    ? Container(width: 100, height: 140, child: Image.memory(bytes,fit: BoxFit.fill,))
-                    : Container(),
+                // image != null
+                //     ? Container(width: 100, height: 140, child: Image.memory(bytes,fit: BoxFit.fill,))
+                //     : Container(),
                 SizedBox(
                   height: 30,
                 ),

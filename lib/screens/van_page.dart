@@ -125,10 +125,10 @@ class VanPageState extends State<VanPage> {
 
   void initState() {
     // TODO: implement initState
-    Uint8List bytes = base64Decode(User.companylogo);
-    setState(() {
-      image=bytes;
-    });
+    // Uint8List bytes = base64Decode(User.companylogo);
+    // setState(() {
+    //   image=bytes;
+    // });
 
     super.initState();
   }
@@ -164,13 +164,13 @@ class VanPageState extends State<VanPage> {
                           const EdgeInsets.only(top: 0.0, left: 10, right: 15),
                       child: Row(
                         children: [
-                          Container(
-                            height: 100,
-                            width: 120,
-                            child: image != null
-                                ?  Image.memory(image,fit: BoxFit.fill,)
-                                : Container(),
-                          ),
+                          // Container(
+                          //   height: 100,
+                          //   width: 120,
+                          //   child: User.companylogo != ""
+                          //       ?  Image.memory(image,fit: BoxFit.fill,)
+                          //       : Container(),
+                          // ),
                           Spacer(),
                         ],
                       ),
@@ -736,33 +736,33 @@ class VanPageState extends State<VanPage> {
                     ],
                   ),
                 ),
-                // Padding(
-                //   padding: EdgeInsets.only(left: 15.0, right: 15),
-                //   child: Row(
-                //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                //     children: [
-                //       Text(
-                //         'Balance',
-                //         style: TextStyle(
-                //           fontFamily: 'Arial',
-                //           fontSize: 12,
-                //           color: const Color(0xff5b5b5b),
-                //           fontWeight: FontWeight.w500,
-                //         ),
-                //         textAlign: TextAlign.left,
-                //       ),
-                //       Text(
-                //         balance,
-                //         style: TextStyle(
-                //           fontFamily: 'Arial',
-                //           fontSize: 12,
-                //           color: const Color(0xff5b5b5b),
-                //         ),
-                //         textAlign: TextAlign.left,
-                //       ),
-                //     ],
-                //   ),
-                // ),
+                Padding(
+                  padding: EdgeInsets.only(left: 15.0, right: 15),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Balance',
+                        style: TextStyle(
+                          fontFamily: 'Arial',
+                          fontSize: 12,
+                          color: const Color(0xff5b5b5b),
+                          fontWeight: FontWeight.w500,
+                        ),
+                        textAlign: TextAlign.left,
+                      ),
+                      Text(
+                        widget.data['Balance'].toString(),
+                        style: TextStyle(
+                          fontFamily: 'Arial',
+                          fontSize: 12,
+                          color: const Color(0xff5b5b5b),
+                        ),
+                        textAlign: TextAlign.left,
+                      ),
+                    ],
+                  ),
+                ),
                 Padding(
                   padding: EdgeInsets.only(left: 15.0, right: 15, top: 10),
                   child: Row(

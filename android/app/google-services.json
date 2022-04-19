@@ -8,9 +8,75 @@
   "client": [
     {
       "client_info": {
+        "mobilesdk_app_id": "1:897731704718:android:3bfd85af549a78285a56df",
+        "android_client_info": {
+          "package_name": "com.example.bizaccfb"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "897731704718-rid6qbgio70ormlmbov3ou3ik9vmo1tg.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.bizaccfb",
+            "certificate_hash": "83b06fb128808eeba36841c444255b9ecc9b15a8"
+          }
+        },
+        {
+          "client_id": "897731704718-9j3ec527roqbskkof0k4po8hk782k6ml.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBwFmWgJhJc3P-6kKxxDgFb5dsZDQVyZBo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "897731704718-9j3ec527roqbskkof0k4po8hk782k6ml.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
         "mobilesdk_app_id": "1:897731704718:android:ec42b65d90b6676a5a56df",
         "android_client_info": {
           "package_name": "com.example.optimist_erp_app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "897731704718-9j3ec527roqbskkof0k4po8hk782k6ml.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBwFmWgJhJc3P-6kKxxDgFb5dsZDQVyZBo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "897731704718-9j3ec527roqbskkof0k4po8hk782k6ml.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:897731704718:android:fddeed923dd1ae4a5a56df",
+        "android_client_info": {
+          "package_name": "com.optimist.optimist_bizacc_app"
         }
       },
       "oauth_client": [

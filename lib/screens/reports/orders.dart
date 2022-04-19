@@ -8,13 +8,11 @@ import 'dart:ui';
 import 'package:http/http.dart' as http;
 import 'dart:async';
 import 'dart:convert';
-import 'package:optimist_erp_app/screens/setleAfterOrder.dart';
 import '../../app_config.dart';
 import '../../models/all_invoice.dart';
 import '../../models/all_orders.dart';
 import '../edit_order.dart';
 import '../newOrderPage.dart';
-import '../setleAfterOrder.dart';
 
 class OrdersPage extends StatefulWidget {
   @override
@@ -104,7 +102,7 @@ class StockReportsState1 extends State<OrdersPage> {
       // APICacheDBModel cacheDBModel =
       //     new APICacheDBModel(key: "orderlist", syncData: response.body);
       // await APICacheManager().addCacheData(cacheDBModel);
-      print(response.body);
+
       return allOrderFromJson(response.body);
     } else {
       // If the server did not return a 200 OK response,
@@ -112,38 +110,6 @@ class StockReportsState1 extends State<OrdersPage> {
       throw Exception('Failed to load album');
     }
   }
-
-  // Future<List<AllInvoice>> fetchInvoiceDatas() async {
-  //   Map data = {
-  //     'from_Date': from,
-  //     'to_Date': to,
-  //   };
-  //   //encode Map to JSON
-  //   var body = json.encode(data);
-  //   String url = AppConfig.DOMAIN_PATH + "salesinvoice/showall";
-  //   final response = await http.post(
-  //     url,
-  //     body: body,
-  //     headers: {
-  //       'Content-Type': 'application/json',
-  //       'Accept': 'application/json',
-  //     },
-  //   );
-  //
-  //   if (response.statusCode == 200) {
-  //     // If the server did return a 200 OK response,
-  //     // then parse the JSON.
-  //     // APICacheDBModel cacheDBModel =
-  //     //     new APICacheDBModel(key: "invoicelist", syncData: response.body);
-  //     // await APICacheManager().addCacheData(cacheDBModel);
-  //
-  //     return allInvoiceFromJson(response.body);
-  //   } else {
-  //     // If the server did not return a 200 OK response,
-  //     // then throw an exception.
-  //     throw Exception('Failed to load album');
-  //   }
-  // }
 
   deleteOrder(String id) async {
     print(id);
@@ -195,15 +161,15 @@ class StockReportsState1 extends State<OrdersPage> {
 
     if (response.statusCode == 200) {
       Map<String, dynamic> data = jsonDecode(response.body);
-      EasyLoading.showSuccess(data.toString());
-      // Navigator.push(context,
-      //     MaterialPageRoute(builder: (context) {
-      //       return EditOrderPage(
-      //         orderId: id,
-      //         customerName: data["CustomerName"].toString(),
-      //         salesType: data["SalesTypeID"].toString(),
-      //       );
-      //     }));
+     // EasyLoading.showSuccess(data.toString());
+      Navigator.push(context,
+          MaterialPageRoute(builder: (context) {
+            return EditOrderPage(
+              orderId: id,
+              customerName: data["CustomerName"].toString(),
+              salesType: data["SalesTypeID"].toString(),
+            );
+          }));
     } else {
       // If the server did not return a 200 OK response,
       // then throw an exception.

@@ -1,10 +1,7 @@
 // @dart=2.9
-import 'dart:async';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:optimist_erp_app/screens/splash.dart';
-import 'package:optimist_erp_app/screens/van_page.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:optimist_erp_app/syncronize.dart';
 import 'contactinfomodel.dart';
@@ -15,7 +12,7 @@ import 'package:uuid/uuid.dart';
 
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
+ await Firebase.initializeApp();
   await SqfliteDatabaseHelper.instance.db;
   runApp(MyApp());
   configLoading();

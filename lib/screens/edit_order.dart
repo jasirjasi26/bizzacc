@@ -32,8 +32,7 @@ import 'package:data_connection_checker/data_connection_checker.dart';
 import '../models/units.dart';
 
 class EditOrderPage extends StatefulWidget {
-  EditOrderPage(
-      {Key key, this.customerName, this.salesType,this.orderId })
+  EditOrderPage({Key key, this.customerName, this.salesType, this.orderId})
       : super(key: key);
 
   final String customerName;
@@ -49,8 +48,9 @@ class NewOrderPageState extends State<EditOrderPage> {
   final _screenshotController = ScreenshotController();
   final pdf = pw.Document();
   int _radioValue1 = 0;
+
   //List<String> itemList = [];
-  List<String> unitlist = [""];
+  List<String> unitlist = [];
   String _selectedUnit = "";
   var saleRate = TextEditingController();
   var saleQty = TextEditingController();
@@ -95,48 +95,25 @@ class NewOrderPageState extends State<EditOrderPage> {
   String ID = "1";
   String unitID = "";
   String ids = "";
-  bool isLoading=false;
-  String voucherid = DateTime
-      .now()
-      .year
-      .toString() +
-      DateTime
-          .now()
-          .month
-          .toString() +
-      DateTime
-          .now()
-          .day
-          .toString() +
-      DateTime
-          .now()
-          .hour
-          .toString() +
-      DateTime
-          .now()
-          .minute
-          .toString() +
-      DateTime
-          .now()
-          .second
-          .toString();
+  bool isLoading = false;
+  String voucherid = DateTime.now().year.toString() +
+      DateTime.now().month.toString() +
+      DateTime.now().day.toString() +
+      DateTime.now().hour.toString() +
+      DateTime.now().minute.toString() +
+      DateTime.now().second.toString();
 
   DateTime selectedDate = DateTime.now();
-  String from = "Select a date";
-  String today = DateTime
-      .now()
-      .year
-      .toString() +
+  String from = DateTime.now().year.toString() +
       "-" +
-      DateTime
-          .now()
-          .month
-          .toString() +
+      DateTime.now().month.toString() +
       "-" +
-      DateTime
-          .now()
-          .day
-          .toString();
+      DateTime.now().day.toString();
+  String today = DateTime.now().year.toString() +
+      "-" +
+      DateTime.now().month.toString() +
+      "-" +
+      DateTime.now().day.toString();
   List<Products> products;
   var name = TextEditingController();
   Future<List<Products>> fetchProducts;
@@ -146,8 +123,6 @@ class NewOrderPageState extends State<EditOrderPage> {
   String orderDate = "";
   String salesTypeId = "";
   List<String> getIds = [];
-
-
 
   getSingleOrder(String id) async {
     Map data = {
@@ -172,33 +147,33 @@ class NewOrderPageState extends State<EditOrderPage> {
       Map<String, dynamic> data = jsonDecode(response.body);
 
       setState(() {
-        orderId=data['OrderID'];
-        orderDate=data['OrderingDate'];
-        salesTypeId=data['SalesTypeID'].toString();
-        customerId=data['CustomerID'].toString();
-        discountedBill=data['BillAmount'];
+        orderId = data['OrderID'];
+        orderDate = data['OrderingDate'];
+        salesTypeId = data['SalesTypeID'].toString();
+        customerId = data['CustomerID'].toString();
+        discountedBill = data['BillAmount'];
+        totalBill= data['BillAmount'];
       });
 
-      for(int i=0;i<data['Items'].length;i++){
+      for (int i = 0; i < data['Items'].length; i++) {
         setState(() {
           getIds.add(data['Items'][i]['Id'].toString());
           itemIds.add(data['Items'][i]['ItemID'].toString());
-          itemname.add(data['Items'][i]['ItemID'].toString());
+          itemname.add(data['Items'][i]['ItemName'].toString());
           totalamount.add(data['Items'][i]['Amount'].toString());
           quantity.add(data['Items'][i]['Qty'].round());
           rateList.add(data['Items'][i]['Rate'].toString());
           discountAmount.add(data['Items'][i]['DiscAmount']);
           units.add("Box");
+          unitlist.add(data['Items'][i]['UnitID'].toString());
           allDiscounts.add(data['Items'][i]['DiscAmount'].toString());
           percentages.add(data['Items'][i]['DiscPercentage'].toString());
           discountedFinalRate.add(data['Items'][i]['Amount'].toString());
           taxTotal.add(data['Items'][i]['VATAmount']);
           vatTotal.add(data['Items'][i]['VATAmount'].toString());
           gstTotal.add(data['Items'][i]['GSTAmount'].toString());
-
         });
       }
-
     } else {
       // If the server did not return a 200 OK response,
       // then throw an exception.
@@ -212,7 +187,7 @@ class NewOrderPageState extends State<EditOrderPage> {
     if (!isCacheExist) {
       print("Data not exists");
 
-      Map data = {'depotid':User.depotId, 'search': ""};
+      Map data = {'depotid': User.depotId, 'search': ""};
       //encode Map to JSON
       var body = json.encode(data);
       String url = AppConfig.DOMAIN_PATH + "customers";
@@ -229,7 +204,7 @@ class NewOrderPageState extends State<EditOrderPage> {
         // If the server did return a 200 OK response,
         // then parse the JSON.
         APICacheDBModel cacheDBModel =
-        new APICacheDBModel(key: "cs", syncData: response.body);
+            new APICacheDBModel(key: "cs", syncData: response.body);
         await APICacheManager().addCacheData(cacheDBModel);
         var json = jsonDecode(response.body);
 
@@ -280,7 +255,7 @@ class NewOrderPageState extends State<EditOrderPage> {
         // If the server did return a 200 OK response,
         // then parse the JSON.
         APICacheDBModel cacheDBModel =
-        new APICacheDBModel(key: "ps", syncData: response.body);
+            new APICacheDBModel(key: "ps", syncData: response.body);
         await APICacheManager().addCacheData(cacheDBModel);
 
         EasyLoading.showSuccess('Refresh done...');
@@ -291,7 +266,6 @@ class NewOrderPageState extends State<EditOrderPage> {
         throw Exception('Failed to load album');
       }
     }
-
   }
 
   Future<List<Products>> fetchDatas() async {
@@ -317,7 +291,7 @@ class NewOrderPageState extends State<EditOrderPage> {
         // If the server did return a 200 OK response,
         // then parse the JSON.
         APICacheDBModel cacheDBModel =
-        new APICacheDBModel(key: "ps", syncData: response.body);
+            new APICacheDBModel(key: "ps", syncData: response.body);
         await APICacheManager().addCacheData(cacheDBModel);
 
         return productsFromJson(response.body);
@@ -357,7 +331,7 @@ class NewOrderPageState extends State<EditOrderPage> {
         // If the server did return a 200 OK response,
         // // then parse the JSON.
         APICacheDBModel cacheDBModel =
-        new APICacheDBModel(key: "units", syncData: response.body);
+            new APICacheDBModel(key: "units", syncData: response.body);
         await APICacheManager().addCacheData(cacheDBModel);
         List<Units> filtered = [];
         unitsFromJson(response.body).forEach((element) {
@@ -410,7 +384,8 @@ class NewOrderPageState extends State<EditOrderPage> {
     });
   }
 
-  void addItem(String Aname,
+  void addItem(
+      String Aname,
       String Aunit,
       String AunitId,
       String AdiscountedAmount,
@@ -516,13 +491,13 @@ class NewOrderPageState extends State<EditOrderPage> {
         "ItemID": itemIds[i],
         "Qty": quantity[i],
         "Rate": rateList[i],
-        "ItemName":itemname[i],
+        "ItemName": itemname[i],
         "Amount": totalamount[i],
         "UnitID": unitlist[i],
         "GSTAmount": gstTotal[i],
         "VATAmount": vatTotal[i],
         "CESSAmount": "",
-        "InclusiveRate":"",
+        "InclusiveRate": "",
         "DiscAmount": discountAmount[i],
         "DiscPercentage": percentages[i],
         // "SalesOrderHDRID": 0,
@@ -530,7 +505,7 @@ class NewOrderPageState extends State<EditOrderPage> {
       };
       amm.add(itemValues);
     }
-    double bamount=discountedBill-disc;
+    double bamount = discountedBill - disc;
 
     Map<String, dynamic> da = {
       "Id": 0,
@@ -540,9 +515,9 @@ class NewOrderPageState extends State<EditOrderPage> {
       "DeliveryDate": from,
       "Items": amm.toList(),
       "InvoiceID": voucherid,
-      "InvoiceDate":  time,
+      "InvoiceDate": time,
       "RoundOff": "",
-      "UpdatedTime":  time,
+      "UpdatedTime": time,
       "SalesTypeID": widget.salesType,
       "Remarks": "",
       "UserID": User.userId
@@ -553,47 +528,38 @@ class NewOrderPageState extends State<EditOrderPage> {
         customerName: widget.customerName,
         date: today,
         values: da,
-        itemCount: itemIds.length,
+        balance: customer_balance,
         radioValue: _radioValue1,
       );
     }));
   }
 
   Future<void> addtoOrders() async {
-    EasyLoading.showInfo('Please Wait');
+    EasyLoading.showInfo('Please Wait...');
     setState(() {
-      isLoading=true;
+      isLoading = true;
     });
 
     List amm = [];
-    String time = DateTime
-        .now()
-        .year
-        .toString() +"-"+
-        DateTime
-            .now()
-            .month
-            .toString() +"-"+
-        DateTime
-            .now()
-            .day
-            .toString() +" "+
-        DateTime
-            .now()
-            .hour
-            .toString() +":"+
-        DateTime
-            .now()
-            .minute
-            .toString() +":"+
-        DateTime
-            .now()
-            .second
-            .toString();
+    String time = DateTime.now().year.toString() +
+        "-" +
+        DateTime.now().month.toString() +
+        "-" +
+        DateTime.now().day.toString() +
+        " " +
+        DateTime.now().hour.toString() +
+        ":" +
+        DateTime.now().minute.toString() +
+        ":" +
+        DateTime.now().second.toString();
+
+    print(getIds.length);
+    print(itemname.length);
+    print(unitlist);
 
     for (int i = 0; i < itemname.length; i++) {
       Map<String, dynamic> itemValues = {
-        "Id": getIds.length <i ? getIds[i] : 0,
+        "Id": i < getIds.length ? getIds[i] : 0,
         "ItemID": itemIds[i],
         "ItemName": itemname[i],
         "Amount": totalamount[i],
@@ -613,11 +579,11 @@ class NewOrderPageState extends State<EditOrderPage> {
       amm.add(itemValues);
     }
 
-    double bamount=discountedBill-disc;
+    double bamount = discountedBill - disc;
 
     Map<String, dynamic> data = {
       //"Id": 28,
-      "TotalTax":taxTotal.reduce((a, b) => a + b),
+      "TotalTax": taxTotal.reduce((a, b) => a + b),
       "BillAmount": bamount.toStringAsFixed(User.decimals),
       "CustomerID": customerId,
       "DeliveryDate": from,
@@ -646,36 +612,34 @@ class NewOrderPageState extends State<EditOrderPage> {
 
       if (response.statusCode == 200) {
         setState(() {
-          isLoading=false;
+          isLoading = false;
         });
         EasyLoading.showSuccess('Successfully Saved');
         Navigator.pop(context);
       } else {
         setState(() {
-          isLoading=false;
+          isLoading = false;
         });
         EasyLoading.showError('Failed to Sent');
       }
     } else {
       print('No internet :( Reason:');
       APICacheDBModel cacheDBModel =
-      new APICacheDBModel(key: data['OrderID'].toString(), syncData: body);
+          new APICacheDBModel(key: data['OrderID'].toString(), syncData: body);
       await APICacheManager().addCacheData(cacheDBModel).then((value) => {
-        if(value){
-          saveToDb(data)
-        }
-      });
+            if (value) {saveToDb(data)}
+          });
     }
-
   }
 
   saveToDb(Map<String, dynamic> data) async {
-    ContactinfoModel contactinfoModel = ContactinfoModel(id: null,userId: data['OrderID'].toString(),createdAt: "Order");
-    await Controller().addData(contactinfoModel).then((value){
-      if (value>0) {
+    ContactinfoModel contactinfoModel = ContactinfoModel(
+        id: null, userId: data['OrderID'].toString(), createdAt: "Order");
+    await Controller().addData(contactinfoModel).then((value) {
+      if (value > 0) {
         EasyLoading.showSuccess('Successfully Saved');
         Navigator.pop(context);
-      }else{
+      } else {
         print("failed");
       }
     });
@@ -790,7 +754,7 @@ class NewOrderPageState extends State<EditOrderPage> {
                       height: 35,
                       width: 30,
                       child: // Adobe XD layer: 'surface1' (group)
-                      Stack(
+                          Stack(
                         children: <Widget>[
                           Pinned.fromPins(
                             Pin(start: 0.0, end: 0.0),
@@ -898,7 +862,7 @@ class NewOrderPageState extends State<EditOrderPage> {
                       height: 35,
                       width: 25,
                       child: // Adobe XD layer: 'surface1' (group)
-                      Stack(
+                          Stack(
                         children: <Widget>[
                           Pinned.fromPins(
                             Pin(start: 0.0, end: 0.0),
@@ -953,10 +917,7 @@ class NewOrderPageState extends State<EditOrderPage> {
           ],
         ),
         Container(
-          width: MediaQuery
-              .of(context)
-              .size
-              .width,
+          width: MediaQuery.of(context).size.width,
           color: Color(0xff20474f),
           height: 35,
           child: Padding(
@@ -964,10 +925,7 @@ class NewOrderPageState extends State<EditOrderPage> {
             child: Row(
               children: [
                 Container(
-                  width: MediaQuery
-                      .of(context)
-                      .size
-                      .width * 0.33,
+                  width: MediaQuery.of(context).size.width * 0.33,
                   child: Text(
                     'Item',
                     style: TextStyle(
@@ -980,10 +938,7 @@ class NewOrderPageState extends State<EditOrderPage> {
                 ),
                 Spacer(),
                 Container(
-                  width: MediaQuery
-                      .of(context)
-                      .size
-                      .width * 0.1,
+                  width: MediaQuery.of(context).size.width * 0.1,
                   child: Text(
                     'Qty',
                     style: TextStyle(
@@ -995,10 +950,7 @@ class NewOrderPageState extends State<EditOrderPage> {
                   ),
                 ),
                 Container(
-                  width: MediaQuery
-                      .of(context)
-                      .size
-                      .width * 0.1,
+                  width: MediaQuery.of(context).size.width * 0.1,
                   child: Text(
                     'Rate',
                     style: TextStyle(
@@ -1010,10 +962,7 @@ class NewOrderPageState extends State<EditOrderPage> {
                   ),
                 ),
                 Container(
-                  width: MediaQuery
-                      .of(context)
-                      .size
-                      .width * 0.1,
+                  width: MediaQuery.of(context).size.width * 0.1,
                   child: Text(
                     'Disc',
                     style: TextStyle(
@@ -1025,10 +974,7 @@ class NewOrderPageState extends State<EditOrderPage> {
                   ),
                 ),
                 Container(
-                  width: MediaQuery
-                      .of(context)
-                      .size
-                      .width * 0.1,
+                  width: MediaQuery.of(context).size.width * 0.1,
                   child: Text(
                     'Tax',
                     style: TextStyle(
@@ -1040,10 +986,7 @@ class NewOrderPageState extends State<EditOrderPage> {
                   ),
                 ),
                 Container(
-                  width: MediaQuery
-                      .of(context)
-                      .size
-                      .width * 0.1,
+                  width: MediaQuery.of(context).size.width * 0.1,
                   child: Text(
                     'Total',
                     style: TextStyle(
@@ -1054,19 +997,13 @@ class NewOrderPageState extends State<EditOrderPage> {
                     textAlign: TextAlign.left,
                   ),
                 ),
-                SizedBox(width: MediaQuery
-                    .of(context)
-                    .size
-                    .width * 0.1),
+                SizedBox(width: MediaQuery.of(context).size.width * 0.1),
               ],
             ),
           ),
         ),
         Container(
-            height: MediaQuery
-                .of(context)
-                .size
-                .height * 0.2,
+            height: MediaQuery.of(context).size.height * 0.2,
             child: ListView.builder(
               itemCount: itemname.length,
               itemBuilder: (context, i) {
@@ -1074,25 +1011,17 @@ class NewOrderPageState extends State<EditOrderPage> {
                   padding: const EdgeInsets.all(0.0),
                   child: Container(
                     height: 30,
-                    color: i
-                        .floor()
-                        .isEven
+                    color: i.floor().isEven
                         ? Colors.blueGrey
                         : Colors.blueGrey[900],
-                    width: MediaQuery
-                        .of(context)
-                        .size
-                        .width,
+                    width: MediaQuery.of(context).size.width,
                     child: Row(
                       children: [
                         SizedBox(
                           width: 10,
                         ),
                         Container(
-                          width: MediaQuery
-                              .of(context)
-                              .size
-                              .width * 0.33,
+                          width: MediaQuery.of(context).size.width * 0.33,
                           child: Text(
                             itemname[i].toString(),
                             style: TextStyle(
@@ -1105,10 +1034,7 @@ class NewOrderPageState extends State<EditOrderPage> {
                         ),
                         Spacer(),
                         Container(
-                          width: MediaQuery
-                              .of(context)
-                              .size
-                              .width * 0.13,
+                          width: MediaQuery.of(context).size.width * 0.13,
                           child: Text(
                             quantity[i].toString() + " " + units[i].toString(),
                             style: TextStyle(
@@ -1120,10 +1046,7 @@ class NewOrderPageState extends State<EditOrderPage> {
                           ),
                         ),
                         Container(
-                          width: MediaQuery
-                              .of(context)
-                              .size
-                              .width * 0.1,
+                          width: MediaQuery.of(context).size.width * 0.1,
                           child: Text(
                             rateList[i].toString(),
                             style: TextStyle(
@@ -1135,10 +1058,7 @@ class NewOrderPageState extends State<EditOrderPage> {
                           ),
                         ),
                         Container(
-                          width: MediaQuery
-                              .of(context)
-                              .size
-                              .width * 0.1,
+                          width: MediaQuery.of(context).size.width * 0.1,
                           child: Text(
                             allDiscounts[i].toString(),
                             style: TextStyle(
@@ -1150,10 +1070,7 @@ class NewOrderPageState extends State<EditOrderPage> {
                           ),
                         ),
                         Container(
-                          width: MediaQuery
-                              .of(context)
-                              .size
-                              .width * 0.1,
+                          width: MediaQuery.of(context).size.width * 0.1,
                           child: Text(
                             vatTotal[i].toString(),
                             style: TextStyle(
@@ -1165,10 +1082,7 @@ class NewOrderPageState extends State<EditOrderPage> {
                           ),
                         ),
                         Container(
-                          width: MediaQuery
-                              .of(context)
-                              .size
-                              .width * 0.1,
+                          width: MediaQuery.of(context).size.width * 0.1,
                           child: Text(
                             discountedFinalRate[i].toString(),
                             style: TextStyle(
@@ -1180,10 +1094,7 @@ class NewOrderPageState extends State<EditOrderPage> {
                           ),
                         ),
                         Container(
-                          width: MediaQuery
-                              .of(context)
-                              .size
-                              .width * 0.1,
+                          width: MediaQuery.of(context).size.width * 0.1,
                           child: GestureDetector(
                             onTap: () {
                               deleteItem(i);
@@ -1201,7 +1112,6 @@ class NewOrderPageState extends State<EditOrderPage> {
                 );
               },
             )),
-
 
         ///after container
         ///
@@ -1236,10 +1146,7 @@ class NewOrderPageState extends State<EditOrderPage> {
                     width: 5,
                   ),
                   Container(
-                    width: MediaQuery
-                        .of(context)
-                        .size
-                        .width * 0.3,
+                    width: MediaQuery.of(context).size.width * 0.3,
                     height: 30,
                     padding: EdgeInsets.only(bottom: 7, left: 5),
                     decoration: BoxDecoration(
@@ -1286,10 +1193,7 @@ class NewOrderPageState extends State<EditOrderPage> {
                     width: 5,
                   ),
                   Container(
-                    width: MediaQuery
-                        .of(context)
-                        .size
-                        .width * 0.3,
+                    width: MediaQuery.of(context).size.width * 0.3,
                     height: 30,
                     padding: EdgeInsets.only(bottom: 7, left: 5),
                     decoration: BoxDecoration(
@@ -1360,7 +1264,7 @@ class NewOrderPageState extends State<EditOrderPage> {
                       ],
                     ),
                     child:
-                    Center(child: Text((discountedBill - disc).toString())),
+                        Center(child: Text((discountedBill - disc).toString())),
                   ),
                 ],
               ),
@@ -1486,8 +1390,8 @@ class NewOrderPageState extends State<EditOrderPage> {
                     onTap: () {
                       Navigator.push(context,
                           MaterialPageRoute(builder: (context) {
-                            return QRViewExample();
-                          }));
+                        return QRViewExample();
+                      }));
                     },
                     child: Center(
                       child: Image.asset(
@@ -1510,57 +1414,129 @@ class NewOrderPageState extends State<EditOrderPage> {
                       Spacer(),
                       _radioValue1 == 1
                           ? GestureDetector(
-                        onTap: () {
-                          if (itemname.length > 0) {
-                            if (from != "Select a date") {
-                              addtoOrders();
-                            } else {
-                              FlutterFlexibleToast.showToast(
-                                  message: "Please select date...",
-                                  // toastLength: Toast.LENGTH_LONG,
-                                  toastGravity: ToastGravity.BOTTOM,
-                                  icon: ICON.ERROR,
-                                  radius: 50,
-                                  elevation: 10,
-                                  imageSize: 15,
-                                  textColor: Colors.white,
-                                  backgroundColor: Colors.black,
-                                  timeInSeconds: 2);
-                            }
-                          } else {
-                            FlutterFlexibleToast.showToast(
-                                message: "Please add items",
-                                // toastLength: Toast.LENGTH_LONG,
-                                toastGravity: ToastGravity.BOTTOM,
-                                icon: ICON.ERROR,
-                                radius: 50,
-                                elevation: 10,
-                                imageSize: 20,
-                                textColor: Colors.white,
-                                backgroundColor: Colors.black,
-                                timeInSeconds: 2);
-                          }
-                        },
-                        child: Container(
-                          height: 50,
-                          width: 120,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(8.0),
-                            color: const Color(0xff20474f),
-                            boxShadow: [
-                              BoxShadow(
-                                color: const Color(0x85747474),
-                                offset: Offset(6, 3),
-                                blurRadius: 6,
+                              onTap: () {
+                                if (itemname.length > 0) {
+                                  if (from != "Select a date") {
+                                    addtoOrders();
+                                  } else {
+                                    FlutterFlexibleToast.showToast(
+                                        message: "Please select date...",
+                                        // toastLength: Toast.LENGTH_LONG,
+                                        toastGravity: ToastGravity.BOTTOM,
+                                        icon: ICON.ERROR,
+                                        radius: 50,
+                                        elevation: 10,
+                                        imageSize: 15,
+                                        textColor: Colors.white,
+                                        backgroundColor: Colors.black,
+                                        timeInSeconds: 2);
+                                  }
+                                } else {
+                                  FlutterFlexibleToast.showToast(
+                                      message: "Please add items",
+                                      // toastLength: Toast.LENGTH_LONG,
+                                      toastGravity: ToastGravity.BOTTOM,
+                                      icon: ICON.ERROR,
+                                      radius: 50,
+                                      elevation: 10,
+                                      imageSize: 20,
+                                      textColor: Colors.white,
+                                      backgroundColor: Colors.black,
+                                      timeInSeconds: 2);
+                                }
+                              },
+                              child: Container(
+                                height: 50,
+                                width: 120,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(8.0),
+                                  color: const Color(0xff20474f),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: const Color(0x85747474),
+                                      offset: Offset(6, 3),
+                                      blurRadius: 6,
+                                    ),
+                                  ],
+                                ),
+                                child: Center(
+                                  child: Stack(
+                                    children: [
+                                      Center(
+                                        child: Text(
+                                          'Save',
+                                          style: TextStyle(
+                                            fontFamily: 'Arial',
+                                            fontSize: 18,
+                                            color: const Color(0xfff7fdfd),
+                                          ),
+                                          textAlign: TextAlign.left,
+                                        ),
+                                      ),
+                                      isLoading
+                                          ? Center(
+                                              child:
+                                                  CircularProgressIndicator())
+                                          : Container(),
+                                    ],
+                                  ),
+                                ),
                               ),
-                            ],
-                          ),
-                          child: Center(
-                            child: Stack(
-                              children: [
-                                Center(
+                            )
+                          : Container(),
+                      SizedBox(
+                        width: 15,
+                      ),
+                      _radioValue1 == 0
+                          ? GestureDetector(
+                              onTap: () {
+                                if (itemname.length > 0) {
+                                  if (from != "Select a date") {
+                                    addtoInvoiceValues();
+                                  } else {
+                                    FlutterFlexibleToast.showToast(
+                                        message: "Please select date...",
+                                        // toastLength: Toast.LENGTH_LONG,
+                                        toastGravity: ToastGravity.BOTTOM,
+                                        icon: ICON.ERROR,
+                                        radius: 50,
+                                        elevation: 10,
+                                        imageSize: 15,
+                                        textColor: Colors.white,
+                                        backgroundColor: Colors.black,
+                                        timeInSeconds: 2);
+                                  }
+                                } else {
+                                  FlutterFlexibleToast.showToast(
+                                      message: "Please add items",
+                                      // toastLength: Toast.LENGTH_LONG,
+                                      toastGravity: ToastGravity.BOTTOM,
+                                      icon: ICON.ERROR,
+                                      radius: 50,
+                                      elevation: 10,
+                                      imageSize: 20,
+                                      textColor: Colors.white,
+                                      backgroundColor: Colors.black,
+                                      timeInSeconds: 2);
+                                }
+                              },
+                              child: Container(
+                                height: 50,
+                                width: 150,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(8.0),
+                                  color: const Color(0xff20474f),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: const Color(0x85747474),
+                                      offset: Offset(6, 3),
+                                      blurRadius: 6,
+                                    )
+                                  ],
+                                ),
+                                child: Center(
                                   child: Text(
-                                    'Save',
+                                    'Generate Invoice',
                                     style: TextStyle(
                                       fontFamily: 'Arial',
                                       fontSize: 18,
@@ -1569,76 +1545,9 @@ class NewOrderPageState extends State<EditOrderPage> {
                                     textAlign: TextAlign.left,
                                   ),
                                 ),
-                                isLoading?Center(child: CircularProgressIndicator()):Container(),
-                              ],
-                            ),
-                          ),
-                        ),
-                      )
-                          : Container(),
-                      SizedBox(
-                        width: 15,
-                      ),
-                      _radioValue1 == 0
-                          ? GestureDetector(
-                        onTap: () {
-                          if (itemname.length > 0) {
-                            if (from != "Select a date") {
-                              addtoInvoiceValues();
-                            } else {
-                              FlutterFlexibleToast.showToast(
-                                  message: "Please select date...",
-                                  // toastLength: Toast.LENGTH_LONG,
-                                  toastGravity: ToastGravity.BOTTOM,
-                                  icon: ICON.ERROR,
-                                  radius: 50,
-                                  elevation: 10,
-                                  imageSize: 15,
-                                  textColor: Colors.white,
-                                  backgroundColor: Colors.black,
-                                  timeInSeconds: 2);
-                            }
-                          } else {
-                            FlutterFlexibleToast.showToast(
-                                message: "Please add items",
-                                // toastLength: Toast.LENGTH_LONG,
-                                toastGravity: ToastGravity.BOTTOM,
-                                icon: ICON.ERROR,
-                                radius: 50,
-                                elevation: 10,
-                                imageSize: 20,
-                                textColor: Colors.white,
-                                backgroundColor: Colors.black,
-                                timeInSeconds: 2);
-                          }
-                        },
-                        child: Container(
-                          height: 50,
-                          width: 150,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(8.0),
-                            color: const Color(0xff20474f),
-                            boxShadow: [
-                              BoxShadow(
-                                color: const Color(0x85747474),
-                                offset: Offset(6, 3),
-                                blurRadius: 6,
-                              )
-                            ],
-                          ),
-                          child: Center(
-                            child: Text(
-                              'Generate Invoice',
-                              style: TextStyle(
-                                fontFamily: 'Arial',
-                                fontSize: 18,
-                                color: const Color(0xfff7fdfd),
                               ),
-                              textAlign: TextAlign.left,
-                            ),
-                          ),
-                        ),
-                      ): Container(),
+                            )
+                          : Container(),
                       Spacer(),
                     ],
                   )
@@ -1672,14 +1581,8 @@ class NewOrderPageState extends State<EditOrderPage> {
                   child: Padding(
                     padding: const EdgeInsets.all(15.0),
                     child: Container(
-                        height: MediaQuery
-                            .of(context)
-                            .size
-                            .height * 0.5,
-                        width: MediaQuery
-                            .of(context)
-                            .size
-                            .width,
+                        height: MediaQuery.of(context).size.height * 0.5,
+                        width: MediaQuery.of(context).size.width,
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(5),
@@ -1689,10 +1592,7 @@ class NewOrderPageState extends State<EditOrderPage> {
                           child: ListView(
                             children: [
                               Container(
-                                width: MediaQuery
-                                    .of(context)
-                                    .size
-                                    .width * 0.9,
+                                width: MediaQuery.of(context).size.width * 0.9,
                                 height: 50,
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(5.0),
@@ -1740,15 +1640,9 @@ class NewOrderPageState extends State<EditOrderPage> {
                                     if (snapshot.hasData) {
                                       return Container(
                                         height:
-                                        MediaQuery
-                                            .of(context)
-                                            .size
-                                            .height,
+                                            MediaQuery.of(context).size.height,
                                         width:
-                                        MediaQuery
-                                            .of(context)
-                                            .size
-                                            .width,
+                                            MediaQuery.of(context).size.width,
                                         child: ListView.builder(
                                             shrinkWrap: true,
                                             itemCount: snapshot.data.length,
@@ -1761,28 +1655,25 @@ class NewOrderPageState extends State<EditOrderPage> {
                                                   child: Row(
                                                     children: [
                                                       Container(
-                                                        width: MediaQuery
-                                                            .of(
-                                                            context)
-                                                            .size
-                                                            .width -
+                                                        width: MediaQuery.of(
+                                                                    context)
+                                                                .size
+                                                                .width -
                                                             180,
                                                         child: ListTile(
                                                           onTap: () {
                                                             setState(() {
                                                               textEditingController
-                                                                  .text =
+                                                                      .text =
                                                                   snapshot
                                                                       .data[
-                                                                  index]
+                                                                          index]
                                                                       .name;
-                                                              vat=snapshot
-                                                                  .data[
-                                                              index]
+                                                              vat = snapshot
+                                                                  .data[index]
                                                                   .vatPerc;
-                                                              tax=snapshot
-                                                                  .data[
-                                                              index]
+                                                              tax = snapshot
+                                                                  .data[index]
                                                                   .vatPerc;
                                                               Name = snapshot
                                                                   .data[index]
@@ -1790,14 +1681,14 @@ class NewOrderPageState extends State<EditOrderPage> {
                                                               saleRate.text =
                                                                   snapshot
                                                                       .data[
-                                                                  index]
+                                                                          index]
                                                                       .salesRate
                                                                       .toString();
                                                               unitController
-                                                                  .text =
+                                                                      .text =
                                                                   snapshot
                                                                       .data[
-                                                                  index]
+                                                                          index]
                                                                       .baseUnit
                                                                       .toString();
                                                               stock = snapshot
@@ -1818,16 +1709,16 @@ class NewOrderPageState extends State<EditOrderPage> {
                                                                 .name,
                                                             style: TextStyle(
                                                               fontFamily:
-                                                              'Arial',
+                                                                  'Arial',
                                                               fontSize: 10,
                                                               color:
-                                                              Colors.white,
+                                                                  Colors.white,
                                                               fontWeight:
-                                                              FontWeight
-                                                                  .w700,
+                                                                  FontWeight
+                                                                      .w700,
                                                             ),
                                                             textAlign:
-                                                            TextAlign.left,
+                                                                TextAlign.left,
                                                           ),
                                                           subtitle: Text(
                                                             "Price : " +
@@ -1837,22 +1728,40 @@ class NewOrderPageState extends State<EditOrderPage> {
                                                                     .toString(),
                                                             style: TextStyle(
                                                               fontFamily:
-                                                              'Arial',
+                                                                  'Arial',
                                                               fontSize: 10,
                                                               color:
-                                                              Colors.white,
+                                                                  Colors.white,
                                                               fontWeight:
-                                                              FontWeight
-                                                                  .w700,
+                                                                  FontWeight
+                                                                      .w700,
                                                             ),
                                                             textAlign:
-                                                            TextAlign.left,
+                                                                TextAlign.left,
                                                           ),
-                                                          leading: snapshot.data[index].productImage!=null? Container(width: 60, height:80, child: Image.memory(base64Decode(snapshot.data[index].productImage),fit: BoxFit.fill,)) :Image.asset(
-                                                            "assets/images/products.jpg",
-                                                            fit: BoxFit.scaleDown,
-                                                            //    color: Colors.white
-                                                          ),
+                                                          leading: snapshot
+                                                                      .data[
+                                                                          index]
+                                                                      .productImage !=
+                                                                  null
+                                                              ? Container(
+                                                                  width: 60,
+                                                                  height: 80,
+                                                                  child: Image
+                                                                      .memory(
+                                                                    base64Decode(snapshot
+                                                                        .data[
+                                                                            index]
+                                                                        .productImage),
+                                                                    fit: BoxFit
+                                                                        .fill,
+                                                                  ))
+                                                              : Image.asset(
+                                                                  "assets/images/products.jpg",
+                                                                  fit: BoxFit
+                                                                      .scaleDown,
+                                                                  //    color: Colors.white
+                                                                ),
                                                         ),
                                                       ),
                                                     ],
@@ -1880,7 +1789,7 @@ class NewOrderPageState extends State<EditOrderPage> {
         transitionBuilder: (_, anim, __, child) {
           return SlideTransition(
             position:
-            Tween(begin: Offset(0, 1), end: Offset(0, 0)).animate(anim),
+                Tween(begin: Offset(0, 1), end: Offset(0, 0)).animate(anim),
             child: child,
           );
         },
@@ -1888,17 +1797,15 @@ class NewOrderPageState extends State<EditOrderPage> {
     }
 
     setState(() {
-      saleQty.text = "0";
+      saleQty.text = "1";
     });
 
-    if (textEditingController.text != "") {
-      saleQty.text = quantity.toString();
-    }
     void calculteAmount(String a) {
       if (vat > 0) {
         print(rate);
         setState(() {
-          totalAmount = double.parse(saleQty.text) * double.parse(saleRate.text);
+          totalAmount =
+              double.parse(saleQty.text) * double.parse(saleRate.text);
           double t = totalAmount * (vat / 100);
           tax = double.parse(t.toStringAsFixed(User.decimals));
           totalAmount = totalAmount + tax;
@@ -1909,7 +1816,8 @@ class NewOrderPageState extends State<EditOrderPage> {
           print(saleRate.text);
           totalAmount = double.parse(saleQty.text) *
               double.parse(saleRate.text.toString());
-          lastSaleRate = double.parse(totalAmount.toStringAsFixed(User.decimals));
+          lastSaleRate =
+              double.parse(totalAmount.toStringAsFixed(User.decimals));
         });
       }
     }
@@ -1950,14 +1858,8 @@ class NewOrderPageState extends State<EditOrderPage> {
               child: Align(
                 alignment: Alignment.bottomCenter,
                 child: Container(
-                    height: MediaQuery
-                        .of(context)
-                        .size
-                        .height * 0.75,
-                    width: MediaQuery
-                        .of(context)
-                        .size
-                        .width,
+                    height: MediaQuery.of(context).size.height * 0.75,
+                    width: MediaQuery.of(context).size.width,
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(5),
@@ -1972,7 +1874,7 @@ class NewOrderPageState extends State<EditOrderPage> {
                             child: Text(
                               "Add Item",
                               style:
-                              TextStyle(color: Colors.black, fontSize: 22),
+                                  TextStyle(color: Colors.black, fontSize: 22),
                             ),
                           ),
                           SizedBox(
@@ -2004,15 +1906,12 @@ class NewOrderPageState extends State<EditOrderPage> {
                                     searchItemDialog();
                                   },
                                   child: Container(
-                                      width: MediaQuery
-                                          .of(context)
-                                          .size
-                                          .width *
+                                      width: MediaQuery.of(context).size.width *
                                           0.8,
                                       height: 50,
                                       decoration: BoxDecoration(
                                         borderRadius:
-                                        BorderRadius.circular(16.0),
+                                            BorderRadius.circular(16.0),
                                         color: const Color(0xffffffff),
                                         boxShadow: [
                                           BoxShadow(
@@ -2049,10 +1948,7 @@ class NewOrderPageState extends State<EditOrderPage> {
                                   width: 10,
                                 ),
                                 Container(
-                                    width: MediaQuery
-                                        .of(context)
-                                        .size
-                                        .width *
+                                    width: MediaQuery.of(context).size.width *
                                         0.35,
                                     height: 50,
                                     decoration: BoxDecoration(
@@ -2087,10 +1983,7 @@ class NewOrderPageState extends State<EditOrderPage> {
                                 GestureDetector(
                                   onTap: () {},
                                   child: Container(
-                                    width: MediaQuery
-                                        .of(context)
-                                        .size
-                                        .width *
+                                    width: MediaQuery.of(context).size.width *
                                         0.38,
                                     height: 50,
                                     padding: const EdgeInsets.only(
@@ -2110,7 +2003,7 @@ class NewOrderPageState extends State<EditOrderPage> {
                                       //width:120,
                                       child: FutureBuilder(
                                           future: Future.delayed(
-                                              Duration(milliseconds: 200))
+                                                  Duration(milliseconds: 200))
                                               .then((value) => fetchUnits(ID)),
                                           builder: (context,
                                               AsyncSnapshot snapshot) {
@@ -2121,28 +2014,27 @@ class NewOrderPageState extends State<EditOrderPage> {
                                               return Theme(
                                                 data: Theme.of(context)
                                                     .copyWith(
-                                                  // canvasColor: Colors.blueGrey, // background color for the dropdown items
-                                                    buttonTheme: ButtonTheme
-                                                        .of(context)
-                                                        .copyWith(
-                                                        alignedDropdown:
-                                                        true,
-                                                        padding: EdgeInsets
-                                                            .only(
-                                                            top: 25,
-                                                            left:
-                                                            10),
-                                                        height:
-                                                        50 //If false (the default), then the dropdown's menu will be wider than its button.
-                                                    )),
+                                                        // canvasColor: Colors.blueGrey, // background color for the dropdown items
+                                                        buttonTheme: ButtonTheme
+                                                                .of(context)
+                                                            .copyWith(
+                                                                alignedDropdown:
+                                                                    true,
+                                                                padding: EdgeInsets
+                                                                    .only(
+                                                                        top: 25,
+                                                                        left:
+                                                                            10),
+                                                                height:
+                                                                    50 //If false (the default), then the dropdown's menu will be wider than its button.
+                                                                )),
                                                 child: DropdownButton(
                                                   isExpanded: true,
                                                   isDense: true,
                                                   value: null,
                                                   items: _cadastro.map((map) {
                                                     return DropdownMenuItem(
-                                                      child: Text(map
-                                                          .unitName.name
+                                                      child: Text(map.unitName
                                                           .toString()),
                                                       value: map.salesRate
                                                           .toString(),
@@ -2151,12 +2043,12 @@ class NewOrderPageState extends State<EditOrderPage> {
                                                           saleRate.text = map
                                                               .salesRate
                                                               .toString();
-                                                          unit = map
-                                                              .unitName.name
+                                                          unit = map.unitName
                                                               .toString();
                                                           unitID = map.unitId
                                                               .toString();
                                                         });
+                                                        calculteAmount("");
                                                       },
                                                     );
                                                   }).toList(),
@@ -2164,6 +2056,7 @@ class NewOrderPageState extends State<EditOrderPage> {
                                                     setState(() {
                                                       _selectedUnit = selected;
                                                     });
+                                                    calculteAmount("");
                                                     print(_selectedUnit);
                                                   },
                                                   hint: Text(unit),
@@ -2175,7 +2068,7 @@ class NewOrderPageState extends State<EditOrderPage> {
                                                   width: 20,
                                                   child: Center(
                                                       child:
-                                                      CircularProgressIndicator()));
+                                                          CircularProgressIndicator()));
                                             }
                                           }),
                                     ),
@@ -2201,10 +2094,7 @@ class NewOrderPageState extends State<EditOrderPage> {
                                 ),
                                 Container(
                                   width:
-                                  MediaQuery
-                                      .of(context)
-                                      .size
-                                      .width * 0.35,
+                                      MediaQuery.of(context).size.width * 0.35,
                                   height: 50,
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(16.0),
@@ -2224,7 +2114,7 @@ class NewOrderPageState extends State<EditOrderPage> {
                                         hintText: 'Rate',
                                         //filled: true,
                                         hintStyle:
-                                        TextStyle(color: Color(0xffb0b0b0)),
+                                            TextStyle(color: Color(0xffb0b0b0)),
                                         border: InputBorder.none,
                                         contentPadding: EdgeInsets.only(
                                             left: 15,
@@ -2257,10 +2147,7 @@ class NewOrderPageState extends State<EditOrderPage> {
                                     )),
                                 Container(
                                   width:
-                                  MediaQuery
-                                      .of(context)
-                                      .size
-                                      .width * 0.2,
+                                      MediaQuery.of(context).size.width * 0.2,
                                   height: 50,
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(16.0),
@@ -2281,7 +2168,7 @@ class NewOrderPageState extends State<EditOrderPage> {
                                         hintText: 'Qty',
                                         //filled: true,
                                         hintStyle:
-                                        TextStyle(color: Color(0xffb0b0b0)),
+                                            TextStyle(color: Color(0xffb0b0b0)),
                                         border: InputBorder.none,
                                         contentPadding: EdgeInsets.only(
                                             left: 15,
@@ -2781,14 +2668,8 @@ class NewOrderPageState extends State<EditOrderPage> {
                   child: Padding(
                     padding: const EdgeInsets.all(15.0),
                     child: Container(
-                        height: MediaQuery
-                            .of(context)
-                            .size
-                            .height * 0.5,
-                        width: MediaQuery
-                            .of(context)
-                            .size
-                            .width,
+                        height: MediaQuery.of(context).size.height * 0.5,
+                        width: MediaQuery.of(context).size.width,
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(5),
@@ -2798,10 +2679,7 @@ class NewOrderPageState extends State<EditOrderPage> {
                           child: ListView(
                             children: [
                               Container(
-                                width: MediaQuery
-                                    .of(context)
-                                    .size
-                                    .width * 0.9,
+                                width: MediaQuery.of(context).size.width * 0.9,
                                 height: 50,
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(5.0),
@@ -2849,15 +2727,9 @@ class NewOrderPageState extends State<EditOrderPage> {
                                     if (snapshot.hasData) {
                                       return Container(
                                         height:
-                                        MediaQuery
-                                            .of(context)
-                                            .size
-                                            .height,
+                                            MediaQuery.of(context).size.height,
                                         width:
-                                        MediaQuery
-                                            .of(context)
-                                            .size
-                                            .width,
+                                            MediaQuery.of(context).size.width,
                                         child: ListView.builder(
                                             shrinkWrap: true,
                                             itemCount: snapshot.data.length,
@@ -2870,20 +2742,19 @@ class NewOrderPageState extends State<EditOrderPage> {
                                                   child: Row(
                                                     children: [
                                                       Container(
-                                                        width: MediaQuery
-                                                            .of(
-                                                            context)
-                                                            .size
-                                                            .width -
+                                                        width: MediaQuery.of(
+                                                                    context)
+                                                                .size
+                                                                .width -
                                                             180,
                                                         child: ListTile(
                                                           onTap: () {
                                                             setState(() {
                                                               textEditingController
-                                                                  .text =
+                                                                      .text =
                                                                   snapshot
                                                                       .data[
-                                                                  index]
+                                                                          index]
                                                                       .name;
                                                               Name = snapshot
                                                                   .data[index]
@@ -2891,14 +2762,14 @@ class NewOrderPageState extends State<EditOrderPage> {
                                                               saleRate.text =
                                                                   snapshot
                                                                       .data[
-                                                                  index]
+                                                                          index]
                                                                       .salesRate
                                                                       .toString();
                                                               unitController
-                                                                  .text =
+                                                                      .text =
                                                                   snapshot
                                                                       .data[
-                                                                  index]
+                                                                          index]
                                                                       .baseUnit
                                                                       .toString();
                                                               stock = snapshot
@@ -2919,16 +2790,16 @@ class NewOrderPageState extends State<EditOrderPage> {
                                                                 .name,
                                                             style: TextStyle(
                                                               fontFamily:
-                                                              'Arial',
+                                                                  'Arial',
                                                               fontSize: 10,
                                                               color:
-                                                              Colors.white,
+                                                                  Colors.white,
                                                               fontWeight:
-                                                              FontWeight
-                                                                  .w700,
+                                                                  FontWeight
+                                                                      .w700,
                                                             ),
                                                             textAlign:
-                                                            TextAlign.left,
+                                                                TextAlign.left,
                                                           ),
                                                           subtitle: Text(
                                                             "Price : " +
@@ -2938,16 +2809,16 @@ class NewOrderPageState extends State<EditOrderPage> {
                                                                     .toString(),
                                                             style: TextStyle(
                                                               fontFamily:
-                                                              'Arial',
+                                                                  'Arial',
                                                               fontSize: 10,
                                                               color:
-                                                              Colors.white,
+                                                                  Colors.white,
                                                               fontWeight:
-                                                              FontWeight
-                                                                  .w700,
+                                                                  FontWeight
+                                                                      .w700,
                                                             ),
                                                             textAlign:
-                                                            TextAlign.left,
+                                                                TextAlign.left,
                                                           ),
                                                           leading: Image.asset(
                                                             "assets/images/products.jpg",
@@ -2982,7 +2853,7 @@ class NewOrderPageState extends State<EditOrderPage> {
         transitionBuilder: (_, anim, __, child) {
           return SlideTransition(
             position:
-            Tween(begin: Offset(0, 1), end: Offset(0, 0)).animate(anim),
+                Tween(begin: Offset(0, 1), end: Offset(0, 0)).animate(anim),
             child: child,
           );
         },
@@ -2990,7 +2861,7 @@ class NewOrderPageState extends State<EditOrderPage> {
     }
 
     setState(() {
-      saleQty.text = "0";
+      saleQty.text = "1";
     });
 
     void calculteAmount(String a) {
@@ -3007,7 +2878,8 @@ class NewOrderPageState extends State<EditOrderPage> {
           print(saleRate.text);
           totalAmount = double.parse(saleQty.text) *
               double.parse(saleRate.text.toString());
-          lastSaleRate = double.parse(totalAmount.toStringAsFixed(User.decimals));
+          lastSaleRate =
+              double.parse(totalAmount.toStringAsFixed(User.decimals));
         });
       }
     }
@@ -3025,14 +2897,8 @@ class NewOrderPageState extends State<EditOrderPage> {
               child: Align(
                 alignment: Alignment.bottomCenter,
                 child: Container(
-                    height: MediaQuery
-                        .of(context)
-                        .size
-                        .height * 0.65,
-                    width: MediaQuery
-                        .of(context)
-                        .size
-                        .width,
+                    height: MediaQuery.of(context).size.height * 0.65,
+                    width: MediaQuery.of(context).size.width,
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(5),
@@ -3047,7 +2913,7 @@ class NewOrderPageState extends State<EditOrderPage> {
                             child: Text(
                               "Return Item",
                               style:
-                              TextStyle(color: Colors.black, fontSize: 22),
+                                  TextStyle(color: Colors.black, fontSize: 22),
                             ),
                           ),
                           SizedBox(
@@ -3079,15 +2945,12 @@ class NewOrderPageState extends State<EditOrderPage> {
                                     searchItemDialog2();
                                   },
                                   child: Container(
-                                      width: MediaQuery
-                                          .of(context)
-                                          .size
-                                          .width *
+                                      width: MediaQuery.of(context).size.width *
                                           0.8,
                                       height: 50,
                                       decoration: BoxDecoration(
                                         borderRadius:
-                                        BorderRadius.circular(16.0),
+                                            BorderRadius.circular(16.0),
                                         color: const Color(0xffffffff),
                                         boxShadow: [
                                           BoxShadow(
@@ -3124,10 +2987,7 @@ class NewOrderPageState extends State<EditOrderPage> {
                                   width: 10,
                                 ),
                                 Container(
-                                    width: MediaQuery
-                                        .of(context)
-                                        .size
-                                        .width *
+                                    width: MediaQuery.of(context).size.width *
                                         0.35,
                                     height: 50,
                                     decoration: BoxDecoration(
@@ -3162,10 +3022,7 @@ class NewOrderPageState extends State<EditOrderPage> {
                                 GestureDetector(
                                   onTap: () {},
                                   child: Container(
-                                    width: MediaQuery
-                                        .of(context)
-                                        .size
-                                        .width *
+                                    width: MediaQuery.of(context).size.width *
                                         0.38,
                                     height: 50,
                                     padding: const EdgeInsets.only(
@@ -3185,7 +3042,7 @@ class NewOrderPageState extends State<EditOrderPage> {
                                       //width:120,
                                       child: FutureBuilder(
                                           future: Future.delayed(
-                                              Duration(milliseconds: 200))
+                                                  Duration(milliseconds: 200))
                                               .then((value) => fetchUnits(ID)),
                                           builder: (context,
                                               AsyncSnapshot snapshot) {
@@ -3196,28 +3053,26 @@ class NewOrderPageState extends State<EditOrderPage> {
                                               return Theme(
                                                 data: Theme.of(context)
                                                     .copyWith(
-                                                  // canvasColor: Colors.blueGrey, // background color for the dropdown items
-                                                    buttonTheme: ButtonTheme
-                                                        .of(context)
-                                                        .copyWith(
-                                                        alignedDropdown:
-                                                        true,
-                                                        padding: EdgeInsets
-                                                            .only(
-                                                            top: 25,
-                                                            left:
-                                                            10),
-                                                        height:
-                                                        50 //If false (the default), then the dropdown's menu will be wider than its button.
-                                                    )),
+                                                        buttonTheme: ButtonTheme
+                                                                .of(context)
+                                                            .copyWith(
+                                                                alignedDropdown:
+                                                                    true,
+                                                                padding: EdgeInsets
+                                                                    .only(
+                                                                        top: 25,
+                                                                        left:
+                                                                            10),
+                                                                height:
+                                                                    50 //If false (the default), then the dropdown's menu will be wider than its button.
+                                                                )),
                                                 child: DropdownButton(
                                                   isExpanded: true,
                                                   isDense: true,
                                                   value: null,
                                                   items: _cadastro.map((map) {
                                                     return DropdownMenuItem(
-                                                      child: Text(map
-                                                          .unitName.name
+                                                      child: Text(map.unitName
                                                           .toString()),
                                                       value: map.salesRate
                                                           .toString(),
@@ -3226,12 +3081,12 @@ class NewOrderPageState extends State<EditOrderPage> {
                                                           saleRate.text = map
                                                               .salesRate
                                                               .toString();
-                                                          unit = map
-                                                              .unitName.name
+                                                          unit = map.unitName
                                                               .toString();
                                                           unitID = map.unitId
                                                               .toString();
                                                         });
+                                                        calculteAmount("");
                                                       },
                                                     );
                                                   }).toList(),
@@ -3239,6 +3094,7 @@ class NewOrderPageState extends State<EditOrderPage> {
                                                     setState(() {
                                                       _selectedUnit = selected;
                                                     });
+                                                    calculteAmount("");
                                                     print(_selectedUnit);
                                                   },
                                                   hint: Text(unit),
@@ -3250,7 +3106,7 @@ class NewOrderPageState extends State<EditOrderPage> {
                                                   width: 20,
                                                   child: Center(
                                                       child:
-                                                      CircularProgressIndicator()));
+                                                          CircularProgressIndicator()));
                                             }
                                           }),
                                     ),
@@ -3276,10 +3132,7 @@ class NewOrderPageState extends State<EditOrderPage> {
                                 ),
                                 Container(
                                   width:
-                                  MediaQuery
-                                      .of(context)
-                                      .size
-                                      .width * 0.35,
+                                      MediaQuery.of(context).size.width * 0.35,
                                   height: 50,
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(16.0),
@@ -3299,7 +3152,7 @@ class NewOrderPageState extends State<EditOrderPage> {
                                         hintText: 'Rate',
                                         //filled: true,
                                         hintStyle:
-                                        TextStyle(color: Color(0xffb0b0b0)),
+                                            TextStyle(color: Color(0xffb0b0b0)),
                                         border: InputBorder.none,
                                         contentPadding: EdgeInsets.only(
                                             left: 15,
@@ -3330,10 +3183,7 @@ class NewOrderPageState extends State<EditOrderPage> {
                                     )),
                                 Container(
                                   width:
-                                  MediaQuery
-                                      .of(context)
-                                      .size
-                                      .width * 0.2,
+                                      MediaQuery.of(context).size.width * 0.2,
                                   height: 50,
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(16.0),
@@ -3354,7 +3204,7 @@ class NewOrderPageState extends State<EditOrderPage> {
                                         hintText: 'Qty',
                                         //filled: true,
                                         hintStyle:
-                                        TextStyle(color: Color(0xffb0b0b0)),
+                                            TextStyle(color: Color(0xffb0b0b0)),
                                         border: InputBorder.none,
                                         contentPadding: EdgeInsets.only(
                                             left: 15,
@@ -3467,9 +3317,9 @@ class NewOrderPageState extends State<EditOrderPage> {
                                           "-" + totalAmount.toString(),
                                           int.parse("-" + saleQty.text),
                                           ID,
-                                          "-" +tax.toString(),
-                                          "-" +tax.toString(),
-                                          "-" +gst.toString(),
+                                          "-" + tax.toString(),
+                                          "-" + tax.toString(),
+                                          "-" + gst.toString(),
                                           saleRate.text,
                                           code,
                                           "-" + totalAmount.toString(),

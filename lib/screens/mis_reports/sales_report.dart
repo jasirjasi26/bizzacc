@@ -1,14 +1,16 @@
 // @dart=2.9
-import 'package:firebase_database/firebase_database.dart';
+import 'package:api_cache_manager/models/cache_db_model.dart';
+import 'package:api_cache_manager/utils/cache_manager.dart';
+import 'package:data_connection_checker/data_connection_checker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'package:http/http.dart' as http;
 import 'dart:async';
 import 'dart:convert';
-
 import '../../app_config.dart';
 import '../../models/productwicereport.dart';
+import 'package:optimist_erp_app/data/user_data.dart';
 
 class SalesReport extends StatefulWidget {
 
@@ -19,6 +21,9 @@ class SalesReport extends StatefulWidget {
 
 class StockReportsState1 extends State<SalesReport> {
   var name = TextEditingController();
+  List<String> _locations = ['All'];
+  String selectedLocation="All";
+  String category="";
   String from = DateTime.now().year.toString() +
       "-" +
       DateTime.now().month.toString() +
@@ -72,6 +77,48 @@ class StockReportsState1 extends State<SalesReport> {
     });
   }
 
+   fetchCategory() async {
+    if (await DataConnectionChecker().hasConnection) {
+      print("Data not exists");
+
+      Map data = {'depotid': User.depotId, 'search': ""};
+      //encode Map to JSON
+      var body = json.encode(data);
+      String url = AppConfig.DOMAIN_PATH + "productgroups";
+      final response = await http.post(
+        url,
+        body: body,
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        // If the server did return a 200 OK response,
+        // then parse the JSON.
+        APICacheDBModel cacheDBModel =
+        new APICacheDBModel(key: "category", syncData: response.body);
+        await APICacheManager().addCacheData(cacheDBModel);
+        var json = jsonDecode(response.body);
+        for (int i = 0; i < json.length; i++) {
+          _locations.add(json[i]['Name']);
+        }
+
+      } else {
+        throw Exception('Failed to load album');
+      }
+    } else {
+      print("Product Data exists");
+      var cacheData = await APICacheManager().getCacheData("category");
+      var json = jsonDecode(cacheData.syncData);
+      for (int i = 0; i < json.length; i++) {
+        _locations.add(json[i]['Name']);
+      }
+    }
+  }
+
+
 
   Future<Salesinvoicedetail> fetchData() async {
 
@@ -79,7 +126,8 @@ class StockReportsState1 extends State<SalesReport> {
       'from_Date': from,
       'to_Date': to,
       //'Account_id':302632
-      'product':name.text
+      'product':name.text,
+      'product_group':category
     };
       //encode Map to JSON
       var body = json.encode(data);
@@ -109,6 +157,7 @@ class StockReportsState1 extends State<SalesReport> {
 
   void initState() {
     salesDetails=fetchData();
+    fetchCategory();
     super.initState();
   }
 
@@ -127,13 +176,16 @@ class StockReportsState1 extends State<SalesReport> {
     return Container(
       width: MediaQuery.of(context).size.width,
       color: Color(0xff20474f),
-      height: 120,
+      height: 140,
       child: Column(
         children: [
           Row(
             children: [
+              SizedBox(
+                width: 10,
+              ),
               Padding(
-                padding: const EdgeInsets.all(10.0),
+                padding: const EdgeInsets.all(5.0),
                 child: Container(
                   width: MediaQuery.of(context).size.width * 0.93,
                   height: 50,
@@ -174,7 +226,7 @@ class StockReportsState1 extends State<SalesReport> {
             ],
           ),
           Padding(
-            padding: const EdgeInsets.all(10.0),
+            padding: const EdgeInsets.all(5.0),
             child: Row(
               children: [
                 Text(
@@ -232,6 +284,75 @@ class StockReportsState1 extends State<SalesReport> {
                     textAlign: TextAlign.left,
                   ),
                 ),
+                SizedBox(
+                  width: 10,
+                ),
+                Column(
+                  children: [
+                    Text(
+                      "Category :    ",
+                      style: TextStyle(
+                        fontFamily: 'Arial',
+                        fontSize: 12,
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                      ),
+                      textAlign: TextAlign.left,
+                    ),
+                    Card(
+                      elevation:5,
+                      child: Container(
+                        padding: const EdgeInsets.only(
+                            left: 5,
+                            right: 0,
+                            bottom: 0,
+                            top: 5),
+                        width: MediaQuery.of(context).size.width*0.4,
+                        height: 40,
+                        child:Theme(
+                          data: Theme.of(context)
+                              .copyWith(
+                            // canvasColor: Colors.blueGrey, // background color for the dropdown items
+                              buttonTheme: ButtonTheme
+                                  .of(context)
+                                  .copyWith(
+                                  alignedDropdown:
+                                  true,
+                                  height:
+                                  50 //If false (the default), then the dropdown's menu will be wider than its button.
+                              )),
+                          child:DropdownButton(
+                            isDense: true,
+                            isExpanded: true,
+                            hint: Text(selectedLocation), // Not necessary for Option 1
+                            value: selectedLocation,
+                            onChanged: (newValue) {
+                              setState(() {
+                                selectedLocation = newValue;
+                                if(newValue=="All"){
+                                  category="";
+                                }
+                                else{
+                                  category=newValue;
+                                }
+                              });
+                              setState(() {
+                                fetchData();
+                              });
+                            },
+                            items: _locations.map((location) {
+                              return DropdownMenuItem(
+                                child: new Text(location),
+                                value: location,
+                              );
+                            }).toList(),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+
               ],
             ),
           ),
@@ -243,7 +364,7 @@ class StockReportsState1 extends State<SalesReport> {
   salesOrder() {
     return Container(
       width: 600,
-      height: MediaQuery.of(context).size.height*0.75,
+      height: MediaQuery.of(context).size.height*0.73,
       child: SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: Container(
@@ -345,6 +466,7 @@ class StockReportsState1 extends State<SalesReport> {
                       future: fetchData(),
                       builder: (context, snapshot) {
                         if (snapshot.hasData) {
+
                           return Container(
                             height: MediaQuery.of(context).size.height,
                             width: MediaQuery.of(context).size.width,
@@ -353,6 +475,9 @@ class StockReportsState1 extends State<SalesReport> {
                                 itemCount: snapshot.data.data.length,
                                 // ignore: missing_return
                                 itemBuilder: (context, index) {
+                                  //if(snapshot.data.data[index].productGroup.toString().toLowerCase().contains(category.toLowerCase())){
+                                   var data=snapshot.data;
+
                                     return Container(
                                       height: 28,
                                       width: MediaQuery.of(context).size.width,
@@ -370,7 +495,7 @@ class StockReportsState1 extends State<SalesReport> {
                                           Padding(
                                             padding: const EdgeInsets.all(8.0),
                                             child: Text(
-                                              snapshot.data.data[index].voucherNo.toString(),
+                                              data.data[index].voucherNo.toString(),
                                               style: TextStyle(
                                                 fontFamily: 'Arial',
                                                 fontSize: 12,
@@ -384,7 +509,7 @@ class StockReportsState1 extends State<SalesReport> {
                                             child: Padding(
                                               padding: const EdgeInsets.all(8.0),
                                               child: Text(
-                                                snapshot.data.data[index].product,
+                                               data.data[index].product,
                                                 style: TextStyle(
                                                   fontFamily: 'Arial',
                                                   fontSize: 12,
@@ -397,7 +522,7 @@ class StockReportsState1 extends State<SalesReport> {
                                           Padding(
                                             padding: const EdgeInsets.all(8.0),
                                             child: Text(
-                                              snapshot.data.data[index].qty
+                                              data.data[index].qty
                                                   .toString(),
                                               style: TextStyle(
                                                 fontFamily: 'Arial',
@@ -410,7 +535,7 @@ class StockReportsState1 extends State<SalesReport> {
                                           Padding(
                                             padding: const EdgeInsets.all(8.0),
                                             child: Text(
-                                              snapshot.data.data[index].rate
+                                              data.data[index].rate
                                                   .toString(),
                                               style: TextStyle(
                                                 fontFamily: 'Arial',
@@ -423,7 +548,7 @@ class StockReportsState1 extends State<SalesReport> {
                                           Padding(
                                             padding: const EdgeInsets.all(8.0),
                                             child: Text(
-                                              snapshot.data.data[index].vat
+                                              data.data[index].vat
                                                   .toString(),
                                               style: TextStyle(
                                                 fontFamily: 'Arial',
@@ -436,7 +561,7 @@ class StockReportsState1 extends State<SalesReport> {
                                           Padding(
                                             padding: const EdgeInsets.all(8.0),
                                             child: Text(
-                                              snapshot.data.data[index].netAmount
+                                              data.data[index].netAmount
                                                   .toString(),
                                               style: TextStyle(
                                                 fontFamily: 'Arial',
@@ -450,6 +575,8 @@ class StockReportsState1 extends State<SalesReport> {
                                       ),
                                     );
                                   }
+
+                                //  }
                         ),
                           );
                         } else {

@@ -27,6 +27,10 @@ class Products {
     this.wacCost,
     this.vatPerc,
     this.productImage,
+    this.groupName,
+    this.defaultSalesUnit,
+    this.defaultPurchaseUnit,
+    this.unit
   });
 
   int id;
@@ -42,6 +46,10 @@ class Products {
   double wacCost;
   double vatPerc;
   String productImage;
+  String groupName;
+  Unit defaultSalesUnit;
+  Unit defaultPurchaseUnit;
+  String unit;
 
   factory Products.fromJson(Map<String, dynamic> json) => Products(
     id: json["id"],
@@ -57,6 +65,10 @@ class Products {
     wacCost: json["WacCost"],
     vatPerc: json["VATPerc"],
     productImage: json["ProductImage"] == null ? null : json["ProductImage"],
+    groupName: json["GroupName"],
+    defaultSalesUnit: unitValues.map[json["DefaultSalesUnit"]],
+    defaultPurchaseUnit: unitValues.map[json["DefaultPurchaseUnit"]],
+    unit: json["BaseUnit"]
   );
 
   Map<String, dynamic> toJson() => {
@@ -73,8 +85,18 @@ class Products {
     "WacCost": wacCost,
     "VATPerc": vatPerc,
     "ProductImage": productImage == null ? null : productImage,
+    "GroupName": groupName,
+    "DefaultSalesUnit": unitValues.reverse[baseUnit],
+    "DefaultPurchaseUnit": unitValues.reverse[baseUnit],
   };
 }
+
+enum Unit { PKT, BOX }
+
+final unitValues = EnumValues({
+  "BOX": Unit.BOX,
+  "PKT": Unit.PKT
+});
 
 enum BaseUnit { PKT }
 

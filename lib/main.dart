@@ -8,12 +8,14 @@ import 'contactinfomodel.dart';
 import 'controller.dart';
 import 'databasehelper.dart';
 import 'package:uuid/uuid.dart';
+import 'package:hive/hive.dart';
 
 
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();
  await Firebase.initializeApp();
   await SqfliteDatabaseHelper.instance.db;
+  await Hive.init("a");
   runApp(MyApp());
   configLoading();
 }
@@ -51,80 +53,3 @@ class MyApp extends StatelessWidget {
     );
   }
 }
-
-class MyHomePage extends StatefulWidget {
-  @override
-  _MyHomePageState createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-
-  @override
-  void initState() {
-    super.initState();
-
-  }
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: RaisedButton(
-              onPressed: () async{
-                //Controller().delete();
-                var uuid = Uuid();
-                print(uuid.v1().trim());
-                String id="V10S"+DateTime.now().year.toString()+DateTime.now().month.toString()+DateTime.now().day.toString()+DateTime.now().hour.toString()+DateTime.now().minute.toString()+DateTime.now().second.toString();
-
-                ContactinfoModel contactinfoModel = ContactinfoModel(id: null,userId: id,name: "ssss",email: "ee",gender: "dddddd",createdAt: DateTime.now().toString());
-                await Controller().addData(contactinfoModel).then((value){
-                  if (value>0) {
-                    print("Success");
-                    Controller().fetchData().then((value) => {
-                      print(value)
-                    });
-                    //userList();
-                  }else{
-                    print("faild");
-                  }
-
-                });
-              },
-              child: Text("Save"),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-
-
-
-
-
-
-// Future<void> main() async {
-//   WidgetsFlutterBinding.ensureInitialized();
-//   await Firebase.initializeApp();
-//   runApp(MyApp());
-// }
-//
-// class MyApp extends StatelessWidget {
-//   // This widget is the root of your application.
-//   @override
-//   Widget build(BuildContext context) {
-//     return MaterialApp(
-//       theme: ThemeData(
-//         primarySwatch: Colors.blue,
-//         visualDensity: VisualDensity.adaptivePlatformDensity,
-//       ),
-//       //home: VanPage(back: true,billAmount: "",date: "",voucherNumber: "",customerName: "",),
-//       home: Splash(),
-//     );
-//   }
-// }
-//

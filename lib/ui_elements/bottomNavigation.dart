@@ -1,8 +1,10 @@
 // @dart=2.9
+import 'package:data_connection_checker/data_connection_checker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'package:flutter/services.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:optimist_erp_app/models/sales_types.dart';
 import 'package:optimist_erp_app/screens/home.dart';
 import 'package:textfield_search/textfield_search.dart';
@@ -12,6 +14,7 @@ import 'package:api_cache_manager/utils/cache_manager.dart';
 import 'package:optimist_erp_app/models/customers.dart';
 import 'package:http/http.dart' as http;
 import 'dart:async';
+import 'package:optimist_erp_app/data/user_data.dart';
 import 'dart:convert';
 import '../app_config.dart';
 
@@ -23,21 +26,21 @@ class BottomBar extends StatefulWidget {
 class BottomBarState extends State<BottomBar> {
   int _currentIndex = 0;
   List<String> _locations = []; // Option 2
-  String _selectedLocation="[None]"; // Opt
+  String _selectedLocation = "[None]"; // Opt
   var _children = [MyHomePage(), Container()];
   String label = "Enter Customer Name";
-  String salesType="";
+  String salesType = "";
 
-
-   fetchData() async {
+  fetchData() async {
     var isCacheExist = await APICacheManager().isAPICacheKeyExist("types");
 
     if (!isCacheExist) {
       print("Data not exists");
 
-      String url=AppConfig.DOMAIN_PATH+"salestypes";
-      final response = await http.get(url,
-       // body: body,
+      String url = AppConfig.DOMAIN_PATH + "salestypes";
+      final response = await http.get(
+        url,
+        // body: body,
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
@@ -46,14 +49,13 @@ class BottomBarState extends State<BottomBar> {
 
       if (response.statusCode == 200) {
         APICacheDBModel cacheDBModel =
-        new APICacheDBModel(key: "types", syncData: response.body);
+            new APICacheDBModel(key: "types", syncData: response.body);
         await APICacheManager().addCacheData(cacheDBModel);
 
         var json = jsonDecode(response.body);
         for (int i = 0; i < salestypesFromJson(response.body).length; i++) {
           _locations.add(json[i]['Name']);
         }
-
       } else {
         // If the server did not return a 200 OK response,
         // then throw an exception.
@@ -95,7 +97,7 @@ class BottomBarState extends State<BottomBar> {
           },
           child: Card(
             elevation: 10,
-            color:  Color(0xff20474f),
+            color: Color(0xff20474f),
             child: Container(
                 width: 90,
                 height: 40,
@@ -135,8 +137,7 @@ class BottomBarState extends State<BottomBar> {
                         : Color.fromRGBO(153, 153, 153, 1),
                     height: 20,
                   ),
-                  label: "Home"
-                  ),
+                  label: "Home"),
               BottomNavigationBarItem(
                   icon: Image.asset(
                     "assets/images/inventory.png",
@@ -145,8 +146,7 @@ class BottomBarState extends State<BottomBar> {
                         : Color.fromRGBO(153, 153, 153, 1),
                     height: 20,
                   ),
-                  label: "Inventory"
-                  ),
+                  label: "Inventory"),
             ],
           ),
         ),
@@ -156,15 +156,14 @@ class BottomBarState extends State<BottomBar> {
 
   void showBookingDialog() {
     var textEditingController = TextEditingController();
+    List _list = [];
 
     Future<List> getNames(String input) async {
-      List _list = [];
-      var isCacheExist = await APICacheManager().isAPICacheKeyExist("cs");
 
-      if (!isCacheExist) {
-        print("Data not exists");
+      // var isCacheExist = await APICacheManager().isAPICacheKeyExist("cs");
 
-        Map data = {'depotid': "8", 'search': ""};
+      if (await DataConnectionChecker().hasConnection) {
+        Map data = {'depotid': User.depotId, 'search': ""};
         //encode Map to JSON
         var body = json.encode(data);
         String url = AppConfig.DOMAIN_PATH + "customers";
@@ -230,37 +229,42 @@ class BottomBarState extends State<BottomBar> {
                             height: 30,
                           ),
                           Center(
-                            child: Container(
-                              height: 45,
-                              width: 200,
-                              decoration: BoxDecoration(
-                                color: const Color(0xff20474f),
-                                borderRadius: BorderRadius.circular(10),
-                              ),
+                            child: GestureDetector(
+                              onTap: () {
+                                addCustomer();
+                              },
                               child: Container(
-                                child: Row(
-                                  children: [
-                                    Spacer(),
-                                    Padding(
-                                      padding: EdgeInsets.all(0),
-                                      child: Container(
-                                        height: 25,
-                                        width: 25,
-                                        child: Image.asset(
-                                          "assets/images/addcustomer.png",
-                                          color: Colors.white,
+                                height: 45,
+                                width: 200,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xff20474f),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Container(
+                                  child: Row(
+                                    children: [
+                                      Spacer(),
+                                      Padding(
+                                        padding: EdgeInsets.all(0),
+                                        child: Container(
+                                          height: 25,
+                                          width: 25,
+                                          child: Image.asset(
+                                            "assets/images/addcustomer.png",
+                                            color: Colors.white,
+                                          ),
                                         ),
                                       ),
-                                    ),
-                                    Text(
-                                      "  Add New Customer",
-                                      style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w500),
-                                    ),
-                                    Spacer(),
-                                  ],
+                                      Text(
+                                        "  Add New Customer",
+                                        style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w500),
+                                      ),
+                                      Spacer(),
+                                    ],
+                                  ),
                                 ),
                               ),
                             ),
@@ -274,8 +278,6 @@ class BottomBarState extends State<BottomBar> {
                             child: Card(
                               elevation: 5,
                               child: TextFieldSearch(
-                                  // future: getNames,
-                                  // initialList: dummyList,
                                   label: label,
                                   minStringLength: 0,
                                   future: () {
@@ -330,14 +332,22 @@ class BottomBarState extends State<BottomBar> {
                                     value: _selectedLocation,
                                     onChanged: (newValue) async {
                                       setState(() {
-                                          _selectedLocation = newValue;
+                                        _selectedLocation = newValue;
                                       });
-                                      var cacheData = await APICacheManager().getCacheData("types");
+                                      var cacheData = await APICacheManager()
+                                          .getCacheData("types");
                                       var json = jsonDecode(cacheData.syncData);
-                                      for (int i = 0; i < salestypesFromJson(cacheData.syncData).length; i++) {
-                                        if(_selectedLocation==json[i]['Name'].toString()){
+                                      for (int i = 0;
+                                          i <
+                                              salestypesFromJson(
+                                                      cacheData.syncData)
+                                                  .length;
+                                          i++) {
+                                        if (_selectedLocation ==
+                                            json[i]['Name'].toString()) {
                                           setState(() {
-                                            salesType = json[i]['id'].toString();
+                                            salesType =
+                                                json[i]['id'].toString();
                                           });
                                         }
                                       }
@@ -368,14 +378,21 @@ class BottomBarState extends State<BottomBar> {
                                   onTap: () {
                                     if (textEditingController.text.isNotEmpty &&
                                         _selectedLocation.isNotEmpty) {
-                                      print(salesType);
-                                      Navigator.push(context,
-                                          MaterialPageRoute(builder: (context) {
-                                        return NewOrderPage(
-                                          customerName: textEditingController.text,
-                                          salesType: salesType,
-                                        );
-                                      }));
+                                      if(_list.contains(textEditingController.text)){
+                                        print("yes");
+                                        Navigator.push(context,
+                                            MaterialPageRoute(builder: (context) {
+                                          return NewOrderPage(
+                                            customerName:
+                                                textEditingController.text,
+                                            salesType: salesType,
+                                          );
+                                        }));
+                                      }else{
+                                        EasyLoading.showError('Not found');
+                                      }
+
+
                                     }
                                   },
                                   child: Container(
@@ -517,6 +534,314 @@ class BottomBarState extends State<BottomBar> {
                                   fontSize: 24,
                                   fontWeight: FontWeight.w500),
                             ),
+                          ),
+                        ],
+                      )),
+                ));
+          },
+        );
+      },
+      transitionBuilder: (_, anim, __, child) {
+        return SlideTransition(
+          position: Tween(begin: Offset(0, 1), end: Offset(0, 0)).animate(anim),
+          child: child,
+        );
+      },
+    );
+  }
+
+  void addCustomer() {
+
+    var customername=TextEditingController();
+    var address=TextEditingController();
+    var userid=TextEditingController();
+    var phone=TextEditingController();
+    var trn=TextEditingController();
+
+    showGeneralDialog(
+      barrierLabel: "Barrier",
+      barrierDismissible: true,
+      barrierColor: Colors.black.withOpacity(0.5),
+      transitionDuration: Duration(milliseconds: 500),
+      context: context,
+      pageBuilder: (_, __, ___) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return Material(
+                type: MaterialType.transparency,
+                child: Align(
+                  alignment: Alignment.bottomCenter,
+                  child: Container(
+                      height: MediaQuery.of(context).size.height * 0.75,
+                      width: MediaQuery.of(context).size.width,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        //borderRadius: BorderRadius.circular(40),
+                      ),
+                      child: ListView(
+                        // crossAxisAlignment: CrossAxisAlignment.start,
+                        // mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          SizedBox(
+                            height: 50,
+                          ),
+                          Center(
+                            child: Text(
+                              "Add New Customer",
+                              style:
+                              TextStyle(color: Colors.black, fontSize: 24,fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                          SizedBox(
+                            height: 10,
+                          ),
+                          Padding(
+                            padding:
+                                const EdgeInsets.only(left: 50.0, right: 50),
+                            child: Card(
+                              elevation: 5,
+                              child: TextField(
+                                decoration: InputDecoration(
+                                  hintText: 'Enter Customer Name',
+                                  contentPadding: EdgeInsets.only(
+                                      left: 15, top: 15, right: 15),
+                                  filled: false,
+                                  prefixIcon: Icon(
+                                    Icons.person,
+                                    size: 25.0,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                                    controller: customername
+                              ),
+                            ),
+                          ),
+                          SizedBox(
+                            height: 20,
+                          ),
+                          Padding(
+                            padding:
+                            const EdgeInsets.only(left: 50.0, right: 50),
+                            child: Card(
+                              elevation: 5,
+                              child: TextField(
+                                decoration: InputDecoration(
+                                  hintText: 'User ID',
+                                  contentPadding: EdgeInsets.only(
+                                      left: 15, top: 15, right: 15),
+                                  filled: false,
+                                  prefixIcon: Icon(
+                                    Icons.perm_identity_sharp,
+                                    size: 25.0,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                                    controller: userid
+                              ),
+                            ),
+                          ),
+
+                          SizedBox(
+                            height: 20,
+                          ),
+                          Padding(
+                            padding:
+                            const EdgeInsets.only(left: 50.0, right: 50),
+                            child: Card(
+                              elevation: 5,
+                              child: TextField(
+                                decoration: InputDecoration(
+                                  hintText: 'Address',
+                                  contentPadding: EdgeInsets.only(
+                                      left: 15, top: 15, right: 15),
+                                  filled: false,
+                                  prefixIcon: Icon(
+                                    Icons.group_add,
+                                    size: 25.0,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                                   controller: address
+                              ),
+                            ),
+                          ),
+                          SizedBox(
+                            height: 20,
+                          ),
+                          Padding(
+                            padding:
+                            const EdgeInsets.only(left: 50.0, right: 50),
+                            child: Card(
+                              elevation: 5,
+                              child: TextField(
+                                decoration: InputDecoration(
+                                  hintText: 'Phone Number ',
+                                  contentPadding: EdgeInsets.only(
+                                      left: 15, top: 15, right: 15),
+                                  filled: false,
+                                  prefixIcon: Icon(
+                                    Icons.phone,
+                                    size: 25.0,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                                  controller: phone
+                              ),
+                            ),
+                          ),
+                          SizedBox(
+                            height: 20,
+                          ),
+                          Padding(
+                            padding:
+                            const EdgeInsets.only(left: 50.0, right: 50),
+                            child: Card(
+                              elevation: 5,
+                              child: TextField(
+                                decoration: InputDecoration(
+                                  hintText: 'TRN Number',
+                                  contentPadding: EdgeInsets.only(
+                                      left: 15, top: 15, right: 15),
+                                  filled: false,
+                                  prefixIcon: Icon(
+                                    Icons.format_list_numbered,
+                                    size: 25.0,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                                    controller: trn
+                              ),
+                            ),
+                          ),
+                          SizedBox(
+                            height: 20,
+                          ),
+                          Row(
+                            children: [
+                              Spacer(),
+                              Center(
+                                child: GestureDetector(
+                                  onTap: () async {
+
+                                    ///Api calling for add customer
+                                    ///
+                                    String url = AppConfig.DOMAIN_PATH + "CustomersSave";
+                                    Map data = {'CustomerName': customername.text, 'UserID': userid.text,'Address' :address.text,'PhoneNumber':phone.text,'TRNNumber':trn.text,'Description':""};
+                                    var body = json.encode(data);
+
+                                    print(body);
+
+                                    final response = await http.post(
+                                      url,
+                                      body: body,
+                                      headers: {
+                                        'Content-Type': 'application/json',
+                                        'Accept': 'application/json',
+                                      },
+                                    );
+
+                                    if(response.statusCode==200){
+                                      EasyLoading.showSuccess('New customer added...');
+                                      Navigator.pop(context);
+                                      print("okkk");
+                                    }else{
+                                      EasyLoading.showError('Something wrong...');
+                                      print("noo"+response.body);
+                                    }
+                                  },
+                                  child: Container(
+                                    height: 45,
+                                    width: 120,
+                                    decoration: BoxDecoration(
+                                      gradient: LinearGradient(
+                                        begin: Alignment(0.0, -1.0),
+                                        end: Alignment(0.0, 1.0),
+                                        colors: [
+                                          const Color(0xff00ecb2),
+                                          const Color(0xff12b3e3)
+                                        ],
+                                        stops: [0.0, 1.0],
+                                      ),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: const Color(0xffcdcdcd),
+                                          offset: Offset(6, 3),
+                                          blurRadius: 6,
+                                        ),
+                                      ],
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: Container(
+                                      child: Row(
+                                        children: [
+                                          Spacer(),
+                                          Text(
+                                            " Add Customer",
+                                            style: TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.w500),
+                                          ),
+                                          Spacer(),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              SizedBox(
+                                width: 15,
+                              ),
+                              Center(
+                                child: GestureDetector(
+                                  onTap: () {
+                                    Navigator.pop(context);
+                                  },
+                                  child: Container(
+                                    height: 45,
+                                    width: 120,
+                                    decoration: BoxDecoration(
+                                      gradient: LinearGradient(
+                                        begin: Alignment(0.0, -1.0),
+                                        end: Alignment(0.0, 1.0),
+                                        colors: [
+                                          const Color(0xff00ecb2),
+                                          const Color(0xff12b3e3)
+                                        ],
+                                        stops: [0.0, 1.0],
+                                      ),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: const Color(0xffcdcdcd),
+                                          offset: Offset(6, 3),
+                                          blurRadius: 6,
+                                        ),
+                                      ],
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: Container(
+                                      child: Row(
+                                        children: [
+                                          Spacer(),
+                                          Text(
+                                            "Cancel",
+                                            style: TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.w500),
+                                          ),
+                                          Spacer(),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              Spacer(),
+                            ],
+                          ),
+                          SizedBox(
+                            height: 20,
                           ),
                         ],
                       )),

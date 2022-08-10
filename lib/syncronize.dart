@@ -134,24 +134,24 @@ class SyncronizationData {
     return contactList;
   }
 
-  Future saveToMysql(List contactList) async {
-    for (var i = 0; i < contactList.length; i++) {
-      Map<String, dynamic> data = {
-        "contact_id": contactList[i]['id'].toString(),
-        "user_id": contactList[i]['user_id'].toString(),
-        "name": contactList[i]['name'],
-        "email": contactList[i]['email'],
-        "gender": contactList[i]['gender'],
-        "created_at": contactList[i]['created_at'],
-      };
-      final response = await htpp.post(
-          'http://192.168.43.6/syncsqftomysqlflutter/load_from_sqflite_contactinfo_table_save_or_update_to_mysql.php',
-          body: data);
-      if (response.statusCode == 200) {
-        print("Saving Data ");
-      } else {
-        print(response.statusCode);
-      }
-    }
-  }
+  // Future saveToMysql(List contactList) async {
+  //   for (var i = 0; i < contactList.length; i++) {
+  //     Map<String, dynamic> data = {
+  //       "contact_id": contactList[i]['id'].toString(),
+  //       "user_id": contactList[i]['user_id'].toString(),
+  //       "name": contactList[i]['name'],
+  //       "email": contactList[i]['email'],
+  //       "gender": contactList[i]['gender'],
+  //       "created_at": contactList[i]['created_at'],
+  //     };
+  //     final response = await htpp.post(
+  //         'http://192.168.43.6/syncsqftomysqlflutter/load_from_sqflite_contactinfo_table_save_or_update_to_mysql.php',
+  //         body: data);
+  //     if (response.statusCode == 200) {
+  //       print("Saving Data ");
+  //     } else {
+  //       print(response.statusCode);
+  //     }
+  //   }
+  // }
 }

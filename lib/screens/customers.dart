@@ -5,6 +5,7 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:optimist_erp_app/data/user_data.dart';
 import 'package:optimist_erp_app/models/customers.dart';
 import 'package:http/http.dart' as http;
 import 'dart:async';
@@ -31,7 +32,7 @@ class CustomersListState extends State<CustomersList> {
     if (!isCacheExist) {
       print("Data not exists");
 
-      Map data = {'depotid': "8", 'search': ""};
+      Map data = {'depotid': User.userId, 'search': ""};
       //encode Map to JSON
       var body = json.encode(data);
       String url=AppConfig.DOMAIN_PATH+"customers";
@@ -49,8 +50,16 @@ class CustomersListState extends State<CustomersList> {
         APICacheDBModel cacheDBModel =
             new APICacheDBModel(key: "cs", syncData: response.body);
         await APICacheManager().addCacheData(cacheDBModel);
+        List<dynamic> responseJson = json.decode(response.body);
 
-        return customersFromJson(response.body);
+        List<Customers> profileList =
+        responseJson.map((d) => new Customers.fromJson(d)).toList();
+
+        profileList.sort((a, b) {
+          return a.name.toLowerCase().compareTo(b.name.toLowerCase());
+        });
+
+        return profileList;
       } else {
         // If the server did not return a 200 OK response,
         // then throw an exception.
@@ -59,13 +68,22 @@ class CustomersListState extends State<CustomersList> {
     } else {
       print("Data exists");
       var cacheData = await APICacheManager().getCacheData("cs");
-      return customersFromJson(cacheData.syncData);
+      List<dynamic> responseJson = json.decode(cacheData.syncData);
+
+      List<Customers> profileList =
+      responseJson.map((d) => new Customers.fromJson(d)).toList();
+
+      profileList.sort((a, b) {
+        return a.name.toLowerCase().compareTo(b.name.toLowerCase());
+      });
+
+      return profileList;
     }
   }
 
 
   Future<bool> refreshData() async {
-    Map data = {'depotid': "8", 'search': ""};
+    Map data = {'depotid': User.userId, 'search': ""};
     //encode Map to JSON
     var body = json.encode(data);
     String url=AppConfig.DOMAIN_PATH+"customers";
@@ -145,6 +163,7 @@ class CustomersListState extends State<CustomersList> {
                       onChanged: (date){
                         setState(() {
                           as=name.text;
+                          fetchCustomers=fetchData();
                         });
                       },
                       decoration: InputDecoration(
@@ -236,6 +255,7 @@ class CustomersListState extends State<CustomersList> {
                         height: MediaQuery.of(context).size.height * 0.75,
                         width: MediaQuery.of(context).size.width,
                         child: ListView.builder(
+                          shrinkWrap: true,
                             itemCount: snapshot.data.length,
                             itemBuilder: (BuildContext context, int index) {
                               if(snapshot.data[index].name.toLowerCase().contains(as.toLowerCase())){
@@ -279,7 +299,7 @@ class CustomersListState extends State<CustomersList> {
                                       Padding(
                                         padding: const EdgeInsets.all(8.0),
                                         child: Text(
-                                          snapshot.data[index].code,
+                                          snapshot.data[index].balance.toString(),
                                           style: TextStyle(
                                             fontFamily: 'Arial',
                                             fontSize: 12,

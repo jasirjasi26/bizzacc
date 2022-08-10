@@ -43,12 +43,14 @@ dependencies:
   pinput: ^1.2.2
   sqflite:
   http:
-  api_cache_manager:
+  api_cache_manager: ^1.0.2
   connectivity:
   data_connection_checker:
   flutter_easyloading:
   uuid:
   blue_thermal_printer:
+  hive:
+
 
 
   # The following adds the Cupertino Icons font to your application.

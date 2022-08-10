@@ -1,7 +1,9 @@
 // @dart=2.9
+import 'package:data_connection_checker/data_connection_checker.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
 import 'package:optimist_erp_app/data/user_data.dart';
 import 'package:api_cache_manager/models/cache_db_model.dart';
 import 'package:api_cache_manager/utils/cache_manager.dart';
@@ -16,6 +18,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:optimist_erp_app/screens/pin_page.dart';
 import 'package:http/http.dart' as http;
+import 'package:path_provider/path_provider.dart';
 import 'dart:async';
 import 'dart:convert';
 
@@ -32,17 +35,19 @@ class StockReports1 extends StatefulWidget {
 
 class StockReportsState1 extends State<StockReports1> {
   var name = TextEditingController();
-
   Future<List<Products>> fetchProducts;
   String as = "";
+  Box box;
 
   Future<List<Products>> fetchData() async {
-    var isCacheExist = await APICacheManager().isAPICacheKeyExist("ps");
+    var dir=await getApplicationDocumentsDirectory();
+    Hive.init(dir.path);
 
-    if (!isCacheExist) {
+    box= await Hive.openBox("products");
+    if (box.isEmpty) {
       print("Data not exists");
 
-      Map data = {'depotid': "8", 'search': ""};
+      Map data = {'depotid': User.depotId, 'search': ""};
       //encode Map to JSON
       var body = json.encode(data);
       String url = AppConfig.DOMAIN_PATH + "products";
@@ -56,56 +61,57 @@ class StockReportsState1 extends State<StockReports1> {
       );
 
       if (response.statusCode == 200) {
-        // If the server did return a 200 OK response,
-        // then parse the JSON.
-        APICacheDBModel cacheDBModel =
-            new APICacheDBModel(key: "ps", syncData: response.body);
-        await APICacheManager().addCacheData(cacheDBModel);
+
+        await box.put("products", response.body);
 
         return productsFromJson(response.body);
+      } else {
+        throw Exception('Failed to load album');
+      }
+    } else {
+      print("Product Data exists");
+      var a=await box.get("products");
+      return productsFromJson(a);
+    }
+  }
+
+  Future<bool> refreshData() async {
+    var dir=await getApplicationDocumentsDirectory();
+    Hive.init(dir.path);
+
+    box= await Hive.openBox("products");
+
+    if (await DataConnectionChecker().hasConnection) {
+      Map data = {'depotid': User.depotId, 'search': ""};
+      //encode Map to JSON
+      var body = json.encode(data);
+      String url = AppConfig.DOMAIN_PATH + "products";
+      final response = await http.post(
+        url,
+        body: body,
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        await box.clear();
+        await box.put("products", response.body);
+
+        EasyLoading.showSuccess('Refresh done...');
+        return true;
       } else {
         // If the server did not return a 200 OK response,
         // then throw an exception.
         throw Exception('Failed to load album');
       }
-    } else {
-      print("Data exists");
-      var cacheData = await APICacheManager().getCacheData("ps");
-      return productsFromJson(cacheData.syncData);
     }
   }
 
-  Future<bool> refreshData() async {
-    Map data = {'depotid': "8", 'search': ""};
-    //encode Map to JSON
-    var body = json.encode(data);
-    String url = AppConfig.DOMAIN_PATH + "products";
-    final response = await http.post(
-      url,
-      body: body,
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-    );
-
-    if (response.statusCode == 200) {
-      // If the server did return a 200 OK response,
-      // then parse the JSON.
-      APICacheDBModel cacheDBModel =
-          new APICacheDBModel(key: "ps", syncData: response.body);
-      await APICacheManager().addCacheData(cacheDBModel);
-
-      EasyLoading.showSuccess('Refresh done...');
-      return true;
-    } else {
-      // If the server did not return a 200 OK response,
-      // then throw an exception.
-      throw Exception('Failed to load album');
-    }
-  }
 
   void initState() {
+    refreshData();
     fetchProducts = fetchData();
     super.initState();
   }
@@ -181,12 +187,12 @@ class StockReportsState1 extends State<StockReports1> {
   salesOrder() {
     return Container(
       width: 600,
-      height: MediaQuery.of(context).size.height*0.8,
+      height: MediaQuery.of(context).size.height * 0.8,
       child: SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: Container(
             width: 600,
-            height: MediaQuery.of(context).size.height*0.8,
+            height: MediaQuery.of(context).size.height * 0.8,
             child: ListView(
               children: [
                 Container(
@@ -279,27 +285,41 @@ class StockReportsState1 extends State<StockReports1> {
                                 itemCount: snapshot.data.length,
                                 // ignore: missing_return
                                 itemBuilder: (context, index) {
-                                  if (snapshot.data[index].name
-                                      .toLowerCase()
-                                      .contains(as.toLowerCase())) {
-                                    return Container(
-                                      height: 28,
-                                      width: MediaQuery.of(context).size.width,
-                                      decoration: BoxDecoration(
-                                        color: index.floor().isEven
-                                            ? Color(0x66d6d6d6)
-                                            : Color(0x66f3ceef),
-                                      ),
-                                      child: Row(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.center,
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Padding(
+                                  // if (snapshot.data[index].name
+                                  //     .toLowerCase()
+                                  //     .contains(as.toLowerCase())) {
+                                  return Container(
+                                    height: 28,
+                                    width: MediaQuery.of(context).size.width,
+                                    decoration: BoxDecoration(
+                                      color: index.floor().isEven
+                                          ? Color(0x66d6d6d6)
+                                          : Color(0x66f3ceef),
+                                    ),
+                                    child: Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.center,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Padding(
+                                          padding: const EdgeInsets.all(8.0),
+                                          child: Text(
+                                            snapshot.data[index].id.toString(),
+                                            style: TextStyle(
+                                              fontFamily: 'Arial',
+                                              fontSize: 12,
+                                              color: Colors.black,
+                                            ),
+                                            textAlign: TextAlign.left,
+                                          ),
+                                        ),
+                                        Container(
+                                          width: 170,
+                                          child: Padding(
                                             padding: const EdgeInsets.all(8.0),
                                             child: Text(
-                                              snapshot.data[index].id.toString(),
+                                              snapshot.data[index].name,
                                               style: TextStyle(
                                                 fontFamily: 'Arial',
                                                 fontSize: 12,
@@ -308,65 +328,52 @@ class StockReportsState1 extends State<StockReports1> {
                                               textAlign: TextAlign.left,
                                             ),
                                           ),
-                                          Container(
-                                            width: 170,
-                                            child: Padding(
-                                              padding: const EdgeInsets.all(8.0),
-                                              child: Text(
-                                                snapshot.data[index].name,
-                                                style: TextStyle(
-                                                  fontFamily: 'Arial',
-                                                  fontSize: 12,
-                                                  color: Colors.black,
-                                                ),
-                                                textAlign: TextAlign.left,
-                                              ),
+                                        ),
+                                        Padding(
+                                          padding: const EdgeInsets.all(8.0),
+                                          child: Text(
+                                            snapshot.data[index].stock
+                                                .toString(),
+                                            style: TextStyle(
+                                              fontFamily: 'Arial',
+                                              fontSize: 12,
+                                              color: Colors.black,
                                             ),
+                                            textAlign: TextAlign.left,
                                           ),
-                                          Padding(
-                                            padding: const EdgeInsets.all(8.0),
-                                            child: Text(
-                                              snapshot.data[index].stock
-                                                  .toString(),
-                                              style: TextStyle(
-                                                fontFamily: 'Arial',
-                                                fontSize: 12,
-                                                color: Colors.black,
-                                              ),
-                                              textAlign: TextAlign.left,
+                                        ),
+                                        Padding(
+                                          padding: const EdgeInsets.all(8.0),
+                                          child: Text(
+                                            snapshot.data[index].salesRate
+                                                .toString(),
+                                            style: TextStyle(
+                                              fontFamily: 'Arial',
+                                              fontSize: 12,
+                                              color: Colors.black,
                                             ),
+                                            textAlign: TextAlign.left,
                                           ),
-                                          Padding(
-                                            padding: const EdgeInsets.all(8.0),
-                                            child: Text(
-                                              snapshot.data[index].salesRate
-                                                  .toString(),
-                                              style: TextStyle(
-                                                fontFamily: 'Arial',
-                                                fontSize: 12,
-                                                color: Colors.black,
-                                              ),
-                                              textAlign: TextAlign.left,
+                                        ),
+                                        Padding(
+                                          padding: const EdgeInsets.all(8.0),
+                                          child: Text(
+                                            snapshot.data[index].purchaseRate
+                                                .toString(),
+                                            style: TextStyle(
+                                              fontFamily: 'Arial',
+                                              fontSize: 12,
+                                              color: Colors.black,
                                             ),
+                                            textAlign: TextAlign.left,
                                           ),
-                                          Padding(
-                                            padding: const EdgeInsets.all(8.0),
-                                            child: Text(
-                                              snapshot.data[index].purchaseRate
-                                                  .toString(),
-                                              style: TextStyle(
-                                                fontFamily: 'Arial',
-                                                fontSize: 12,
-                                                color: Colors.black,
-                                              ),
-                                              textAlign: TextAlign.left,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    );
-                                  }
-                                }),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                }
+                                //        }
+                                ),
                           );
                         } else {
                           return Center(child: CircularProgressIndicator());

@@ -103,7 +103,6 @@ setState(() {
           'Accept': 'application/json',
         },
       );
-      print(response.body);
       if (response.statusCode == 200) {
         setState(() {
           isLoading=false;
@@ -122,8 +121,8 @@ setState(() {
         setState(() {
           isLoading=false;
         });
-        EasyLoading.showError('Failed');
-        print("Failed");
+        EasyLoading.showError('Failed'+response.body);
+        print(response.body);
       }
     }else{
       APICacheDBModel cacheDBModel =

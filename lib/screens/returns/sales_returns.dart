@@ -6,6 +6,7 @@ import 'package:data_connection_checker/data_connection_checker.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:intl/intl.dart';
 import 'package:optimist_erp_app/data/user_data.dart';
 import 'package:optimist_erp_app/models/returns.dart';
@@ -187,8 +188,10 @@ class ReturnsPageState extends State<ReturnsPage> {
 
   void showBookingDialog() {
     var textEditingController = TextEditingController();
+    List _list = [];
+
     Future<List> getNames(String input) async {
-      List _list = [];
+
       var isCacheExist = await APICacheManager().isAPICacheKeyExist("cs");
 
       if (!isCacheExist) {
@@ -382,14 +385,21 @@ class ReturnsPageState extends State<ReturnsPage> {
                               onTap: () {
                                 if (textEditingController.text.isNotEmpty &&
                                     _selectedLocation.isNotEmpty) {
-                                  Navigator.push(context,
-                                      MaterialPageRoute(builder: (context) {
-                                    return ReturnOrder(
-                                      customerName: textEditingController.text,
-                                      refNo: "0",
-                                      salesType: salesType,
-                                    );
-                                  }));
+                                  if(_list.contains(textEditingController.text)){
+                                    print("yes");
+                                    Navigator.push(context,
+                                        MaterialPageRoute(builder: (context) {
+                                          return ReturnOrder(
+                                            customerName:
+                                            textEditingController.text,
+                                            salesType: salesType,
+                                          );
+                                        }));
+                                  }else{
+                                    EasyLoading.showError('Not found');
+                                  }
+
+
                                 }
                               },
                               child: Container(

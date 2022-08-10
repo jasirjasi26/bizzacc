@@ -1,16 +1,12 @@
 import 'dart:ui';
-import 'package:adobe_xd/page_link.dart';
-import 'package:firebase_database/firebase_database.dart';
+import 'package:blue_thermal_printer/blue_thermal_printer.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:flutter/services.dart';
 import 'package:optimist_erp_app/app_config.dart';
 import 'package:optimist_erp_app/data/user_data.dart';
 import 'package:optimist_erp_app/screens/login.dart';
-import 'package:optimist_erp_app/screens/pin_page.dart';
 import 'package:optimist_erp_app/ui_elements/bottomNavigation.dart';
-
-import 'package:shared_preferences/shared_preferences.dart';
 
 class Splash extends StatefulWidget {
   @override
@@ -18,47 +14,66 @@ class Splash extends StatefulWidget {
 }
 
 class _SplashState extends State<Splash> {
+  BlueThermalPrinter bluetooth = BlueThermalPrinter.instance;
+  List<BluetoothDevice> _devices = [];
 
-  getUser() async {
-    // Obtain shared preferences.
-    // final prefs = await SharedPreferences.getInstance();
-    // String name = prefs.getString("name");
-    // String number = prefs.getString("number");
-    // String vanNumber = prefs.getString("vanNo");
-    // String dbs = prefs.getString("database");
-    //
-    // if (name != null && number != null) {
-    //   User.number = number;
-    //   User.name = name;
-    //   User.vanNo = vanNumber;
-    //   User.database = dbs;
-    //   User.database = dbs;
-    //
-    //   Navigator.push(context, MaterialPageRoute(builder: (context) {
-    //     return BottomBar();
-    //   }));
-    // }
-    AppConfig.getApi();
-    User().fetchUser().then((value) => {
-      if(value[0].id!=null&&value[0].accountId!=null){
-        User().fetchUser().then((value) => {
-      value.forEach((element) {
-        setState(() {
-          User.depotId=element.depotId.toString();
-          User.name=element.userName.toString();
-          User.userId=element.id.toString();
-          User.accId=element.accountId.toString();
-        });
-      })
-    }),
-    Navigator.push(context, MaterialPageRoute(builder: (context) {
-      return BottomBar();
-    }))
-           // Navigator.push(context, MaterialPageRoute(builder: (context) {
-           //    return PinPage();
-           //  })),
+
+  Future<bool?> initPlatformState() async {
+   // bool? isConnected = await bluetooth.isOn;
+
+    List<BluetoothDevice> devices = [];
+    try {
+      devices = await bluetooth.getBondedDevices();
+    } on PlatformException {
+      // TODO - Error
+
+      print("jjjjjjjjjjjjjjjjj");
+      return false;
+    }
+
+    bluetooth.onStateChanged().listen((state) {
+      switch (state) {
+        case BlueThermalPrinter.CONNECTED:
+          break;
+        case BlueThermalPrinter.DISCONNECTED:
+          break;
+        case BlueThermalPrinter.STATE_TURNING_OFF:
+          break;
+        case BlueThermalPrinter.STATE_OFF:
+          break;
+        case BlueThermalPrinter.STATE_ON:
+          break;
+        case BlueThermalPrinter.STATE_TURNING_ON:
+          break;
+        case BlueThermalPrinter.ERROR:
+          break;
+        default:
+          print(state);
+          break;
       }
     });
+  }
+
+  getUser() async {
+    AppConfig.getApi();
+    User().fetchUser().then((value) => {
+          if (value[0].id != null && value[0].accountId != null)
+            {
+              User().fetchUser().then((value) => {
+                    value.forEach((element) {
+                      setState(() {
+                        User.depotId = element.depotId.toString();
+                        User.name = element.userName.toString();
+                        User.userId = element.id.toString();
+                        User.accId = element.accountId.toString();
+                      });
+                    })
+                  }),
+              Navigator.push(context, MaterialPageRoute(builder: (context) {
+                return BottomBar();
+              }))
+            }
+        });
   }
 
   @override
@@ -67,7 +82,7 @@ class _SplashState extends State<Splash> {
     SystemChrome.setEnabledSystemUIOverlays(
         [SystemUiOverlay.bottom, SystemUiOverlay.top]);
 
-
+    initPlatformState();
     getUser();
     super.initState();
   }

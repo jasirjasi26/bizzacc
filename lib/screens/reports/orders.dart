@@ -333,7 +333,7 @@ class StockReportsState1 extends State<OrdersPage> {
                     Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: Text(
-                        'VoucherNo',
+                        'Order ID',
                         style: TextStyle(
                           fontFamily: 'Arial',
                           fontSize: 14,
@@ -381,19 +381,6 @@ class StockReportsState1 extends State<OrdersPage> {
                         textAlign: TextAlign.left,
                       ),
                     ),
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Text(
-                        'Status',
-                        style: TextStyle(
-                          fontFamily: 'Arial',
-                          fontSize: 14,
-                          color: const Color(0xffffffff),
-                        ),
-                        textAlign: TextAlign.left,
-                      ),
-                    ),
-                    SizedBox(width: 10,),
                     Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: Text(
@@ -445,7 +432,7 @@ class StockReportsState1 extends State<OrdersPage> {
                                         Padding(
                                           padding: const EdgeInsets.all(8.0),
                                           child: Text(
-                                            snapshot.data.data[index].voucherNo,
+                                            snapshot.data.data[index].orderId,
                                             style: TextStyle(
                                               fontFamily: 'Arial',
                                               fontSize: 12,
@@ -487,18 +474,6 @@ class StockReportsState1 extends State<OrdersPage> {
                                           child: Text(
                                             snapshot.data.data[index].grandTotal
                                                 .toStringAsFixed(2),
-                                            style: TextStyle(
-                                              fontFamily: 'Arial',
-                                              fontSize: 12,
-                                              color: Colors.black,
-                                            ),
-                                            textAlign: TextAlign.left,
-                                          ),
-                                        ),
-                                        Padding(
-                                          padding: const EdgeInsets.all(8.0),
-                                          child: Text(
-                                            "Pending",
                                             style: TextStyle(
                                               fontFamily: 'Arial',
                                               fontSize: 12,

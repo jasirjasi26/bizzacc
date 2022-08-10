@@ -6,9 +6,11 @@ import 'package:api_cache_manager/utils/cache_manager.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:hive/hive.dart';
 import 'package:optimist_erp_app/models/products.dart';
 import 'dart:ui';
 import 'package:http/http.dart' as http;
+import 'package:path_provider/path_provider.dart';
 import 'dart:async';
 import 'dart:convert';
 import '../app_config.dart';
@@ -27,11 +29,17 @@ class AllProductPageState extends State<AllProductPage> {
   var name = TextEditingController();
   Future<List<Products>> fetchProducts;
   String as = "";
+  Box box;
 
   Future<List<Products>> fetchData() async {
-    var isCacheExist = await APICacheManager().isAPICacheKeyExist("ps");
 
-    if (!isCacheExist) {
+    var dir=await getApplicationDocumentsDirectory();
+    Hive.init(dir.path);
+    box= await Hive.openBox("products");
+
+   // var isCacheExist = await APICacheManager().isAPICacheKeyExist("ps");
+
+    if (box.isEmpty) {
       print("Data not exists");
 
       Map data = {'depotid': User.depotId, 'search': ""};
@@ -48,13 +56,19 @@ class AllProductPageState extends State<AllProductPage> {
       );
 
       if (response.statusCode == 200) {
-        // If the server did return a 200 OK response,
-        // then parse the JSON.
-        APICacheDBModel cacheDBModel =
-            new APICacheDBModel(key: "ps", syncData: response.body);
-        await APICacheManager().addCacheData(cacheDBModel);
+        await box.clear();
+        await box.put("products", response.body);
 
-        return productsFromJson(response.body);
+        List<dynamic> responseJson = json.decode(response.body);
+
+        List<Products> profileList =
+        responseJson.map((d) => new Products.fromJson(d)).toList();
+
+        profileList.sort((a, b) {
+          return a.name.toLowerCase().compareTo(b.name.toLowerCase());
+        });
+
+        return profileList;
       } else {
         // If the server did not return a 200 OK response,
         // then throw an exception.
@@ -62,13 +76,24 @@ class AllProductPageState extends State<AllProductPage> {
       }
     } else {
       print("Data exists");
-      var cacheData = await APICacheManager().getCacheData("ps");
-      return productsFromJson(cacheData.syncData);
+      var a=await box.get("products");
+
+      List<dynamic> responseJson = json.decode(a);
+      //print(a);
+
+      List<Products> profileList =
+      responseJson.map((d) => new Products.fromJson(d)).toList();
+
+      profileList.sort((a, b) {
+        return a.name.toLowerCase().compareTo(b.name.toLowerCase());
+      });
+
+      return profileList;
     }
   }
 
   Future<bool> refreshData() async {
-    Map data = {'depotid': "8", 'search': ""};
+    Map data = {'depotid': User.depotId, 'search': ""};
     //encode Map to JSON
     var body = json.encode(data);
     String url = AppConfig.DOMAIN_PATH + "products";
@@ -82,11 +107,7 @@ class AllProductPageState extends State<AllProductPage> {
     );
 
     if (response.statusCode == 200) {
-      // If the server did return a 200 OK response,
-      // then parse the JSON.
-      APICacheDBModel cacheDBModel =
-          new APICacheDBModel(key: "ps", syncData: response.body);
-      await APICacheManager().addCacheData(cacheDBModel);
+      await box.put("products", response.body);
 
       EasyLoading.showSuccess('Refresh done...');
       return true;
@@ -216,7 +237,8 @@ class AllProductPageState extends State<AllProductPage> {
                                     ),
                                     subtitle: Text(
                                       "Sale Rate : " + snapshot.data[index].salesRate
-                                          .toString()+"    Purchase Rate : " + snapshot.data[index].purchaseRate
+                                          //.toString()
+                                          //+"    Purchase Rate : " + snapshot.data[index].purchaseRate
                                           .toString(),
                                       style: TextStyle(
                                         fontFamily: 'Arial',

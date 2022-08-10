@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_flexible_toast/flutter_flexible_toast.dart';
 import 'package:optimist_erp_app/screens/pin_page.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -20,37 +21,88 @@ class Login extends StatefulWidget {
 class LoginState extends State<Login> {
   late String code;
   List<String> userNumbers = [];
-  var number = TextEditingController();
-  var database = TextEditingController();
+  var username = TextEditingController();
+  var password = TextEditingController();
   var api = TextEditingController();
 
 
 
 
-  Future<bool> login(String number, String password) async {
-    AppConfig.setApi("http://185.188.127.100/ERPWeb/api/");
+  Future<bool> login(String username, String password) async {
+    AppConfig.setApi(api.text);
 
     try {
-      Map data = {'name': password, 'pass': number};
+      Map data = {'name': username, 'pass': password};
       String url = AppConfig.DOMAIN_PATH + "login";
+
+      FlutterFlexibleToast.showToast(
+          message: url,
+          toastGravity: ToastGravity.BOTTOM,
+          icon: ICON.LOADING,
+          radius: 50,
+          elevation: 10,
+          imageSize: 15,
+          textColor: Colors.white,
+          backgroundColor: Colors.black,
+          timeInSeconds: 2);
+
       final response = await http.post(url,
           body:data,
       );
+
       switch (response.statusCode) {
         case 200:
+          FlutterFlexibleToast.showToast(
+              message: "Please Wait...",
+              toastGravity: ToastGravity.BOTTOM,
+              icon: ICON.LOADING,
+              radius: 50,
+              elevation: 10,
+              imageSize: 15,
+              textColor: Colors.white,
+              backgroundColor: Colors.black,
+              timeInSeconds: 2);
           bool a=await User().addUser(response.body);
           return a;
           break;
         case 404:
-          print("Something went wrong");
+          FlutterFlexibleToast.showToast(
+              message: response.body,
+              toastGravity: ToastGravity.BOTTOM,
+              //icon: ICON.ERROR,
+              radius: 50,
+              elevation: 10,
+              imageSize: 15,
+              textColor: Colors.white,
+              backgroundColor: Colors.black,
+              timeInSeconds: 2);
           return false;
           break;
         default:
-          print("Something ");
+          FlutterFlexibleToast.showToast(
+              message: response.body,
+              toastGravity: ToastGravity.BOTTOM,
+              //icon: ICON.ERROR,
+              radius: 50,
+              elevation: 10,
+              imageSize: 15,
+              textColor: Colors.white,
+              backgroundColor: Colors.black,
+              timeInSeconds: 2);
           return false;
           break;
       }
     } on Exception {
+      FlutterFlexibleToast.showToast(
+          message: "Something went wrong",
+          toastGravity: ToastGravity.BOTTOM,
+          icon: ICON.ERROR,
+          radius: 50,
+          elevation: 10,
+          imageSize: 15,
+          textColor: Colors.white,
+          backgroundColor: Colors.black,
+          timeInSeconds: 2);
       return false;
     }
   }
@@ -98,7 +150,7 @@ class LoginState extends State<Login> {
                   children: [
                     Card(
                       child: Container(
-                        width: MediaQuery.of(context).size.width * 0.7,
+                        width: MediaQuery.of(context).size.width * 0.8,
                         height: 50,
                         // padding: EdgeInsets.only(bottom: 7, left: 5),
                         decoration: BoxDecoration(
@@ -141,7 +193,7 @@ class LoginState extends State<Login> {
                     ),
                     Card(
                       child: Container(
-                        width: MediaQuery.of(context).size.width * 0.7,
+                        width: MediaQuery.of(context).size.width * 0.8,
                         height: 50,
                        // padding: EdgeInsets.only(bottom: 7, left: 5),
                         decoration: BoxDecoration(
@@ -156,7 +208,7 @@ class LoginState extends State<Login> {
                           ],
                         ),
                         child: TextFormField(
-                            controller: database,
+                            controller: username,
                             maxLines: 1,
                             decoration: InputDecoration(
                               contentPadding:
@@ -182,121 +234,15 @@ class LoginState extends State<Login> {
                     SizedBox(
                       height: 20,
                     ),
-                    // Center(
-                    //   child: Padding(
-                    //     padding: EdgeInsets.all(0),
-                    //     child: Card(
-                    //       elevation: 5,
-                    //       child: Container(
-                    //         width: MediaQuery.of(context).size.width * 0.7,
-                    //         height: 50,
-                    //         padding: const EdgeInsets.only(),
-                    //         child: Row(
-                    //           children: [
-                    //             SizedBox(
-                    //               width: 5,
-                    //             ),
-                    //             Icon(
-                    //               Icons.flag,
-                    //               size: 25.0,
-                    //               color: Colors.grey,
-                    //             ),
-                    //             Container(
-                    //               width:
-                    //                   MediaQuery.of(context).size.width * 0.6,
-                    //               height: 50,
-                    //               padding: EdgeInsets.only(
-                    //                 left: 20.0,
-                    //                 top: 10,
-                    //               ),
-                    //               child: DropdownButton(
-                    //                 isDense: true,
-                    //                 //itemHeight: 50,
-                    //                 iconSize: 30,
-                    //                 isExpanded: true,
-                    //                 hint: Text('Select Country'),
-                    //                 value: _selectedLocation,
-                    //                 onChanged: (newValue) {
-                    //                   setState(() {
-                    //                     _selectedLocation = newValue;
-                    //                   });
-                    //                   if (_selectedLocation == "UAE") {
-                    //                     setState(() {
-                    //                       code = "+971";
-                    //                     });
-                    //                   }
-                    //                   if (_selectedLocation == "India") {
-                    //                     setState(() {
-                    //                       code = "+91";
-                    //                     });
-                    //                   }
-                    //                   if (_selectedLocation == "Nigeria") {
-                    //                     setState(() {
-                    //                       code = "+234";
-                    //                     });
-                    //                   }
-                    //                   if (_selectedLocation == "Sri Lanka") {
-                    //                     setState(() {
-                    //                       code = "+94";
-                    //                     });
-                    //                   }
-                    //                   if (_selectedLocation == "Kuwait") {
-                    //                     setState(() {
-                    //                       code = "+965";
-                    //                     });
-                    //                   }
-                    //                   if (_selectedLocation == "Saudi Arabia") {
-                    //                     setState(() {
-                    //                       code = "+966";
-                    //                     });
-                    //                   }
-                    //                   if (_selectedLocation == "Oman") {
-                    //                     setState(() {
-                    //                       code = "+968";
-                    //                     });
-                    //                   }
-                    //                   if (_selectedLocation == "Bahrain") {
-                    //                     setState(() {
-                    //                       code = "+973";
-                    //                     });
-                    //                   }
-                    //                   if (_selectedLocation == "Quatar") {
-                    //                     setState(() {
-                    //                       code = "+974";
-                    //                     });
-                    //                   }
-                    //                   print(_selectedLocation);
-                    //                 },
-                    //                 items: _locations.map((location) {
-                    //                   return DropdownMenuItem(
-                    //                     child: Padding(
-                    //                       padding: const EdgeInsets.only(
-                    //                           top: 0.0, left: 0),
-                    //                       child: new Text(location),
-                    //                     ),
-                    //                     value: location,
-                    //                   );
-                    //                 }).toList(),
-                    //               ),
-                    //             ),
-                    //           ],
-                    //         ),
-                    //       ),
-                    //     ),
-                    //   ),
-                    // ),
-                    // SizedBox(
-                    //   height: 20,
-                    // ),
                     Padding(
                       padding: const EdgeInsets.all(0.0),
                       child: Container(
-                        width: MediaQuery.of(context).size.width * 0.714,
+                        width: MediaQuery.of(context).size.width * 0.8,
                         child: Card(
                           elevation: 10,
                           child: Container(
                             child: TextFormField(
-                                controller: number,
+                                controller: password,
                                // keyboardType: TextInputType.number,
                                 obscureText: true,
                                 decoration: InputDecoration(
@@ -321,14 +267,8 @@ class LoginState extends State<Login> {
                     GestureDetector(
                       onTap: () {
 
-                        login(database.text, number.text).then((value) => {
+                        login(username.text, password.text).then((value) => {
                           if(value){
-                            // Navigator.push(context,
-                            //     MaterialPageRoute(builder: (context) {
-                            //       return PinPage(
-                            //         //  phone: code + number.text,
-                            //       );
-                            //     }))
                             User().fetchUser().then((value) => {
                           value.forEach((element) {
                             setState(() {

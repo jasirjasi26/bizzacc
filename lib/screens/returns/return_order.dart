@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_flexible_toast/flutter_flexible_toast.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:hive/hive.dart';
+import 'package:intl/intl.dart';
 import 'package:optimist_erp_app/data/user_data.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:screenshot/screenshot.dart';
@@ -30,7 +32,6 @@ import '../../controller.dart';
 import '../../models/customers.dart';
 import '../../models/units.dart';
 import '../van_page.dart';
-
 
 class ReturnOrder extends StatefulWidget {
   ReturnOrder(
@@ -100,67 +101,31 @@ class NewOrderPageState extends State<ReturnOrder> {
   String ID = "1";
   String unitID = "";
   String ids = "";
-  bool isLoading=false;
-  String voucherid = DateTime
-      .now()
-      .year
-      .toString() +
-      DateTime
-          .now()
-          .month
-          .toString() +
-      DateTime
-          .now()
-          .day
-          .toString() +
-      DateTime
-          .now()
-          .hour
-          .toString() +
-      DateTime
-          .now()
-          .minute
-          .toString() +
-      DateTime
-          .now()
-          .second
-          .toString();
+  bool isLoading = false;
+  List<String> _locations = ['All'];
+  String selectedLocation = "All";
+  String category = "";
+  String voucherid = DateFormat('yyMMdd/kkmmss').format(DateTime.now());
+
 
   DateTime selectedDate = DateTime.now();
-  String from = DateTime
-      .now()
-      .year
-      .toString() +
+  String from = DateTime.now().year.toString() +
       "-" +
-      DateTime
-          .now()
-          .month
-          .toString() +
+      DateTime.now().month.toString() +
       "-" +
-      DateTime
-          .now()
-          .day
-          .toString();
-  String today = DateTime
-      .now()
-      .year
-      .toString() +
+      DateTime.now().day.toString();
+  String today = DateTime.now().year.toString() +
       "-" +
-      DateTime
-          .now()
-          .month
-          .toString() +
+      DateTime.now().month.toString() +
       "-" +
-      DateTime
-          .now()
-          .day
-          .toString();
+      DateTime.now().day.toString();
   List<Products> products;
   var name = TextEditingController();
   Future<List<Products>> fetchProducts;
   String as = "";
   String customer_id = "";
   String customer_balance = "";
+  Box box;
 
   getNames() async {
     var isCacheExist = await APICacheManager().isAPICacheKeyExist("cs");
@@ -168,7 +133,7 @@ class NewOrderPageState extends State<ReturnOrder> {
     if (!isCacheExist) {
       print("Data not exists");
 
-      Map data = {'depotid':User.depotId, 'search': ""};
+      Map data = {'depotid': User.depotId, 'search': ""};
       //encode Map to JSON
       var body = json.encode(data);
       String url = AppConfig.DOMAIN_PATH + "customers";
@@ -185,7 +150,7 @@ class NewOrderPageState extends State<ReturnOrder> {
         // If the server did return a 200 OK response,
         // then parse the JSON.
         APICacheDBModel cacheDBModel =
-        new APICacheDBModel(key: "cs", syncData: response.body);
+            new APICacheDBModel(key: "cs", syncData: response.body);
         await APICacheManager().addCacheData(cacheDBModel);
         var json = jsonDecode(response.body);
         for (int i = 0; i < customersFromJson(response.body).length; i++) {
@@ -216,7 +181,52 @@ class NewOrderPageState extends State<ReturnOrder> {
     }
   }
 
+  fetchCategory() async {
+    if (await DataConnectionChecker().hasConnection) {
+      print("Data not exists");
+
+      Map data = {'depotid': User.depotId, 'search': ""};
+      //encode Map to JSON
+      var body = json.encode(data);
+      String url = AppConfig.DOMAIN_PATH + "productgroups";
+      final response = await http.post(
+        url,
+        body: body,
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        // If the server did return a 200 OK response,
+        // then parse the JSON.
+        APICacheDBModel cacheDBModel =
+            new APICacheDBModel(key: "category", syncData: response.body);
+        await APICacheManager().addCacheData(cacheDBModel);
+        var json = jsonDecode(response.body);
+        for (int i = 0; i < json.length; i++) {
+          _locations.add(json[i]['Name']);
+        }
+      } else {
+        throw Exception('Failed to load album');
+      }
+    } else {
+      print("Product Data exists");
+      var cacheData = await APICacheManager().getCacheData("category");
+      var json = jsonDecode(cacheData.syncData);
+      for (int i = 0; i < json.length; i++) {
+        _locations.add(json[i]['Name']);
+      }
+    }
+  }
+
   Future<bool> refreshData() async {
+    var dir = await getApplicationDocumentsDirectory();
+    Hive.init(dir.path);
+
+    box = await Hive.openBox("products");
+
     if (await DataConnectionChecker().hasConnection) {
       Map data = {'depotid': User.depotId, 'search': ""};
       //encode Map to JSON
@@ -232,11 +242,8 @@ class NewOrderPageState extends State<ReturnOrder> {
       );
 
       if (response.statusCode == 200) {
-        // If the server did return a 200 OK response,
-        // then parse the JSON.
-        APICacheDBModel cacheDBModel =
-        new APICacheDBModel(key: "ps", syncData: response.body);
-        await APICacheManager().addCacheData(cacheDBModel);
+        await box.clear();
+        await box.put("products", response.body);
 
         EasyLoading.showSuccess('Refresh done...');
         return true;
@@ -246,13 +253,10 @@ class NewOrderPageState extends State<ReturnOrder> {
         throw Exception('Failed to load album');
       }
     }
-
   }
 
   Future<List<Products>> fetchDatas() async {
-    var isCacheExist = await APICacheManager().isAPICacheKeyExist("ps");
-
-    if (!isCacheExist) {
+    if (box.isEmpty) {
       print("Data not exists");
 
       Map data = {'depotid': User.depotId, 'search': ""};
@@ -269,11 +273,8 @@ class NewOrderPageState extends State<ReturnOrder> {
       );
 
       if (response.statusCode == 200) {
-        // If the server did return a 200 OK response,
-        // then parse the JSON.
-        APICacheDBModel cacheDBModel =
-        new APICacheDBModel(key: "ps", syncData: response.body);
-        await APICacheManager().addCacheData(cacheDBModel);
+        await box.clear();
+        await box.put("products", response.body);
 
         return productsFromJson(response.body);
       } else {
@@ -283,13 +284,12 @@ class NewOrderPageState extends State<ReturnOrder> {
       }
     } else {
       print("Product Data exists");
-      var cacheData = await APICacheManager().getCacheData("ps");
-      return productsFromJson(cacheData.syncData);
+      var a = await box.get("products");
+      return productsFromJson(a);
     }
   }
 
   Future<List<Units>> fetchUnits(String id) async {
-    var isCacheExist = await APICacheManager().isAPICacheKeyExist("units");
 
     if (await DataConnectionChecker().hasConnection) {
       print("Internet exists");
@@ -310,11 +310,10 @@ class NewOrderPageState extends State<ReturnOrder> {
 
       if (response.statusCode == 200) {
         APICacheDBModel cacheDBModel =
-        new APICacheDBModel(key: "units", syncData: response.body);
+            new APICacheDBModel(key: "units", syncData: response.body);
         await APICacheManager().addCacheData(cacheDBModel);
         List<Units> filtered = [];
         unitsFromJson(response.body).forEach((element) {
-
           if (element.productId.toString() == id) {
             filtered.add(element);
           }
@@ -358,8 +357,8 @@ class NewOrderPageState extends State<ReturnOrder> {
       });
   }
 
-
-  void addItem(String Aname,
+  void addItem(
+      String Aname,
       String Aunit,
       String AunitId,
       String AdiscountedAmount,
@@ -433,14 +432,12 @@ class NewOrderPageState extends State<ReturnOrder> {
     print(itemname);
   }
 
-
-
   Future<void> addtoInvoiceValues() async {
     List amm = [];
     String time = DateTime.now().toString();
     EasyLoading.showInfo('Please Wait');
     setState(() {
-      isLoading=true;
+      isLoading = true;
     });
     for (int i = 0; i < itemname.length; i++) {
       Map<String, dynamic> itemValues = {
@@ -448,23 +445,23 @@ class NewOrderPageState extends State<ReturnOrder> {
         "ItemID": itemIds[i],
         "Qty": quantity[i],
         "Rate": rateList[i],
-        "ItemName":itemname[i],
+        "ItemName": itemname[i],
         "Amount": totalamount[i],
         "UnitID": unitlist[i],
         "GSTAmount": gstTotal[i],
         "VATAmount": vatTotal[i],
         "CESSAmount": "",
-        "InclusiveRate":"",
+        "InclusiveRate": "",
         "DiscAmount": discountAmount[i],
         "DiscPercentage": percentages[i],
       };
       amm.add(itemValues);
     }
 
-    double finalbalance=double.parse(customer_balance)-discountedBill;
+    double finalbalance = double.parse(customer_balance) - discountedBill;
     Map<String, dynamic> da = {
       "Id": 0,
-      "Balance":finalbalance.toStringAsFixed(User.decimals),
+      "Balance": finalbalance.toStringAsFixed(User.decimals),
       "BillAmount": discountedBill.toStringAsFixed(User.decimals),
       "Discount": "-",
       "CardReceived": "-",
@@ -473,9 +470,9 @@ class NewOrderPageState extends State<ReturnOrder> {
       "DeliveryDate": from,
       "Items": amm.toList(),
       "ReturnID": voucherid,
-      "ReturnDate":  time,
+      "ReturnDate": time,
       "RoundOff": "-",
-      "UpdatedTime":  time,
+      "UpdatedTime": time,
       "SalesTypeID": widget.salesType,
       "Remarks": "",
       "UserID": User.userId
@@ -498,25 +495,25 @@ class NewOrderPageState extends State<ReturnOrder> {
 
       if (response.statusCode == 200) {
         setState(() {
-          isLoading=false;
+          isLoading = false;
         });
         EasyLoading.showSuccess('Successfully Saved');
-        Navigator.push(context,
-            MaterialPageRoute(builder: (context) {
-              return VanPage(
-                customerName: widget.customerName,
-                billAmount: discountedBill.toString(),
-                voucherNumber: voucherid,
-                date: time,
-                back: false,
-                data: da,
-              );
-            }));
+        Navigator.push(context, MaterialPageRoute(builder: (context) {
+          return VanPage(
+            customerName: widget.customerName,
+            billAmount: discountedBill.toString(),
+            voucherNumber: voucherid,
+            date: time,
+            back: false,
+            customerCode:customerId,
+            data: da,
+          );
+        }));
 
         //Navigator.pop(context);
       } else {
         setState(() {
-          isLoading=false;
+          isLoading = false;
         });
         EasyLoading.showError('Failed to sent data');
         print("Failed");
@@ -524,23 +521,21 @@ class NewOrderPageState extends State<ReturnOrder> {
     } else {
       print('No internet :( Reason:');
       APICacheDBModel cacheDBModel =
-      new APICacheDBModel(key: da['ReturnID'].toString(), syncData: body);
+          new APICacheDBModel(key: da['ReturnID'].toString(), syncData: body);
       await APICacheManager().addCacheData(cacheDBModel).then((value) => {
-        if(value){
-          saveToDb(da)
-        }
-      });
+            if (value) {saveToDb(da)}
+          });
     }
   }
 
-
   saveToDb(Map<String, dynamic> data) async {
-    ContactinfoModel contactinfoModel = ContactinfoModel(id: null,userId: data['ReturnID'].toString(),createdAt: "Return");
-    await Controller().addData(contactinfoModel).then((value){
-      if (value>0) {
+    ContactinfoModel contactinfoModel = ContactinfoModel(
+        id: null, userId: data['ReturnID'].toString(), createdAt: "Return");
+    await Controller().addData(contactinfoModel).then((value) {
+      if (value > 0) {
         EasyLoading.showSuccess('Successfully Saved');
         Navigator.pop(context);
-      }else{
+      } else {
         print("failed");
       }
     });
@@ -551,6 +546,7 @@ class NewOrderPageState extends State<ReturnOrder> {
     fetchProducts = fetchDatas();
     getNames();
     refreshData();
+    fetchCategory();
 
     User().fetchUser().asStream().forEach((element) {
       ids = element[0].id.toString();
@@ -581,14 +577,15 @@ class NewOrderPageState extends State<ReturnOrder> {
                   )
                 ],
               ),
-              isLoading?Center(child: CircularProgressIndicator()):Container()
+              isLoading
+                  ? Center(child: CircularProgressIndicator())
+                  : Container()
             ],
           ),
         ),
       ),
     );
   }
-
 
   homeData() {
     return Column(
@@ -660,7 +657,7 @@ class NewOrderPageState extends State<ReturnOrder> {
                       height: 35,
                       width: 30,
                       child: // Adobe XD layer: 'surface1' (group)
-                      Stack(
+                          Stack(
                         children: <Widget>[
                           Pinned.fromPins(
                             Pin(start: 0.0, end: 0.0),
@@ -768,7 +765,7 @@ class NewOrderPageState extends State<ReturnOrder> {
                       height: 35,
                       width: 25,
                       child: // Adobe XD layer: 'surface1' (group)
-                      Stack(
+                          Stack(
                         children: <Widget>[
                           Pinned.fromPins(
                             Pin(start: 0.0, end: 0.0),
@@ -823,10 +820,7 @@ class NewOrderPageState extends State<ReturnOrder> {
           ],
         ),
         Container(
-          width: MediaQuery
-              .of(context)
-              .size
-              .width,
+          width: MediaQuery.of(context).size.width,
           color: Color(0xff20474f),
           height: 35,
           child: Padding(
@@ -834,10 +828,7 @@ class NewOrderPageState extends State<ReturnOrder> {
             child: Row(
               children: [
                 Container(
-                  width: MediaQuery
-                      .of(context)
-                      .size
-                      .width * 0.33,
+                  width: MediaQuery.of(context).size.width * 0.33,
                   child: Text(
                     'Item',
                     style: TextStyle(
@@ -850,10 +841,7 @@ class NewOrderPageState extends State<ReturnOrder> {
                 ),
                 Spacer(),
                 Container(
-                  width: MediaQuery
-                      .of(context)
-                      .size
-                      .width * 0.1,
+                  width: MediaQuery.of(context).size.width * 0.1,
                   child: Text(
                     'Qty',
                     style: TextStyle(
@@ -865,10 +853,7 @@ class NewOrderPageState extends State<ReturnOrder> {
                   ),
                 ),
                 Container(
-                  width: MediaQuery
-                      .of(context)
-                      .size
-                      .width * 0.1,
+                  width: MediaQuery.of(context).size.width * 0.1,
                   child: Text(
                     'Rate',
                     style: TextStyle(
@@ -880,10 +865,7 @@ class NewOrderPageState extends State<ReturnOrder> {
                   ),
                 ),
                 Container(
-                  width: MediaQuery
-                      .of(context)
-                      .size
-                      .width * 0.1,
+                  width: MediaQuery.of(context).size.width * 0.1,
                   child: Text(
                     'Disc',
                     style: TextStyle(
@@ -895,10 +877,7 @@ class NewOrderPageState extends State<ReturnOrder> {
                   ),
                 ),
                 Container(
-                  width: MediaQuery
-                      .of(context)
-                      .size
-                      .width * 0.1,
+                  width: MediaQuery.of(context).size.width * 0.1,
                   child: Text(
                     'Tax',
                     style: TextStyle(
@@ -910,10 +889,7 @@ class NewOrderPageState extends State<ReturnOrder> {
                   ),
                 ),
                 Container(
-                  width: MediaQuery
-                      .of(context)
-                      .size
-                      .width * 0.1,
+                  width: MediaQuery.of(context).size.width * 0.1,
                   child: Text(
                     'Total',
                     style: TextStyle(
@@ -924,19 +900,13 @@ class NewOrderPageState extends State<ReturnOrder> {
                     textAlign: TextAlign.left,
                   ),
                 ),
-                SizedBox(width: MediaQuery
-                    .of(context)
-                    .size
-                    .width * 0.1),
+                SizedBox(width: MediaQuery.of(context).size.width * 0.1),
               ],
             ),
           ),
         ),
         Container(
-            height: MediaQuery
-                .of(context)
-                .size
-                .height * 0.3,
+            height: MediaQuery.of(context).size.height * 0.3,
             child: ListView.builder(
               itemCount: itemname.length,
               itemBuilder: (context, i) {
@@ -944,25 +914,17 @@ class NewOrderPageState extends State<ReturnOrder> {
                   padding: const EdgeInsets.all(0.0),
                   child: Container(
                     height: 30,
-                    color: i
-                        .floor()
-                        .isEven
+                    color: i.floor().isEven
                         ? Colors.blueGrey
                         : Colors.blueGrey[900],
-                    width: MediaQuery
-                        .of(context)
-                        .size
-                        .width,
+                    width: MediaQuery.of(context).size.width,
                     child: Row(
                       children: [
                         SizedBox(
                           width: 10,
                         ),
                         Container(
-                          width: MediaQuery
-                              .of(context)
-                              .size
-                              .width * 0.33,
+                          width: MediaQuery.of(context).size.width * 0.33,
                           child: Text(
                             itemname[i].toString(),
                             style: TextStyle(
@@ -975,10 +937,7 @@ class NewOrderPageState extends State<ReturnOrder> {
                         ),
                         Spacer(),
                         Container(
-                          width: MediaQuery
-                              .of(context)
-                              .size
-                              .width * 0.13,
+                          width: MediaQuery.of(context).size.width * 0.13,
                           child: Text(
                             quantity[i].toString() + " " + units[i].toString(),
                             style: TextStyle(
@@ -990,10 +949,7 @@ class NewOrderPageState extends State<ReturnOrder> {
                           ),
                         ),
                         Container(
-                          width: MediaQuery
-                              .of(context)
-                              .size
-                              .width * 0.1,
+                          width: MediaQuery.of(context).size.width * 0.1,
                           child: Text(
                             rateList[i].toString(),
                             style: TextStyle(
@@ -1005,10 +961,7 @@ class NewOrderPageState extends State<ReturnOrder> {
                           ),
                         ),
                         Container(
-                          width: MediaQuery
-                              .of(context)
-                              .size
-                              .width * 0.1,
+                          width: MediaQuery.of(context).size.width * 0.1,
                           child: Text(
                             allDiscounts[i].toString(),
                             style: TextStyle(
@@ -1020,10 +973,7 @@ class NewOrderPageState extends State<ReturnOrder> {
                           ),
                         ),
                         Container(
-                          width: MediaQuery
-                              .of(context)
-                              .size
-                              .width * 0.1,
+                          width: MediaQuery.of(context).size.width * 0.1,
                           child: Text(
                             vatTotal[i].toString(),
                             style: TextStyle(
@@ -1035,10 +985,7 @@ class NewOrderPageState extends State<ReturnOrder> {
                           ),
                         ),
                         Container(
-                          width: MediaQuery
-                              .of(context)
-                              .size
-                              .width * 0.1,
+                          width: MediaQuery.of(context).size.width * 0.1,
                           child: Text(
                             discountedFinalRate[i].toString(),
                             style: TextStyle(
@@ -1050,10 +997,7 @@ class NewOrderPageState extends State<ReturnOrder> {
                           ),
                         ),
                         Container(
-                          width: MediaQuery
-                              .of(context)
-                              .size
-                              .width * 0.1,
+                          width: MediaQuery.of(context).size.width * 0.1,
                           child: GestureDetector(
                             onTap: () {
                               deleteItem(i);
@@ -1113,7 +1057,7 @@ class NewOrderPageState extends State<ReturnOrder> {
                       ],
                     ),
                     child:
-                    Center(child: Text((discountedBill - disc).toString())),
+                        Center(child: Text((discountedBill - disc).toString())),
                   ),
                 ],
               ),
@@ -1162,26 +1106,26 @@ class NewOrderPageState extends State<ReturnOrder> {
               padding: const EdgeInsets.all(8.0),
               child: Column(
                 children: [
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.push(context,
-                          MaterialPageRoute(builder: (context) {
-                            return QRViewExample();
-                          }));
-                    },
-                    child: Center(
-                      child: Image.asset(
-                        'assets/images/approvalscan.png',
-                        fit: BoxFit.scaleDown,
-                        color: Colors.blueGrey,
-                        height: 50,
-                        width: 50,
-                      ),
-                    ),
-                  ),
-                  Text(
-                    "\nScan to Approve",
-                  ),
+                  // GestureDetector(
+                  //   onTap: () {
+                  //     Navigator.push(context,
+                  //         MaterialPageRoute(builder: (context) {
+                  //           return QRViewExample();
+                  //         }));
+                  //   },
+                  //   child: Center(
+                  //     child: Image.asset(
+                  //       'assets/images/approvalscan.png',
+                  //       fit: BoxFit.scaleDown,
+                  //       color: Colors.blueGrey,
+                  //       height: 50,
+                  //       width: 50,
+                  //     ),
+                  //   ),
+                  // ),
+                  // Text(
+                  //   "\nScan to Approve",
+                  // ),
                   SizedBox(
                     height: 20,
                   ),
@@ -1251,7 +1195,6 @@ class NewOrderPageState extends State<ReturnOrder> {
                                 ),
                               ),
                             ),
-
                           ],
                         ),
                       ),
@@ -1270,11 +1213,9 @@ class NewOrderPageState extends State<ReturnOrder> {
   Future<void> showBookingDialog2() {
     var textEditingController = TextEditingController();
 
-
     setState(() {
       saleQty.text = "1";
     });
-
 
     void calculteAmount(String a) {
       if (vat > 0) {
@@ -1310,14 +1251,8 @@ class NewOrderPageState extends State<ReturnOrder> {
                 child: Align(
                   alignment: Alignment.bottomCenter,
                   child: Container(
-                      height: MediaQuery
-                          .of(context)
-                          .size
-                          .height * 0.65,
-                      width: MediaQuery
-                          .of(context)
-                          .size
-                          .width,
+                      height: MediaQuery.of(context).size.height * 0.65,
+                      width: MediaQuery.of(context).size.width,
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(5),
@@ -1331,8 +1266,8 @@ class NewOrderPageState extends State<ReturnOrder> {
                                   left: 10.0, right: 50, bottom: 5),
                               child: Text(
                                 "Return Item",
-                                style:
-                                TextStyle(color: Colors.black, fontSize: 22),
+                                style: TextStyle(
+                                    color: Colors.black, fontSize: 22),
                               ),
                             ),
                             SizedBox(
@@ -1343,8 +1278,7 @@ class NewOrderPageState extends State<ReturnOrder> {
                               child: Row(
                                 children: [
                                   GestureDetector(
-                                    onTap: () {
-                                    },
+                                    onTap: () {},
                                     child: Container(
                                         height: 20,
                                         width: 20,
@@ -1362,15 +1296,13 @@ class NewOrderPageState extends State<ReturnOrder> {
                                       showBookingDialog2();
                                     },
                                     child: Container(
-                                        width: MediaQuery
-                                            .of(context)
-                                            .size
-                                            .width *
-                                            0.8,
+                                        width:
+                                            MediaQuery.of(context).size.width *
+                                                0.8,
                                         height: 50,
                                         decoration: BoxDecoration(
                                           borderRadius:
-                                          BorderRadius.circular(16.0),
+                                              BorderRadius.circular(16.0),
                                           color: const Color(0xffffffff),
                                           boxShadow: [
                                             BoxShadow(
@@ -1407,14 +1339,12 @@ class NewOrderPageState extends State<ReturnOrder> {
                                     width: 10,
                                   ),
                                   Container(
-                                      width: MediaQuery
-                                          .of(context)
-                                          .size
-                                          .width *
+                                      width: MediaQuery.of(context).size.width *
                                           0.35,
                                       height: 50,
                                       decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(16.0),
+                                        borderRadius:
+                                            BorderRadius.circular(16.0),
                                         color: const Color(0xffffffff),
                                         boxShadow: [
                                           BoxShadow(
@@ -1445,16 +1375,17 @@ class NewOrderPageState extends State<ReturnOrder> {
                                   GestureDetector(
                                     onTap: () {},
                                     child: Container(
-                                      width: MediaQuery
-                                          .of(context)
-                                          .size
-                                          .width *
+                                      width: MediaQuery.of(context).size.width *
                                           0.38,
                                       height: 50,
                                       padding: const EdgeInsets.only(
-                                          left: 10, right: 0, bottom: 0, top: 12),
+                                          left: 10,
+                                          right: 0,
+                                          bottom: 0,
+                                          top: 12),
                                       decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(16.0),
+                                        borderRadius:
+                                            BorderRadius.circular(16.0),
                                         color: const Color(0xffffffff),
                                         boxShadow: [
                                           BoxShadow(
@@ -1468,8 +1399,9 @@ class NewOrderPageState extends State<ReturnOrder> {
                                         //width:120,
                                         child: FutureBuilder(
                                             future: Future.delayed(
-                                                Duration(milliseconds: 200))
-                                                .then((value) => fetchUnits(ID)),
+                                                    Duration(milliseconds: 200))
+                                                .then(
+                                                    (value) => fetchUnits(ID)),
                                             builder: (context,
                                                 AsyncSnapshot snapshot) {
                                               if (snapshot.hasData &&
@@ -1479,28 +1411,28 @@ class NewOrderPageState extends State<ReturnOrder> {
                                                 return Theme(
                                                   data: Theme.of(context)
                                                       .copyWith(
-                                                    // canvasColor: Colors.blueGrey, // background color for the dropdown items
-                                                      buttonTheme: ButtonTheme
-                                                          .of(context)
-                                                          .copyWith(
-                                                          alignedDropdown:
-                                                          true,
-                                                          padding: EdgeInsets
-                                                              .only(
-                                                              top: 25,
-                                                              left:
-                                                              10),
-                                                          height:
-                                                          50 //If false (the default), then the dropdown's menu will be wider than its button.
-                                                      )),
+                                                          // canvasColor: Colors.blueGrey, // background color for the dropdown items
+                                                          buttonTheme: ButtonTheme
+                                                                  .of(context)
+                                                              .copyWith(
+                                                                  alignedDropdown:
+                                                                      true,
+                                                                  padding: EdgeInsets
+                                                                      .only(
+                                                                          top:
+                                                                              25,
+                                                                          left:
+                                                                              10),
+                                                                  height:
+                                                                      50 //If false (the default), then the dropdown's menu will be wider than its button.
+                                                                  )),
                                                   child: DropdownButton(
                                                     isExpanded: true,
                                                     isDense: true,
                                                     value: null,
                                                     items: _cadastro.map((map) {
                                                       return DropdownMenuItem(
-                                                        child: Text(map
-                                                            .unitName
+                                                        child: Text(map.unitName
                                                             .toString()),
                                                         value: map.salesRate
                                                             .toString(),
@@ -1509,8 +1441,7 @@ class NewOrderPageState extends State<ReturnOrder> {
                                                             saleRate.text = map
                                                                 .salesRate
                                                                 .toString();
-                                                            unit = map
-                                                                .unitName
+                                                            unit = map.unitName
                                                                 .toString();
                                                             unitID = map.unitId
                                                                 .toString();
@@ -1521,7 +1452,8 @@ class NewOrderPageState extends State<ReturnOrder> {
                                                     }).toList(),
                                                     onChanged: (selected) {
                                                       setState(() {
-                                                        _selectedUnit = selected;
+                                                        _selectedUnit =
+                                                            selected;
                                                       });
                                                       print(_selectedUnit);
                                                       calculteAmount("");
@@ -1535,7 +1467,7 @@ class NewOrderPageState extends State<ReturnOrder> {
                                                     width: 20,
                                                     child: Center(
                                                         child:
-                                                        CircularProgressIndicator()));
+                                                            CircularProgressIndicator()));
                                               }
                                             }),
                                       ),
@@ -1560,11 +1492,8 @@ class NewOrderPageState extends State<ReturnOrder> {
                                     width: 20,
                                   ),
                                   Container(
-                                    width:
-                                    MediaQuery
-                                        .of(context)
-                                        .size
-                                        .width * 0.35,
+                                    width: MediaQuery.of(context).size.width *
+                                        0.35,
                                     height: 50,
                                     decoration: BoxDecoration(
                                       borderRadius: BorderRadius.circular(16.0),
@@ -1580,11 +1509,14 @@ class NewOrderPageState extends State<ReturnOrder> {
                                     child: TextFormField(
                                         controller: saleRate,
                                         keyboardType: TextInputType.number,
+                                        onChanged: (value) {
+                                          calculteAmount("");
+                                        },
                                         decoration: InputDecoration(
                                           hintText: 'Rate',
                                           //filled: true,
-                                          hintStyle:
-                                          TextStyle(color: Color(0xffb0b0b0)),
+                                          hintStyle: TextStyle(
+                                              color: Color(0xffb0b0b0)),
                                           border: InputBorder.none,
                                           contentPadding: EdgeInsets.only(
                                               left: 15,
@@ -1615,10 +1547,7 @@ class NewOrderPageState extends State<ReturnOrder> {
                                       )),
                                   Container(
                                     width:
-                                    MediaQuery
-                                        .of(context)
-                                        .size
-                                        .width * 0.2,
+                                        MediaQuery.of(context).size.width * 0.2,
                                     height: 50,
                                     decoration: BoxDecoration(
                                       borderRadius: BorderRadius.circular(16.0),
@@ -1638,8 +1567,8 @@ class NewOrderPageState extends State<ReturnOrder> {
                                         decoration: InputDecoration(
                                           hintText: 'Qty',
                                           //filled: true,
-                                          hintStyle:
-                                          TextStyle(color: Color(0xffb0b0b0)),
+                                          hintStyle: TextStyle(
+                                              color: Color(0xffb0b0b0)),
                                           border: InputBorder.none,
                                           contentPadding: EdgeInsets.only(
                                               left: 15,
@@ -1745,20 +1674,20 @@ class NewOrderPageState extends State<ReturnOrder> {
                                       if (Name != "" &&
                                           saleQty.text != "0" &&
                                           lastSaleRate > 0) {
-                                          addItem(
-                                              Name,
-                                              unit,
-                                              unitID,
-                                              totalAmount.toString(),
-                                              int.parse(saleQty.text),
-                                              ID,
-                                              tax.toString(),
-                                              tax.toString(),
-                                              gst.toString(),
-                                              saleRate.text,
-                                              code,
-                                              totalAmount.toString(),
-                                              "0");
+                                        addItem(
+                                            Name,
+                                            unit,
+                                            unitID,
+                                            totalAmount.toString(),
+                                            int.parse(saleQty.text),
+                                            ID,
+                                            tax.toString(),
+                                            tax.toString(),
+                                            gst.toString(),
+                                            saleRate.text,
+                                            code,
+                                            totalAmount.toString(),
+                                            "0");
 
                                         setState(() {
                                           unit = "";
@@ -1794,7 +1723,8 @@ class NewOrderPageState extends State<ReturnOrder> {
                                       height: 50,
                                       width: 120,
                                       decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(8.0),
+                                        borderRadius:
+                                            BorderRadius.circular(8.0),
                                         color: const Color(0xff20474f),
                                         boxShadow: [
                                           BoxShadow(
@@ -1866,15 +1796,13 @@ class NewOrderPageState extends State<ReturnOrder> {
         },
         transitionBuilder: (_, anim, __, child) {
           return SlideTransition(
-            position: Tween(begin: Offset(0, 1), end: Offset(0, 0)).animate(anim),
+            position:
+                Tween(begin: Offset(0, 1), end: Offset(0, 0)).animate(anim),
             child: child,
           );
         },
       );
-
     }
-
-
 
     ///searchItemDialog2() {
     showGeneralDialog(
@@ -1892,14 +1820,8 @@ class NewOrderPageState extends State<ReturnOrder> {
                 child: Padding(
                   padding: const EdgeInsets.all(15.0),
                   child: Container(
-                      height: MediaQuery
-                          .of(context)
-                          .size
-                          .height * 0.7,
-                      width: MediaQuery
-                          .of(context)
-                          .size
-                          .width,
+                      height: MediaQuery.of(context).size.height * 0.7,
+                      width: MediaQuery.of(context).size.width,
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(5),
@@ -1909,10 +1831,7 @@ class NewOrderPageState extends State<ReturnOrder> {
                         child: ListView(
                           children: [
                             Container(
-                              width: MediaQuery
-                                  .of(context)
-                                  .size
-                                  .width * 0.9,
+                              width: MediaQuery.of(context).size.width * 0.9,
                               height: 50,
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(5.0),
@@ -1954,70 +1873,124 @@ class NewOrderPageState extends State<ReturnOrder> {
                             SizedBox(
                               height: 10,
                             ),
+                            Row(
+                              children: [
+                                SizedBox(
+                                  width: 20,
+                                ),
+                                Text(
+                                  "Category :    ",
+                                  style: TextStyle(
+                                    fontFamily: 'Arial',
+                                    fontSize: 15,
+                                    color: Colors.black,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                  textAlign: TextAlign.left,
+                                ),
+                                Card(
+                                  elevation: 5,
+                                  child: Container(
+                                    padding: const EdgeInsets.only(
+                                        left: 5, right: 0, bottom: 0, top: 5),
+                                    width:
+                                        MediaQuery.of(context).size.width * 0.6,
+                                    height: 50,
+                                    child: Theme(
+                                      data: Theme.of(context).copyWith(
+                                          // canvasColor: Colors.blueGrey, // background color for the dropdown items
+                                          buttonTheme: ButtonTheme.of(context)
+                                              .copyWith(
+                                                  alignedDropdown: true,
+                                                  height:
+                                                      50 //If false (the default), then the dropdown's menu will be wider than its button.
+                                                  )),
+                                      child: DropdownButton(
+                                        isDense: true,
+                                        isExpanded: true,
+                                        hint: Text(selectedLocation),
+                                        // Not necessary for Option 1
+                                        value: selectedLocation,
+                                        onChanged: (newValue) {
+                                          setState(() {
+                                            selectedLocation = newValue;
+                                            if (newValue == "All") {
+                                              as = "";
+                                              category = "";
+                                            } else {
+                                              as = newValue;
+                                              category = newValue;
+                                            }
+                                          });
+                                        },
+                                        items: _locations.map((location) {
+                                          return DropdownMenuItem(
+                                            child: new Text(location),
+                                            value: location,
+                                          );
+                                        }).toList(),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
                             FutureBuilder<List<Products>>(
                                 future: fetchProducts,
                                 builder: (context, snapshot) {
                                   if (snapshot.hasData) {
                                     return Container(
                                       height:
-                                      MediaQuery
-                                          .of(context)
-                                          .size
-                                          .height,
-                                      width:
-                                      MediaQuery
-                                          .of(context)
-                                          .size
-                                          .width,
+                                          MediaQuery.of(context).size.height,
+                                      width: MediaQuery.of(context).size.width,
                                       child: ListView.builder(
                                           shrinkWrap: true,
                                           itemCount: snapshot.data.length,
                                           itemBuilder: (context, index) {
                                             if (snapshot.data[index].name
-                                                .toLowerCase()
-                                                .contains(as.toLowerCase())) {
+                                                    .toLowerCase()
+                                                    .contains(
+                                                        as.toLowerCase()) &&
+                                                snapshot.data[index].groupName
+                                                    .toLowerCase()
+                                                    .contains(category
+                                                        .toLowerCase())) {
                                               return Card(
                                                 color: Colors.blueGrey[300],
                                                 child: Row(
                                                   children: [
                                                     Container(
-                                                      width: MediaQuery
-                                                          .of(
-                                                          context)
-                                                          .size
-                                                          .width -
-                                                          180,
+                                                      width:
+                                                          MediaQuery.of(context)
+                                                                  .size
+                                                                  .width -
+                                                              180,
                                                       child: ListTile(
                                                         onTap: () {
                                                           setState(() {
                                                             textEditingController
-                                                                .text =
+                                                                    .text =
                                                                 snapshot
-                                                                    .data[
-                                                                index]
+                                                                    .data[index]
                                                                     .name;
                                                             vat = snapshot
-                                                                .data[
-                                                            index]
+                                                                .data[index]
                                                                 .vatPerc;
                                                             tax = snapshot
-                                                                .data[
-                                                            index]
+                                                                .data[index]
                                                                 .vatPerc;
                                                             Name = snapshot
                                                                 .data[index]
                                                                 .name;
                                                             saleRate.text =
                                                                 snapshot
-                                                                    .data[
-                                                                index]
+                                                                    .data[index]
                                                                     .salesRate
                                                                     .toString();
                                                             unitController
-                                                                .text =
+                                                                    .text =
                                                                 snapshot
-                                                                    .data[
-                                                                index]
+                                                                    .data[index]
                                                                     .baseUnit
                                                                     .toString();
                                                             stock = snapshot
@@ -2025,8 +1998,7 @@ class NewOrderPageState extends State<ReturnOrder> {
                                                                 .stock
                                                                 .toString();
                                                             ID = snapshot
-                                                                .data[index]
-                                                                .id
+                                                                .data[index].id
                                                                 .toString();
                                                           });
                                                           Navigator.pop(
@@ -2034,20 +2006,17 @@ class NewOrderPageState extends State<ReturnOrder> {
                                                           searchItemDialog2();
                                                         },
                                                         title: Text(
-                                                          snapshot.data[index]
-                                                              .name,
+                                                          snapshot
+                                                              .data[index].name,
                                                           style: TextStyle(
-                                                            fontFamily:
-                                                            'Arial',
+                                                            fontFamily: 'Arial',
                                                             fontSize: 10,
-                                                            color:
-                                                            Colors.white,
+                                                            color: Colors.white,
                                                             fontWeight:
-                                                            FontWeight
-                                                                .w700,
+                                                                FontWeight.w700,
                                                           ),
                                                           textAlign:
-                                                          TextAlign.left,
+                                                              TextAlign.left,
                                                         ),
                                                         subtitle: Text(
                                                           "Price : " +
@@ -2056,37 +2025,37 @@ class NewOrderPageState extends State<ReturnOrder> {
                                                                   .salesRate
                                                                   .toString(),
                                                           style: TextStyle(
-                                                            fontFamily:
-                                                            'Arial',
+                                                            fontFamily: 'Arial',
                                                             fontSize: 10,
-                                                            color:
-                                                            Colors.white,
+                                                            color: Colors.white,
                                                             fontWeight:
-                                                            FontWeight
-                                                                .w700,
+                                                                FontWeight.w700,
                                                           ),
                                                           textAlign:
-                                                          TextAlign.left,
+                                                              TextAlign.left,
                                                         ),
                                                         leading: snapshot
-                                                            .data[index]
-                                                            .productImage !=
-                                                            null
+                                                                    .data[index]
+                                                                    .productImage !=
+                                                                null
                                                             ? Container(
-                                                            width: 60,
-                                                            height: 80,
-                                                            child: Image.memory(
-                                                              base64Decode(
-                                                                  snapshot
-                                                                      .data[index]
+                                                                width: 60,
+                                                                height: 80,
+                                                                child: Image
+                                                                    .memory(
+                                                                  base64Decode(snapshot
+                                                                      .data[
+                                                                          index]
                                                                       .productImage),
-                                                              fit: BoxFit
-                                                                  .fill,))
+                                                                  fit: BoxFit
+                                                                      .fill,
+                                                                ))
                                                             : Image.asset(
-                                                          "assets/images/products.jpg",
-                                                          fit: BoxFit.scaleDown,
-                                                          //    color: Colors.white
-                                                        ),
+                                                                "assets/images/products.jpg",
+                                                                fit: BoxFit
+                                                                    .scaleDown,
+                                                                //    color: Colors.white
+                                                              ),
                                                       ),
                                                     ),
                                                   ],
@@ -2113,14 +2082,12 @@ class NewOrderPageState extends State<ReturnOrder> {
       },
       transitionBuilder: (_, anim, __, child) {
         return SlideTransition(
-          position:
-          Tween(begin: Offset(0, 1), end: Offset(0, 0)).animate(anim),
+          position: Tween(begin: Offset(0, 1), end: Offset(0, 0)).animate(anim),
           child: child,
         );
       },
     );
     //}
-
   }
 
   takeBillPdf() async {
@@ -2157,7 +2124,6 @@ class NewOrderPageState extends State<ReturnOrder> {
             Spacer(),
             Row(
               children: [
-
                 GestureDetector(
                   onTap: () {
                     showBookingDialog2();
@@ -2204,5 +2170,4 @@ class NewOrderPageState extends State<ReturnOrder> {
       toolbarHeight: 120,
     );
   }
-
 }

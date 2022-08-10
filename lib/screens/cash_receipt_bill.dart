@@ -1,47 +1,49 @@
 import 'dart:convert';
-
-import 'package:bluetooth_print/bluetooth_print.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:printing/printing.dart';
 import 'package:screenshot/screenshot.dart';
 import 'package:share/share.dart';
 import 'package:adobe_xd/pinned.dart';
-import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:optimist_erp_app/ui_elements/bluetooth_print.dart';
 import 'package:optimist_erp_app/data/user_data.dart';
 import 'package:optimist_erp_app/ui_elements/bottomNavigation.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'dart:io';
 import 'dart:typed_data';
 
-class VanPage extends StatefulWidget {
-  VanPage(
+class CashReceiptPage extends StatefulWidget {
+  CashReceiptPage(
       {required Key key,
-      required this.customerName,
-      required this.date,
-      required this.voucherNumber,
-      required this.billAmount,required this.back, required this.data, required this.customerCode})
+        required this.customerName,
+        required this.date,
+        required this.card,
+        required this.cash,
+        required this.voucherNumber,
+        required this.billAmount,required this.back,
+        //required this.data,
+        required this.customerCode,  required this.customerBalance,})
       : super(key: key);
 
   final String date;
   final String customerName;
   final String customerCode;
+  final String customerBalance;
+  final String card;
+  final String cash;
   final String voucherNumber;
   final String billAmount;
   final bool back;
-  final Map<String, dynamic> data;
+  //final Map<String, dynamic> data;
 
   @override
   VanPageState createState() => VanPageState();
 }
 
-class VanPageState extends State<VanPage> {
+class VanPageState extends State<CashReceiptPage> {
   final _screenshotController = ScreenshotController();
   final pdf = pw.Document();
   String cash = "-";
@@ -55,51 +57,6 @@ class VanPageState extends State<VanPage> {
   String totalBill = "-";
   var image;
   late Uint8List bytes;
-
-   _generatePdf() async {
-    // final pdf = pw.Document( compress: true);
-    // //final font = await PdfGoogleFonts.nunitoExtraLight();
-    //
-    // pdf.addPage(
-    //   pw.Page(
-    //     //pageFormat: format,
-    //     build: (context) {
-    //       return pw.Column(
-    //         children: [
-    //           pw.SizedBox(
-    //             width: double.infinity,
-    //             child: pw.FittedBox(
-    //               child: pw.Text("mmmm", style: pw.TextStyle()),
-    //             ),
-    //           ),
-    //           pw.SizedBox(height: 20),
-    //           pw.Flexible(child: pw.FlutterLogo())
-    //         ],
-    //       );
-    //     },
-    //   ),
-    // );
-
-     final imageFile = await _screenshotController.capture();
-
-     final image = pw.MemoryImage(
-       File(imageFile.path).readAsBytesSync(),
-     );
-
-     pdf.addPage(pw.Page(
-         pageFormat: PdfPageFormat.a4,
-         build: (pw.Context context) {
-           return pw.Center(
-             child: pw.Image(image),
-           ); // Center
-         }));
-
-    final output = await getTemporaryDirectory();
-    final file = File("${output.path}/"+widget.voucherNumber+".pdf");
-    await file.writeAsBytes(await pdf.save());
-    Share.shareFiles([file.path], text: "Shared");
-   // return pdf.save();
-  }
 
   takeBillPdf() async {
     final imageFile = await _screenshotController.capture();
@@ -127,10 +84,10 @@ class VanPageState extends State<VanPage> {
 
   void initState() {
     // TODO: implement initState
-   bytes = base64Decode(User.companylogo);
-    setState(() {
-      image=bytes;
-    });
+    bytes = base64Decode(User.companylogo);
+    // setState(() {
+    //   image=bytes;
+    // });
 
     super.initState();
   }
@@ -159,10 +116,14 @@ class VanPageState extends State<VanPage> {
               controller: _screenshotController,
               child: Container(
                 color: Colors.white,
-                child:  homeData()
+                child: ListView(
+                  children: [
+                    homeData()
+                  ],
+                ),
               ),
             ),
-           widget.back ? Container()  : Positioned(
+            widget.back ? Container()  : Positioned(
               bottom: 40,
               child: Container(
                 width: MediaQuery.of(context).size.width,
@@ -171,8 +132,8 @@ class VanPageState extends State<VanPage> {
                     onTap: () {
                       Navigator.push(context,
                           MaterialPageRoute(builder: (context) {
-                        return BottomBar();
-                      }));
+                            return BottomBar();
+                          }));
                     },
                     child: Container(
                       width: 120,
@@ -217,15 +178,15 @@ class VanPageState extends State<VanPage> {
   }
 
   homeData() {
-    return ListView(
+    return Column(
       children: [
         Row(
           children: [
             bytes != null
                 ? Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Center(child: Container(width: 150, height: 100, child: Image.memory(bytes,fit: BoxFit.cover,))),
-                )
+              padding: const EdgeInsets.all(8.0),
+              child: Center(child: Container(width: 150, height: 100, child: Image.memory(bytes,fit: BoxFit.cover,))),
+            )
                 : Container(),
             Spacer(),
             Padding(
@@ -242,7 +203,7 @@ class VanPageState extends State<VanPage> {
                     textAlign: TextAlign.left,
                   ),
                   Text(
-                    widget.data['InvoiceID'] ?? widget.data['ReturnID'],
+                    widget.voucherNumber,
                     style: TextStyle(
                       fontFamily: 'Arial',
                       fontSize: 16,
@@ -264,7 +225,7 @@ class VanPageState extends State<VanPage> {
             child: Stack(
               children: <Widget>[
                 Pinned.fromPins(
-                  Pin(size: MediaQuery.of(context).size.width*0.6, start: 3.5),
+                  Pin(size: 250.0, start: 3.5),
                   Pin(size: 14.0, start: 0.0),
                   child: Text(
                     'Party Name : ' + widget.customerName,
@@ -280,7 +241,7 @@ class VanPageState extends State<VanPage> {
                   Pin(size: 232.0, start: 3.5),
                   Pin(size: 14.0, middle: 0.1957),
                   child: Text(
-                    'Date :'+widget.date,
+                    'Date :'+widget.date.substring(0,10),
                     style: TextStyle(
                       fontFamily: 'Arial',
                       fontSize: 12,
@@ -317,182 +278,6 @@ class VanPageState extends State<VanPage> {
                   ),
                 ),
               ],
-            ),
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.only(
-            left: 15,
-            right: 15,
-          ),
-          child: Container(
-            width: MediaQuery.of(context).size.width,
-            color: Colors.grey[500],
-            child: Padding(
-              padding: const EdgeInsets.only(
-                left: 0,
-                right: 0,
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Container(
-                    width: 180,
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Text(
-                        'ITEM',
-                        style: TextStyle(
-                          fontFamily: 'Arial',
-                          fontSize: 10,
-                          color: Colors.white,
-                        ),
-                        textAlign: TextAlign.left,
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Text(
-                      'QTY',
-                      style: TextStyle(
-                        fontFamily: 'Arial',
-                        fontSize: 10,
-                        color: Colors.white,
-                      ),
-                      textAlign: TextAlign.left,
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Text(
-                      'RATE',
-                      style: TextStyle(
-                        fontFamily: 'Arial',
-                        fontSize: 10,
-                        color: Colors.white,
-                      ),
-                      textAlign: TextAlign.left,
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Text(
-                      'TAX',
-                      style: TextStyle(
-                        fontFamily: 'Arial',
-                        fontSize: 10,
-                        color: Colors.white,
-                      ),
-                      textAlign: TextAlign.left,
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Text(
-                      'TOTAL',
-                      style: TextStyle(
-                        fontFamily: 'Arial',
-                        fontSize: 10,
-                        color: Colors.white,
-                      ),
-                      textAlign: TextAlign.left,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-        Container(
-          // height: 200,
-          width: MediaQuery.of(context).size.width,
-          child: ListView(
-            shrinkWrap: true,
-            padding: const EdgeInsets.only(
-              left: 15,
-              right: 15,
-            ),
-            children: new List.generate(
-              widget.data['Items'].length,
-              (index) => Container(
-                height: 30,
-                width: MediaQuery.of(context).size.width,
-                decoration: BoxDecoration(
-                  color: index.floor().isEven
-                      ? Color(0x66d6d6d6)
-                      : Color(0x66f3ceef),
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Container(
-                      width: MediaQuery.of(context).size.width*0.45,
-                      child: Padding(
-                        padding: const EdgeInsets.all(3.0),
-                        child: Text(
-                          widget.data['Items'][index]['ItemName'].toString(),
-                          style: TextStyle(
-                            fontFamily: 'Arial',
-                            fontSize: 10,
-                            color: Colors.black,
-                          ),
-                          textAlign: TextAlign.left,
-                        ),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Text(
-                        widget.data['Items'][index]['Qty'].toString(),
-                        style: TextStyle(
-                          fontFamily: 'Arial',
-                          fontSize: 10,
-                          color: Colors.black,
-                        ),
-                        textAlign: TextAlign.left,
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Text(
-                        widget.data['Items'][index]['Rate'].toString(),
-                        style: TextStyle(
-                          fontFamily: 'Arial',
-                          fontSize: 10,
-                          color: Colors.black,
-                        ),
-                        textAlign: TextAlign.left,
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Text(
-                        widget.data['Items'][index]['VATAmount'].toString(),
-                        style: TextStyle(
-                          fontFamily: 'Arial',
-                          fontSize: 10,
-                          color: Colors.black,
-                        ),
-                        textAlign: TextAlign.left,
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Text(
-                        widget.data['Items'][index]['Amount'].toString(),
-                        style: TextStyle(
-                          fontFamily: 'Arial',
-                          fontSize: 10,
-                          color: Colors.black,
-                        ),
-                        textAlign: TextAlign.left,
-                      ),
-                    )
-                  ],
-                ),
-              ),
             ),
           ),
         ),
@@ -553,7 +338,7 @@ class VanPageState extends State<VanPage> {
                         textAlign: TextAlign.left,
                       ),
                       Text(
-                        widget.data['BillAmount'].toString(),
+                        widget.billAmount,
                         style: TextStyle(
                           fontFamily: 'Arial',
                           fontSize: 12,
@@ -564,60 +349,60 @@ class VanPageState extends State<VanPage> {
                     ],
                   ),
                 ),
-                Padding(
-                  padding: EdgeInsets.only(left: 15.0, right: 15),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Tax',
-                        style: TextStyle(
-                          fontFamily: 'Arial',
-                          fontSize: 12,
-                          color: const Color(0xff5b5b5b),
-                          fontWeight: FontWeight.w500,
-                        ),
-                        textAlign: TextAlign.left,
-                      ),
-                      Text(
-                        totaltax,
-                        style: TextStyle(
-                          fontFamily: 'Arial',
-                          fontSize: 12,
-                          color: const Color(0xff5b5b5b),
-                        ),
-                        textAlign: TextAlign.left,
-                      ),
-                    ],
-                  ),
-                ),
-                Padding(
-                  padding: EdgeInsets.only(left: 15.0, right: 15),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'RoundOff',
-                        style: TextStyle(
-                          fontFamily: 'Arial',
-                          fontSize: 12,
-                          color: const Color(0xff5b5b5b),
-                          fontWeight: FontWeight.w500,
-                        ),
-                        textAlign: TextAlign.left,
-                      ),
-                      Text(
-                        widget.data['RoundOff'].toString(),
-                        style: TextStyle(
-                          fontFamily: 'Arial',
-                          fontSize: 12,
-                          color: const Color(0xff5b5b5b),
-                        ),
-                        textAlign: TextAlign.left,
-                      ),
-                    ],
-                  ),
-                ),
+                // Padding(
+                //   padding: EdgeInsets.only(left: 15.0, right: 15),
+                //   child: Row(
+                //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                //     children: [
+                //       Text(
+                //         'Tax',
+                //         style: TextStyle(
+                //           fontFamily: 'Arial',
+                //           fontSize: 12,
+                //           color: const Color(0xff5b5b5b),
+                //           fontWeight: FontWeight.w500,
+                //         ),
+                //         textAlign: TextAlign.left,
+                //       ),
+                //       Text(
+                //         totaltax,
+                //         style: TextStyle(
+                //           fontFamily: 'Arial',
+                //           fontSize: 12,
+                //           color: const Color(0xff5b5b5b),
+                //         ),
+                //         textAlign: TextAlign.left,
+                //       ),
+                //     ],
+                //   ),
+                // ),
+                // Padding(
+                //   padding: EdgeInsets.only(left: 15.0, right: 15),
+                //   child: Row(
+                //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                //     children: [
+                //       Text(
+                //         'RoundOff',
+                //         style: TextStyle(
+                //           fontFamily: 'Arial',
+                //           fontSize: 12,
+                //           color: const Color(0xff5b5b5b),
+                //           fontWeight: FontWeight.w500,
+                //         ),
+                //         textAlign: TextAlign.left,
+                //       ),
+                //       Text(
+                //         widget.data['RoundOff'].toString(),
+                //         style: TextStyle(
+                //           fontFamily: 'Arial',
+                //           fontSize: 12,
+                //           color: const Color(0xff5b5b5b),
+                //         ),
+                //         textAlign: TextAlign.left,
+                //       ),
+                //     ],
+                //   ),
+                // ),
                 Padding(
                   padding: EdgeInsets.only(left: 15.0, right: 15),
                   child: Row(
@@ -634,7 +419,7 @@ class VanPageState extends State<VanPage> {
                         textAlign: TextAlign.left,
                       ),
                       Text(
-                        widget.data['CashReceived'].toString(),
+                        widget.cash.toString(),
                         style: TextStyle(
                           fontFamily: 'Arial',
                           fontSize: 12,
@@ -661,34 +446,7 @@ class VanPageState extends State<VanPage> {
                         textAlign: TextAlign.left,
                       ),
                       Text(
-                        widget.data['CardReceived'].toString(),
-                        style: TextStyle(
-                          fontFamily: 'Arial',
-                          fontSize: 12,
-                          color: const Color(0xff5b5b5b),
-                        ),
-                        textAlign: TextAlign.left,
-                      ),
-                    ],
-                  ),
-                ),
-                Padding(
-                  padding: EdgeInsets.only(left: 15.0, right: 15),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Discount',
-                        style: TextStyle(
-                          fontFamily: 'Arial',
-                          fontSize: 12,
-                          color: const Color(0xff5b5b5b),
-                          fontWeight: FontWeight.w500,
-                        ),
-                        textAlign: TextAlign.left,
-                      ),
-                      Text(
-                        totalDisc.toString(),
+                        widget.card.toString(),
                         style: TextStyle(
                           fontFamily: 'Arial',
                           fontSize: 12,
@@ -715,7 +473,7 @@ class VanPageState extends State<VanPage> {
                         textAlign: TextAlign.left,
                       ),
                       Text(
-                        widget.data['Balance'].toString(),
+                        widget.customerBalance,
                         style: TextStyle(
                           fontFamily: 'Arial',
                           fontSize: 12,
@@ -742,7 +500,7 @@ class VanPageState extends State<VanPage> {
                         textAlign: TextAlign.left,
                       ),
                       Text(
-                        widget.data['BillAmount'].toString(),
+                        widget.billAmount,
                         style: TextStyle(
                           fontFamily: 'Arial',
                           fontSize: 13,
@@ -774,7 +532,7 @@ class VanPageState extends State<VanPage> {
       centerTitle: true,
       iconTheme: IconThemeData(color: Colors.white),
       leadingWidth: 50,
-      title: Text("Bill",style: TextStyle(color: Colors.white)),
+      title: Text("Cash Receipt",style: TextStyle(color: Colors.white)),
       elevation: 1.0,
       actions: [
         Column(
@@ -797,6 +555,9 @@ class VanPageState extends State<VanPage> {
                                   voucherNumber: widget.voucherNumber,
                                   customerName: widget.customerName,
                                   customerCode: widget.customerCode,
+                                  cash:widget.cash,
+                                  card:widget.card,
+                                    balance:widget.customerBalance
                                 )));
                       },
                       child: Center(

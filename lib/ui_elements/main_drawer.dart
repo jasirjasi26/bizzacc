@@ -22,6 +22,7 @@ class MainDrawerState extends State<MainDrawer> {
   bool misHeight = false;
   bool reports = false;
   var image;
+  late Uint8List bytes;
 
   Future syncToMysql() async {
     await SyncronizationData().fetchAllInfo().then((userList) async {
@@ -34,6 +35,16 @@ class MainDrawerState extends State<MainDrawer> {
 
   @override
   void initState() {
+    Uint8List bytes1 = base64Decode(User.companylogo);
+    // setState(() {
+    //   image = bytes;
+    // });
+    //  final ByteData data = await rootBundle.load('assets/images/logo.jpg');
+    setState(() {
+      //bytes = data.buffer.asUint8List();
+      bytes=bytes1;
+    });
+
     // TODO: implement initState
     super.initState();
   }
@@ -43,11 +54,11 @@ class MainDrawerState extends State<MainDrawer> {
     return Drawer(
       child: Container(
         color: Colors.white,
-        padding: EdgeInsets.only(top: 20),
+        padding: EdgeInsets.only(top: 0),
         child: ListView(
           children: <Widget>[
-            image != null
-                ? Container(width: 100, height: 140, child: Image.memory(base64Decode(User.companylogo??""),fit: BoxFit.fill,))
+            bytes != null
+                ? Center(child: Container(width: 150, height: 150, child: Image.memory(bytes,fit: BoxFit.fill,)))
                 : Container(),
             ListTile(
                 visualDensity: VisualDensity(horizontal: -4, vertical: -4),
